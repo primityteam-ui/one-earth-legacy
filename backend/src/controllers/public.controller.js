@@ -4,9 +4,11 @@ import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
 import Emperor from "../models/Emperor.js";
 
-const defaultCauseCategory = "Human Survival";
-const defaultCauseImpact = "Clean Water for Life";
-const defaultCause = `${defaultCauseCategory} — ${defaultCauseImpact}`;
+import {
+  defaultCause,
+  defaultCauseCategory,
+  defaultCauseImpact
+} from "../constants/legacyOptions.js";
 
 const mockDonors = [
   {
@@ -161,9 +163,10 @@ function normalizeCauseData(source = {}) {
     causeImpact = defaultCauseImpact;
   }
 
-  const cause = rawCause && rawCause !== "Clean drinking water"
-    ? rawCause
-    : `${causeCategory} — ${causeImpact}`;
+  const cause =
+    rawCause && rawCause !== "Clean drinking water"
+      ? rawCause
+      : `${causeCategory} — ${causeImpact}`;
 
   return {
     causeCategory,
@@ -557,9 +560,9 @@ export async function getAuditEntries(req, res, next) {
           amount: 25,
           currency: "USD",
           recipient: "One Earth Legacy",
-          causeCategory: "Human Survival",
-          causeImpact: "Clean Water for Life",
-          cause: "Human Survival — Clean Water for Life",
+          causeCategory: defaultCauseCategory,
+          causeImpact: defaultCauseImpact,
+          cause: defaultCause,
           description: "Citizen rank donation received from mock donor.",
           status: "settled",
           createdAt: new Date().toISOString()
@@ -569,10 +572,10 @@ export async function getAuditEntries(req, res, next) {
           type: "cause_allocation",
           amount: 15,
           currency: "USD",
-          recipient: "Human Survival — Clean Water for Life",
-          causeCategory: "Human Survival",
-          causeImpact: "Clean Water for Life",
-          cause: "Human Survival — Clean Water for Life",
+          recipient: defaultCause,
+          causeCategory: defaultCauseCategory,
+          causeImpact: defaultCauseImpact,
+          cause: defaultCause,
           description: "60% allocation reserved for verified global cause payout.",
           status: "reserved",
           createdAt: new Date().toISOString()
@@ -583,9 +586,9 @@ export async function getAuditEntries(req, res, next) {
           amount: 6.25,
           currency: "USD",
           recipient: "Platform operations",
-          causeCategory: "Human Survival",
-          causeImpact: "Clean Water for Life",
-          cause: "Human Survival — Clean Water for Life",
+          causeCategory: defaultCauseCategory,
+          causeImpact: defaultCauseImpact,
+          cause: defaultCause,
           description: "25% allocation reserved for hosting, security, monitoring, and operations.",
           status: "reserved",
           createdAt: new Date().toISOString()
@@ -596,9 +599,9 @@ export async function getAuditEntries(req, res, next) {
           amount: 3.75,
           currency: "USD",
           recipient: "Monthly donor lottery",
-          causeCategory: "Human Survival",
-          causeImpact: "Clean Water for Life",
-          cause: "Human Survival — Clean Water for Life",
+          causeCategory: defaultCauseCategory,
+          causeImpact: defaultCauseImpact,
+          cause: defaultCause,
           description: "15% allocation added to monthly donor prize pool.",
           status: "reserved",
           createdAt: new Date().toISOString()
