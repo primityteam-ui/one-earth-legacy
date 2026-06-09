@@ -2,56 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
 import api from "../api/client.js";
+import {
+  buildPublicFilterParams,
+  getImpactsForMission,
+  missionFilters
+} from "../constants/legacyOptions.js";
 
 const tabs = ["Global", "By Country", "This Month", "All Time"];
-
-const missionFilters = [
-  "All Missions",
-  "Human Survival",
-  "Planet Protection",
-  "Children & Education"
-];
-
-const impactFilters = {
-  "Human Survival": [
-    "Clean Water for Life",
-    "Meals for the Hungry",
-    "Emergency Medical Aid",
-    "Shelter & Warmth",
-    "Disaster Rescue Fund",
-    "Refugee & Crisis Relief"
-  ],
-  "Planet Protection": [
-    "Forests of the Future",
-    "Ocean Cleanup Mission",
-    "Wildlife Guardians",
-    "Climate Repair Fund",
-    "Plastic-Free Earth",
-    "Land Restoration"
-  ],
-  "Children & Education": [
-    "School Starter Kits",
-    "Child Health Shield",
-    "Girls’ Education Fund",
-    "Scholarship Pathways",
-    "Digital Learning Access",
-    "Orphan & Vulnerable Child Care"
-  ]
-};
-
-function buildFilterParams(missionFilter, impactFilter) {
-  const params = {};
-
-  if (missionFilter !== "All Missions") {
-    params.mission = missionFilter;
-  }
-
-  if (impactFilter !== "All Impacts") {
-    params.impact = impactFilter;
-  }
-
-  return params;
-}
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Global");
@@ -63,11 +20,7 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
 
   const availableImpacts = useMemo(() => {
-    if (missionFilter === "All Missions") {
-      return [];
-    }
-
-    return impactFilters[missionFilter] || [];
+    return getImpactsForMission(missionFilter);
   }, [missionFilter]);
 
   useEffect(() => {
@@ -79,7 +32,7 @@ export default function Leaderboard() {
       try {
         setLoading(true);
 
-        const params = buildFilterParams(missionFilter, impactFilter);
+        const params = buildPublicFilterParams(missionFilter, impactFilter);
 
         const [leaderboardResponse, countriesResponse] = await Promise.all([
           api.get("/public/leaderboard", { params }),

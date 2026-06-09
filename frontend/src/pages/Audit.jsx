@@ -11,54 +11,11 @@ import {
   Trophy
 } from "lucide-react";
 import api from "../api/client.js";
-
-const missionFilters = [
-  "All Missions",
-  "Human Survival",
-  "Planet Protection",
-  "Children & Education"
-];
-
-const impactFilters = {
-  "Human Survival": [
-    "Clean Water for Life",
-    "Meals for the Hungry",
-    "Emergency Medical Aid",
-    "Shelter & Warmth",
-    "Disaster Rescue Fund",
-    "Refugee & Crisis Relief"
-  ],
-  "Planet Protection": [
-    "Forests of the Future",
-    "Ocean Cleanup Mission",
-    "Wildlife Guardians",
-    "Climate Repair Fund",
-    "Plastic-Free Earth",
-    "Land Restoration"
-  ],
-  "Children & Education": [
-    "School Starter Kits",
-    "Child Health Shield",
-    "Girls’ Education Fund",
-    "Scholarship Pathways",
-    "Digital Learning Access",
-    "Orphan & Vulnerable Child Care"
-  ]
-};
-
-function buildFilterParams(missionFilter, impactFilter) {
-  const params = {};
-
-  if (missionFilter !== "All Missions") {
-    params.mission = missionFilter;
-  }
-
-  if (impactFilter !== "All Impacts") {
-    params.impact = impactFilter;
-  }
-
-  return params;
-}
+import {
+  buildPublicFilterParams,
+  getImpactsForMission,
+  missionFilters
+} from "../constants/legacyOptions.js";
 
 export default function Audit() {
   const [entries, setEntries] = useState([]);
@@ -67,11 +24,7 @@ export default function Audit() {
   const [loading, setLoading] = useState(true);
 
   const availableImpacts = useMemo(() => {
-    if (missionFilter === "All Missions") {
-      return [];
-    }
-
-    return impactFilters[missionFilter] || [];
+    return getImpactsForMission(missionFilter);
   }, [missionFilter]);
 
   useEffect(() => {
@@ -84,7 +37,7 @@ export default function Audit() {
         setLoading(true);
 
         const response = await api.get("/public/audit", {
-          params: buildFilterParams(missionFilter, impactFilter)
+          params: buildPublicFilterParams(missionFilter, impactFilter)
         });
 
         setEntries(response.data.entries || []);

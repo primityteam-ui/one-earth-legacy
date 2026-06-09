@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Crown, Search, Sparkles } from "lucide-react";
 import api from "../api/client.js";
+import {
+  buildPublicFilterParams,
+  getImpactsForMission,
+  missionFilters
+} from "../constants/legacyOptions.js";
 
 const ranks = [
   "All",
@@ -19,54 +24,6 @@ const ranks = [
 
 const countries = ["All", "Global", "India", "Brazil", "United States"];
 
-const missionFilters = [
-  "All Missions",
-  "Human Survival",
-  "Planet Protection",
-  "Children & Education"
-];
-
-const impactFilters = {
-  "Human Survival": [
-    "Clean Water for Life",
-    "Meals for the Hungry",
-    "Emergency Medical Aid",
-    "Shelter & Warmth",
-    "Disaster Rescue Fund",
-    "Refugee & Crisis Relief"
-  ],
-  "Planet Protection": [
-    "Forests of the Future",
-    "Ocean Cleanup Mission",
-    "Wildlife Guardians",
-    "Climate Repair Fund",
-    "Plastic-Free Earth",
-    "Land Restoration"
-  ],
-  "Children & Education": [
-    "School Starter Kits",
-    "Child Health Shield",
-    "Girls’ Education Fund",
-    "Scholarship Pathways",
-    "Digital Learning Access",
-    "Orphan & Vulnerable Child Care"
-  ]
-};
-
-function buildFilterParams(missionFilter, impactFilter) {
-  const params = {};
-
-  if (missionFilter !== "All Missions") {
-    params.mission = missionFilter;
-  }
-
-  if (impactFilter !== "All Impacts") {
-    params.impact = impactFilter;
-  }
-
-  return params;
-}
-
 export default function Wall() {
   const [tiles, setTiles] = useState([]);
   const [search, setSearch] = useState("");
@@ -77,11 +34,7 @@ export default function Wall() {
   const [loading, setLoading] = useState(true);
 
   const availableImpacts = useMemo(() => {
-    if (missionFilter === "All Missions") {
-      return [];
-    }
-
-    return impactFilters[missionFilter] || [];
+    return getImpactsForMission(missionFilter);
   }, [missionFilter]);
 
   useEffect(() => {
@@ -94,7 +47,7 @@ export default function Wall() {
         setLoading(true);
 
         const response = await api.get("/public/tiles", {
-          params: buildFilterParams(missionFilter, impactFilter)
+          params: buildPublicFilterParams(missionFilter, impactFilter)
         });
 
         setTiles(response.data.tiles || []);
