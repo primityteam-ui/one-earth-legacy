@@ -19,6 +19,16 @@ const missionFilters = [
   "Children & Education"
 ];
 
+function buildMissionParams(missionFilter) {
+  if (missionFilter === "All Missions") {
+    return {};
+  }
+
+  return {
+    mission: missionFilter
+  };
+}
+
 export default function Audit() {
   const [entries, setEntries] = useState([]);
   const [missionFilter, setMissionFilter] = useState("All Missions");
@@ -27,7 +37,12 @@ export default function Audit() {
   useEffect(() => {
     async function loadAudit() {
       try {
-        const response = await api.get("/public/audit");
+        setLoading(true);
+
+        const response = await api.get("/public/audit", {
+          params: buildMissionParams(missionFilter)
+        });
+
         setEntries(response.data.entries || []);
       } catch (error) {
         console.error("Could not load audit entries", error);
@@ -37,18 +52,10 @@ export default function Audit() {
     }
 
     loadAudit();
-  }, []);
-
-  const filteredEntries = useMemo(() => {
-    if (missionFilter === "All Missions") {
-      return entries;
-    }
-
-    return entries.filter((entry) => entry.causeCategory === missionFilter);
-  }, [entries, missionFilter]);
+  }, [missionFilter]);
 
   const totals = useMemo(() => {
-    return filteredEntries.reduce(
+    return entries.reduce(
       (acc, entry) => {
         const amount = Number(entry.amount || 0);
 
@@ -77,7 +84,7 @@ export default function Audit() {
         lottery: 0
       }
     );
-  }, [filteredEntries]);
+  }, [entries]);
 
   const auditStats = [
     {
@@ -125,7 +132,7 @@ export default function Audit() {
           <div className="rounded-2xl border border-gold/30 bg-gold/10 px-5 py-4">
             <p className="text-sm text-goldLight">Transparency mode</p>
             <p className="font-display text-2xl font-bold text-textPrimary">
-              Mission Tracking
+              Backend Filtered
             </p>
           </div>
         </div>
@@ -138,7 +145,7 @@ export default function Audit() {
               Filter by Mission
             </p>
             <p className="mt-1 text-sm text-textSecondary">
-              View all audit entries or only one mission category.
+              This dropdown now reloads audit entries directly from the backend.
             </p>
           </div>
 
@@ -173,9 +180,9 @@ export default function Audit() {
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
               Loading audit entries from backend...
             </div>
-          ) : filteredEntries.length > 0 ? (
+          ) : entries.length > 0 ? (
             <div className="space-y-4">
-              {filteredEntries.map((entry, index) => (
+              {entries.map((entry, index) => (
                 <AuditEntry key={entry.id} entry={entry} index={index} />
               ))}
             </div>
@@ -197,7 +204,7 @@ export default function Audit() {
             <SplitBar label="15% Lottery" value={`$${totals.lottery.toFixed(2)}`} width="15%" />
 
             <p className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4 text-sm text-textSecondary">
-              These values are calculated from backend audit records and can now be filtered by mission.
+              These values are now returned from backend-filtered audit records.
             </p>
           </div>
 

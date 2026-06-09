@@ -11,6 +11,16 @@ const missionFilters = [
   "Children & Education"
 ];
 
+function buildMissionParams(missionFilter) {
+  if (missionFilter === "All Missions") {
+    return {};
+  }
+
+  return {
+    mission: missionFilter
+  };
+}
+
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Global");
   const [search, setSearch] = useState("");
@@ -22,9 +32,13 @@ export default function Leaderboard() {
   useEffect(() => {
     async function loadLeaderboard() {
       try {
+        setLoading(true);
+
+        const params = buildMissionParams(missionFilter);
+
         const [leaderboardResponse, countriesResponse] = await Promise.all([
-          api.get("/public/leaderboard"),
-          api.get("/public/leaderboard/countries")
+          api.get("/public/leaderboard", { params }),
+          api.get("/public/leaderboard/countries", { params })
         ]);
 
         setLeaderboard(leaderboardResponse.data.leaderboard || []);
@@ -37,17 +51,13 @@ export default function Leaderboard() {
     }
 
     loadLeaderboard();
-  }, []);
+  }, [missionFilter]);
 
   const visibleDonors = useMemo(() => {
     let list = [...leaderboard];
 
     if (activeTab === "This Month") {
       list = list.filter((donor) => !donor.isEmperor);
-    }
-
-    if (missionFilter !== "All Missions") {
-      list = list.filter((donor) => donor.causeCategory === missionFilter);
     }
 
     return list
@@ -64,7 +74,7 @@ export default function Leaderboard() {
           donor.cause?.toLowerCase().includes(query)
         );
       });
-  }, [activeTab, search, missionFilter, leaderboard]);
+  }, [activeTab, search, leaderboard]);
 
   const podium = visibleDonors.slice(0, 3);
   const rest = visibleDonors.slice(3);
@@ -377,7 +387,7 @@ function CountryLeaderboard({ countryStats }) {
 
         <p className="mt-4 text-textSecondary">
           This country leaderboard is loaded from the backend route:
-          /api/public/leaderboard/countries
+          /api/public/leaderboard/countries and follows the selected mission filter.
         </p>
 
         <div className="mt-8 grid grid-cols-3 gap-3">

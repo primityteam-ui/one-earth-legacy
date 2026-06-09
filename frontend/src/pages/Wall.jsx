@@ -12,6 +12,16 @@ const missionFilters = [
   "Children & Education"
 ];
 
+function buildMissionParams(missionFilter) {
+  if (missionFilter === "All Missions") {
+    return {};
+  }
+
+  return {
+    mission: missionFilter
+  };
+}
+
 export default function Wall() {
   const [tiles, setTiles] = useState([]);
   const [search, setSearch] = useState("");
@@ -23,7 +33,12 @@ export default function Wall() {
   useEffect(() => {
     async function loadTiles() {
       try {
-        const response = await api.get("/public/tiles");
+        setLoading(true);
+
+        const response = await api.get("/public/tiles", {
+          params: buildMissionParams(missionFilter)
+        });
+
         setTiles(response.data.tiles || []);
       } catch (error) {
         console.error("Could not load tiles", error);
@@ -33,7 +48,7 @@ export default function Wall() {
     }
 
     loadTiles();
-  }, []);
+  }, [missionFilter]);
 
   const filteredTiles = useMemo(() => {
     return tiles.filter((tile) => {
@@ -49,11 +64,10 @@ export default function Wall() {
 
       const matchesRank = rank === "All" || tile.rank === rank;
       const matchesCountry = country === "All" || tile.country === country;
-      const matchesMission = missionFilter === "All Missions" || tile.causeCategory === missionFilter;
 
-      return matchesSearch && matchesRank && matchesCountry && matchesMission;
+      return matchesSearch && matchesRank && matchesCountry;
     });
-  }, [tiles, search, rank, country, missionFilter]);
+  }, [tiles, search, rank, country]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
@@ -69,8 +83,8 @@ export default function Wall() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              Every donor receives a permanent tile. Tiles now show both the selected
-              mission and the exact impact saved in MongoDB.
+              Every donor receives a permanent tile. Mission filtering is now handled
+              by the backend before tiles reach this page.
             </p>
           </div>
 
