@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
   googleAuth,
   googleAuthValidators,
@@ -9,20 +10,51 @@ import {
   verifyOtp,
   verifyOtpValidators
 } from "../controllers/auth.controller.js";
+
 import { validateRequest } from "../middleware/validate.js";
+import { authLimiter, otpLimiter } from "../middleware/rateLimits.js";
 
 const router = express.Router();
 
 /*
-  DEVELOPMENT NOTE:
-  OTP and auth rate limiters are temporarily removed so local testing is easy.
-  Before production launch, add otpLimiter and authLimiter back here.
+  Rate limit behavior:
+  - Development: bypassed by rateLimits.js so local testing is easy.
+  - Production: active automatically to protect OTP/login endpoints.
 */
 
-router.post("/email/send-otp", sendOtpValidators, validateRequest, sendOtp);
-router.post("/email/verify-otp", verifyOtpValidators, validateRequest, verifyOtp);
-router.post("/google", googleAuthValidators, validateRequest, googleAuth);
-router.post("/refresh-token", refreshToken);
-router.post("/logout", logout);
+router.post(
+  "/email/send-otp",
+  otpLimiter,
+  sendOtpValidators,
+  validateRequest,
+  sendOtp
+);
+
+router.post(
+  "/email/verify-otp",
+  authLimiter,
+  verifyOtpValidators,
+  validateRequest,
+  verifyOtp
+);
+
+router.post(
+  "/google",
+  authLimiter,
+  googleAuthValidators,
+  validateRequest,
+  googleAuth
+);
+
+router.post(
+  "/refresh-token",
+  authLimiter,
+  refreshToken
+);
+
+router.post(
+  "/logout",
+  logout
+);
 
 export default router;

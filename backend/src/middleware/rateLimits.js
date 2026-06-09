@@ -1,10 +1,20 @@
-import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import { logSecurityEvent } from "../utils/securityLog.js";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
 function devBypassLimiter(req, res, next) {
   return next();
+}
+
+function getClientIp(req) {
+  const forwardedFor = req.headers["x-forwarded-for"];
+
+  if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  return req.ip || req.socket?.remoteAddress || "unknown";
 }
 
 function createLimiter({ windowMs, max, message, type = "rate_limit_hit", keyGenerator }) {
@@ -17,12 +27,12 @@ function createLimiter({ windowMs, max, message, type = "rate_limit_hit", keyGen
     max,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: keyGenerator || ((req) => ipKeyGenerator(req.ip)),
+    keyGenerator: keyGenerator || ((req) => getClientIp(req)),
     handler: async (req, res) => {
       await logSecurityEvent({
         type,
         email: req.body?.email,
-        ipAddress: req.ip,
+        ipAddress: getClientIp(req),
         userAgent: req.get("user-agent"),
         details: {
           path: req.originalUrl,
@@ -59,6 +69,6 @@ export const otpLimiter = createLimiter({
       return req.body.email.toLowerCase();
     }
 
-    return ipKeyGenerator(req.ip);
+    return getClientIp(req);
   }
 });
