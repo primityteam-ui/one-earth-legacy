@@ -5,8 +5,11 @@ import {
   CheckCircle2,
   Crown,
   CreditCard,
+  Globe2,
+  HeartPulse,
   ImagePlus,
   Loader2,
+  School,
   ShieldCheck,
   Sparkles
 } from "lucide-react";
@@ -25,11 +28,121 @@ const ranks = [
   { name: "Emperor", min: 1000000, max: Infinity }
 ];
 
-const causes = [
-  "Clean drinking water",
-  "Hunger relief",
-  "Global education",
-  "Climate action"
+const legacyMissions = [
+  {
+    id: "human-survival",
+    name: "Human Survival",
+    icon: <HeartPulse className="h-6 w-6" />,
+    tagline: "Immediate help for people fighting hunger, thirst, sickness, homelessness, and crisis.",
+    impacts: [
+      {
+        id: "clean-water-for-life",
+        name: "Clean Water for Life",
+        description: "Support safe drinking water, wells, filtration, and hygiene access."
+      },
+      {
+        id: "meals-for-the-hungry",
+        name: "Meals for the Hungry",
+        description: "Help provide food support for families facing hunger."
+      },
+      {
+        id: "emergency-medical-aid",
+        name: "Emergency Medical Aid",
+        description: "Support urgent medical care, basic treatment, and health response."
+      },
+      {
+        id: "shelter-and-warmth",
+        name: "Shelter & Warmth",
+        description: "Help people facing homelessness, cold, and unsafe living conditions."
+      },
+      {
+        id: "disaster-rescue-fund",
+        name: "Disaster Rescue Fund",
+        description: "Support relief after floods, fires, earthquakes, storms, and emergencies."
+      },
+      {
+        id: "refugee-crisis-relief",
+        name: "Refugee & Crisis Relief",
+        description: "Help displaced families with survival essentials and emergency support."
+      }
+    ]
+  },
+  {
+    id: "planet-protection",
+    name: "Planet Protection",
+    icon: <Globe2 className="h-6 w-6" />,
+    tagline: "Protect forests, oceans, animals, climate, land, and the future of Earth.",
+    impacts: [
+      {
+        id: "forests-of-the-future",
+        name: "Forests of the Future",
+        description: "Support tree planting, forest protection, and reforestation."
+      },
+      {
+        id: "ocean-cleanup-mission",
+        name: "Ocean Cleanup Mission",
+        description: "Help remove plastic waste and protect marine ecosystems."
+      },
+      {
+        id: "wildlife-guardians",
+        name: "Wildlife Guardians",
+        description: "Support animal protection, rescue, habitats, and anti-poaching efforts."
+      },
+      {
+        id: "climate-repair-fund",
+        name: "Climate Repair Fund",
+        description: "Support climate action, clean energy, and carbon reduction projects."
+      },
+      {
+        id: "plastic-free-earth",
+        name: "Plastic-Free Earth",
+        description: "Support plastic waste reduction, cleanup, and recycling initiatives."
+      },
+      {
+        id: "land-restoration",
+        name: "Land Restoration",
+        description: "Help restore damaged soil, farms, grasslands, and natural habitats."
+      }
+    ]
+  },
+  {
+    id: "children-education",
+    name: "Children & Education",
+    icon: <School className="h-6 w-6" />,
+    tagline: "Help children survive, learn, grow, and build a better future.",
+    impacts: [
+      {
+        id: "school-starter-kits",
+        name: "School Starter Kits",
+        description: "Support books, bags, uniforms, supplies, and classroom basics."
+      },
+      {
+        id: "child-health-shield",
+        name: "Child Health Shield",
+        description: "Support child nutrition, basic healthcare, vaccines, and wellness."
+      },
+      {
+        id: "girls-education-fund",
+        name: "Girls’ Education Fund",
+        description: "Help girls stay in school and access safe learning opportunities."
+      },
+      {
+        id: "scholarship-pathways",
+        name: "Scholarship Pathways",
+        description: "Support student fees, scholarships, and long-term education access."
+      },
+      {
+        id: "digital-learning-access",
+        name: "Digital Learning Access",
+        description: "Support laptops, internet access, digital tools, and remote learning."
+      },
+      {
+        id: "vulnerable-child-care",
+        name: "Orphan & Vulnerable Child Care",
+        description: "Support children without stable family, safety, or basic resources."
+      }
+    ]
+  }
 ];
 
 const presetAmounts = [5, 10, 25, 50, 100, 250, 1000];
@@ -48,7 +161,10 @@ export default function Donate() {
   const [message, setMessage] = useState("My mark on One Earth.");
   const [displayName, setDisplayName] = useState("Vamshi");
   const [theme, setTheme] = useState("Gold");
-  const [cause, setCause] = useState("Clean drinking water");
+
+  const [selectedMissionId, setSelectedMissionId] = useState("human-survival");
+  const [selectedImpactId, setSelectedImpactId] = useState("clean-water-for-life");
+
   const [anonymous, setAnonymous] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
 
@@ -62,6 +178,19 @@ export default function Donate() {
   const [previewError, setPreviewError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [stripeError, setStripeError] = useState("");
+
+  const selectedMission = useMemo(() => {
+    return legacyMissions.find((mission) => mission.id === selectedMissionId) || legacyMissions[0];
+  }, [selectedMissionId]);
+
+  const selectedImpact = useMemo(() => {
+    return (
+      selectedMission.impacts.find((impact) => impact.id === selectedImpactId) ||
+      selectedMission.impacts[0]
+    );
+  }, [selectedMission, selectedImpactId]);
+
+  const cause = `${selectedMission.name} — ${selectedImpact.name}`;
 
   const currentRank = useMemo(() => {
     return ranks.find((rank) => amount >= rank.min && amount <= rank.max) || ranks[0];
@@ -83,6 +212,11 @@ export default function Donate() {
   const causeAmount = amount * 0.6;
   const platformAmount = amount * 0.25;
   const lotteryAmount = amount * 0.15;
+
+  function selectMission(mission) {
+    setSelectedMissionId(mission.id);
+    setSelectedImpactId(mission.impacts[0].id);
+  }
 
   function toggleAddOn(id) {
     setSelectedAddOns((current) =>
@@ -166,7 +300,8 @@ export default function Donate() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              Create a backend preview, save a mock donation into MongoDB, or open Stripe test checkout.
+              Choose your mission, select the exact impact, create your legacy tile, and send your
+              donation through Stripe test checkout.
             </p>
           </div>
 
@@ -184,7 +319,7 @@ export default function Donate() {
           <Panel
             icon={<BadgeDollarSign className="h-5 w-5" />}
             title="Step 1 — Choose amount"
-            subtitle="Rank is cumulative. This mock flow saves USD values to MongoDB."
+            subtitle="Rank is cumulative. Your confirmed donations raise your legacy rank."
           >
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {presetAmounts.map((value) => (
@@ -231,8 +366,89 @@ export default function Donate() {
           </Panel>
 
           <Panel
+            icon={<Globe2 className="h-5 w-5" />}
+            title="Step 2 — Choose your Legacy Mission"
+            subtitle="Pick the greater mission first, then choose the exact impact your donation should support."
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              {legacyMissions.map((mission) => (
+                <button
+                  key={mission.id}
+                  type="button"
+                  onClick={() => selectMission(mission)}
+                  className={`rounded-[1.5rem] border p-5 text-left transition ${
+                    selectedMissionId === mission.id
+                      ? "border-gold bg-gold/10 shadow-gold"
+                      : "border-borderRoyal bg-black/30 hover:border-gold"
+                  }`}
+                >
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
+                    {mission.icon}
+                  </div>
+
+                  <p className="font-display text-xl font-bold text-textPrimary">
+                    {mission.name}
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-textSecondary">
+                    {mission.tagline}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-gold">
+                Exact Impact
+              </p>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {selectedMission.impacts.map((impact) => (
+                  <button
+                    key={impact.id}
+                    type="button"
+                    onClick={() => setSelectedImpactId(impact.id)}
+                    className={`rounded-2xl border p-5 text-left transition ${
+                      selectedImpactId === impact.id
+                        ? "border-gold bg-gold text-black"
+                        : "border-borderRoyal bg-black/30 text-textPrimary hover:border-gold"
+                    }`}
+                  >
+                    <p className="font-bold">{impact.name}</p>
+
+                    <p
+                      className={`mt-2 text-sm leading-6 ${
+                        selectedImpactId === impact.id
+                          ? "text-black/70"
+                          : "text-textSecondary"
+                      }`}
+                    >
+                      {impact.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-gold/30 bg-gold/10 p-5">
+              <p className="text-sm uppercase tracking-[0.25em] text-gold">
+                Selected Impact Path
+              </p>
+
+              <p className="mt-2 font-display text-2xl font-bold text-textPrimary">
+                {cause}
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-textSecondary">
+                This exact impact path will be saved into Stripe metadata, MongoDB donation data,
+                and the public audit record.
+              </p>
+            </div>
+          </Panel>
+
+          <Panel
             icon={<ImagePlus className="h-5 w-5" />}
-            title="Step 2 — Customize tile"
+            title="Step 3 — Customize tile"
             subtitle="This data is sent to the backend and saved into Donation, Tile, and AuditEntry records."
           >
             <div className="grid gap-5 md:grid-cols-2">
@@ -278,19 +494,17 @@ export default function Donate() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-textSecondary">
-                  Cause
+                  Public display
                 </label>
-                <select
-                  value={cause}
-                  onChange={(event) => setCause(event.target.value)}
-                  className="w-full rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
-                >
-                  {causes.map((item) => (
-                    <option key={item} className="bg-royalBlack">
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                <label className="flex h-[58px] cursor-pointer items-center gap-3 rounded-2xl border border-borderRoyal bg-black/30 px-4">
+                  <input
+                    type="checkbox"
+                    checked={anonymous}
+                    onChange={(event) => setAnonymous(event.target.checked)}
+                    className="h-5 w-5"
+                  />
+                  <span className="text-textSecondary">Show as Anonymous</span>
+                </label>
               </div>
             </div>
 
@@ -308,21 +522,11 @@ export default function Donate() {
                 {message.length}/280
               </p>
             </div>
-
-            <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-borderRoyal bg-black/30 p-4">
-              <input
-                type="checkbox"
-                checked={anonymous}
-                onChange={(event) => setAnonymous(event.target.checked)}
-                className="h-5 w-5"
-              />
-              <span className="text-textSecondary">Show as Anonymous on the public wall</span>
-            </label>
           </Panel>
 
           <Panel
             icon={<Sparkles className="h-5 w-5" />}
-            title="Step 3 — Optional add-ons"
+            title="Step 4 — Optional add-ons"
             subtitle="Selected add-ons are calculated by the backend."
           >
             <div className="grid gap-3 md:grid-cols-2">
@@ -349,8 +553,8 @@ export default function Donate() {
 
           <Panel
             icon={<ShieldCheck className="h-5 w-5" />}
-            title="Step 4 — Backend actions"
-            subtitle="Preview first, save mock donation, or open Stripe test checkout."
+            title="Step 5 — Complete donation"
+            subtitle="Preview first, save mock donation locally, or open Stripe test checkout."
           >
             <div className="grid gap-4 md:grid-cols-3">
               <button
@@ -485,6 +689,18 @@ export default function Donate() {
                   <p className="text-xs text-textSecondary">Donation</p>
                 </div>
               </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-gold/30 bg-gold/10 p-5">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-gold">
+                Your Selected Impact
+              </p>
+              <p className="font-display text-xl font-bold text-textPrimary">
+                {cause}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-textSecondary">
+                {selectedImpact.description}
+              </p>
             </div>
 
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
