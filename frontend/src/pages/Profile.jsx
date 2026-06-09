@@ -8,6 +8,7 @@ import {
   HeartHandshake,
   Share2,
   ShieldCheck,
+  Target,
   Trophy
 } from "lucide-react";
 import api from "../api/client.js";
@@ -61,7 +62,7 @@ export default function Profile() {
             Profile not found
           </p>
           <p className="mt-3 text-textSecondary">
-            This username does not exist in the backend mock profile API yet.
+            This username does not exist in the backend profile API yet.
           </p>
           <Link
             to="/wall"
@@ -73,6 +74,10 @@ export default function Profile() {
       </main>
     );
   }
+
+  const mission = profile.causeCategory || "Mission Pending";
+  const exactImpact = profile.causeImpact || "Impact Pending";
+  const fullCause = profile.cause || `${mission} — ${exactImpact}`;
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
@@ -129,6 +134,14 @@ export default function Profile() {
                 {profile.message}
               </p>
 
+              <div className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.25em] text-gold">
+                  Mission
+                </p>
+                <p className="mt-2 font-bold text-textPrimary">{mission}</p>
+                <p className="mt-1 text-sm text-textSecondary">{exactImpact}</p>
+              </div>
+
               <div className="mt-5 flex items-end justify-between border-t border-borderRoyal pt-5">
                 <div>
                   <p className="text-xs uppercase tracking-[0.25em] text-textSecondary">
@@ -152,18 +165,34 @@ export default function Profile() {
 
             <StatLine icon={<Crown />} label="Rank" value={profile.rank} />
             <StatLine icon={<Globe2 />} label="Country" value={`${profile.flag} ${profile.country}`} />
-            <StatLine icon={<HeartHandshake />} label="Chosen cause" value={profile.cause} />
+            <StatLine icon={<HeartHandshake />} label="Mission" value={mission} />
+            <StatLine icon={<Target />} label="Exact Impact" value={exactImpact} />
             <StatLine icon={<ShieldCheck />} label="Profile status" value="Backend connected" />
           </div>
         </aside>
 
         <div className="space-y-8">
+          <section className="rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
+            <p className="mb-2 text-sm uppercase tracking-[0.3em] text-goldLight">
+              Selected Legacy Path
+            </p>
+
+            <h2 className="font-display text-3xl font-bold text-textPrimary">
+              {fullCause}
+            </h2>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <MissionBox label="Mission Category" value={mission} />
+              <MissionBox label="Exact Impact" value={exactImpact} />
+            </div>
+          </section>
+
           <section className="grid gap-5 md:grid-cols-3">
             <ImpactCard
               icon={<HeartHandshake />}
               label="Cause contribution"
               value={`$${Number(profile.impact?.causeAmount || 0).toFixed(2)}`}
-              text="60% of donation amount"
+              text={`60% toward ${exactImpact}`}
             />
 
             <ImpactCard
@@ -249,7 +278,18 @@ function StatLine({ icon, label, value }) {
         <span className="text-textSecondary">{label}</span>
       </div>
 
-      <span className="font-bold text-textPrimary">{value}</span>
+      <span className="text-right font-bold text-textPrimary">{value}</span>
+    </div>
+  );
+}
+
+function MissionBox({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-borderRoyal bg-black/30 p-5">
+      <p className="text-sm text-textSecondary">{label}</p>
+      <p className="mt-2 font-display text-2xl font-bold text-textPrimary">
+        {value}
+      </p>
     </div>
   );
 }
