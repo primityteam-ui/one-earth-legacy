@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
 import api from "../api/client.js";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
+import PublicStateBox from "../components/PublicStateBox.jsx";
 import {
   buildPublicFilterParams,
   getImpactsForMission,
@@ -178,9 +179,7 @@ export default function Leaderboard() {
       {errorMessage && <PublicErrorBox message={errorMessage} />}
 
       {loading ? (
-        <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-          Loading leaderboard from backend...
-        </div>
+        <PublicStateBox message="Loading leaderboard from backend..." />
       ) : activeTab === "By Country" ? (
         <CountryLeaderboard countryStats={countryStats} errorMessage={errorMessage} />
       ) : visibleDonors.length > 0 ? (
@@ -237,11 +236,13 @@ export default function Leaderboard() {
           </section>
         </>
       ) : (
-        <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-          {errorMessage
-            ? "Fix the filter issue above and try again."
-            : "No donors found for this mission, impact, or search."}
-        </div>
+        <PublicStateBox
+          message={
+            errorMessage
+              ? "Fix the filter issue above and try again."
+              : "No donors found for this mission, impact, or search."
+          }
+        />
       )}
     </main>
   );
@@ -357,11 +358,13 @@ function CountryLeaderboard({ countryStats, errorMessage }) {
 
   if (countryStats.length === 0) {
     return (
-      <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-        {errorMessage
-          ? "Fix the filter issue above and try again."
-          : "No country data found for this mission or impact."}
-      </div>
+      <PublicStateBox
+        message={
+          errorMessage
+            ? "Fix the filter issue above and try again."
+            : "No country data found for this mission or impact."
+        }
+      />
     );
   }
 

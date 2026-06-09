@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
+import PublicStateBox from "../components/PublicStateBox.jsx";
 import {
   buildPublicFilterParams,
   getImpactsForMission,
@@ -201,9 +202,7 @@ export default function Audit() {
           </div>
 
           {loading ? (
-            <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
-              Loading audit entries from backend...
-            </div>
+            <PublicStateBox message="Loading audit entries from backend..." />
           ) : entries.length > 0 ? (
             <div className="space-y-4">
               {entries.map((entry, index) => (
@@ -211,11 +210,13 @@ export default function Audit() {
               ))}
             </div>
           ) : (
-            <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
-              {errorMessage
-                ? "Fix the filter issue above and try again."
-                : "No audit entries found for this mission or exact impact."}
-            </div>
+            <PublicStateBox
+              message={
+                errorMessage
+                  ? "Fix the filter issue above and try again."
+                  : "No audit entries found for this mission or exact impact."
+              }
+            />
           )}
         </div>
 

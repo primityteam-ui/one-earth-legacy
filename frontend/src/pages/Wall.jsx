@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Search, Sparkles } from "lucide-react";
 import api from "../api/client.js";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
+import PublicStateBox from "../components/PublicStateBox.jsx";
 import {
   buildPublicFilterParams,
   getImpactsForMission,
@@ -184,9 +185,7 @@ export default function Wall() {
       {errorMessage && <PublicErrorBox message={errorMessage} />}
 
       {loading ? (
-        <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-          Loading wall tiles from backend...
-        </div>
+        <PublicStateBox message="Loading wall tiles from backend..." />
       ) : (
         <section className="grid auto-rows-[210px] grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-4">
           {filteredTiles.map((tile, index) => (
@@ -196,13 +195,15 @@ export default function Wall() {
       )}
 
       {!loading && filteredTiles.length === 0 && (
-        <div className="mt-10 rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center">
-          <p className="font-display text-2xl text-goldLight">No tiles found</p>
-          <p className="mt-2 text-textSecondary">
-            {errorMessage
-              ? "Fix the filter issue above and try again."
-              : "Try another search, rank, country, mission, or exact impact filter."}
-          </p>
+        <div className="mt-10">
+          <PublicStateBox
+            title="No tiles found"
+            message={
+              errorMessage
+                ? "Fix the filter issue above and try again."
+                : "Try another search, rank, country, mission, or exact impact filter."
+            }
+          />
         </div>
       )}
     </main>
