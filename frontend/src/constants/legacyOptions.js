@@ -1,3 +1,26 @@
+export const ranks = [
+  { name: "Spark", min: 1, max: 9 },
+  { name: "Citizen", min: 10, max: 49 },
+  { name: "Merchant", min: 50, max: 249 },
+  { name: "Knight", min: 250, max: 999 },
+  { name: "Lord", min: 1000, max: 4999 },
+  { name: "Baron", min: 5000, max: 19999 },
+  { name: "Duke", min: 20000, max: 49999 },
+  { name: "Sovereign", min: 50000, max: 99999 },
+  { name: "King/Queen", min: 100000, max: 999999 },
+  { name: "Emperor", min: 1000000, max: Infinity }
+];
+
+export const presetAmounts = [5, 10, 25, 50, 100, 250, 1000];
+
+export const addOns = [
+  { id: "animatedBorder", name: "Animated border", price: 4.99 },
+  { id: "videoTile", name: "Video tile", price: 9.99 },
+  { id: "analytics", name: "Analytics dashboard", price: 2.99 },
+  { id: "resurrection", name: "Tile resurrection", price: 19.99 },
+  { id: "nft", name: "NFT certificate", price: 9.99 }
+];
+
 export const missionFilters = [
   "All Missions",
   "Human Survival",
@@ -148,6 +171,14 @@ export const legacyMissions = [
     ]
   }
 ];
+
+export function getRankForAmount(amountUSD) {
+  return ranks.find((rank) => amountUSD >= rank.min && amountUSD <= rank.max) || ranks[0];
+}
+
+export function getNextRankForAmount(amountUSD) {
+  return ranks.find((rank) => rank.min > amountUSD) || null;
+}
 
 export function getImpactsForMission(missionFilter) {
   if (missionFilter === "All Missions") {

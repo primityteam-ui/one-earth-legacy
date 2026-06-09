@@ -14,30 +14,13 @@ import {
   Sparkles
 } from "lucide-react";
 import api from "../api/client.js";
-import { legacyMissions } from "../constants/legacyOptions.js";
-
-const ranks = [
-  { name: "Spark", min: 1, max: 9 },
-  { name: "Citizen", min: 10, max: 49 },
-  { name: "Merchant", min: 50, max: 249 },
-  { name: "Knight", min: 250, max: 999 },
-  { name: "Lord", min: 1000, max: 4999 },
-  { name: "Baron", min: 5000, max: 19999 },
-  { name: "Duke", min: 20000, max: 49999 },
-  { name: "Sovereign", min: 50000, max: 99999 },
-  { name: "King/Queen", min: 100000, max: 999999 },
-  { name: "Emperor", min: 1000000, max: Infinity }
-];
-
-const presetAmounts = [5, 10, 25, 50, 100, 250, 1000];
-
-const addOns = [
-  { id: "animatedBorder", name: "Animated border", price: 4.99 },
-  { id: "videoTile", name: "Video tile", price: 9.99 },
-  { id: "analytics", name: "Analytics dashboard", price: 2.99 },
-  { id: "resurrection", name: "Tile resurrection", price: 19.99 },
-  { id: "nft", name: "NFT certificate", price: 9.99 }
-];
+import {
+  addOns,
+  getNextRankForAmount,
+  getRankForAmount,
+  legacyMissions,
+  presetAmounts
+} from "../constants/legacyOptions.js";
 
 function getMissionIcon(iconName) {
   if (iconName === "heart") {
@@ -89,11 +72,11 @@ export default function Donate() {
   const cause = `${selectedMission.name} — ${selectedImpact.name}`;
 
   const currentRank = useMemo(() => {
-    return ranks.find((rank) => amount >= rank.min && amount <= rank.max) || ranks[0];
+    return getRankForAmount(amount);
   }, [amount]);
 
   const nextRank = useMemo(() => {
-    return ranks.find((rank) => rank.min > amount);
+    return getNextRankForAmount(amount);
   }, [amount]);
 
   const addOnTotal = useMemo(() => {
