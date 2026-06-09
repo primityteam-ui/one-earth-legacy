@@ -11,13 +11,10 @@ import {
   Trophy
 } from "lucide-react";
 import api from "../api/client.js";
+import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
-import {
-  buildPublicFilterParams,
-  getImpactsForMission,
-  missionFilters
-} from "../constants/legacyOptions.js";
+import { buildPublicFilterParams } from "../constants/legacyOptions.js";
 
 export default function Audit() {
   const [entries, setEntries] = useState([]);
@@ -25,14 +22,6 @@ export default function Audit() {
   const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-
-  const availableImpacts = useMemo(() => {
-    return getImpactsForMission(missionFilter);
-  }, [missionFilter]);
-
-  useEffect(() => {
-    setImpactFilter("All Impacts");
-  }, [missionFilter]);
 
   useEffect(() => {
     async function loadAudit() {
@@ -146,7 +135,7 @@ export default function Audit() {
       </section>
 
       <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
-        <div className="grid gap-4 md:grid-cols-[1fr_260px_300px] md:items-end">
+        <div className="grid gap-4 md:grid-cols-[1fr_570px] md:items-end">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-gold">
               Filter Audit
@@ -156,33 +145,12 @@ export default function Audit() {
             </p>
           </div>
 
-          <select
-            value={missionFilter}
-            onChange={(event) => setMissionFilter(event.target.value)}
-            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
-          >
-            {missionFilters.map((mission) => (
-              <option key={mission} value={mission} className="bg-royalBlack">
-                {mission}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={impactFilter}
-            onChange={(event) => setImpactFilter(event.target.value)}
-            disabled={missionFilter === "All Missions"}
-            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="All Impacts" className="bg-royalBlack">
-              All Impacts
-            </option>
-            {availableImpacts.map((impact) => (
-              <option key={impact} value={impact} className="bg-royalBlack">
-                {impact}
-              </option>
-            ))}
-          </select>
+          <MissionImpactFilter
+            missionFilter={missionFilter}
+            setMissionFilter={setMissionFilter}
+            impactFilter={impactFilter}
+            setImpactFilter={setImpactFilter}
+          />
         </div>
       </section>
 
@@ -190,7 +158,12 @@ export default function Audit() {
 
       <section className="mb-8 grid gap-5 md:grid-cols-4">
         {auditStats.map((stat) => (
-          <StatCard key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} />
+          <StatCard
+            key={stat.label}
+            icon={stat.icon}
+            label={stat.label}
+            value={stat.value}
+          />
         ))}
       </section>
 
@@ -226,9 +199,21 @@ export default function Audit() {
               Money Split
             </p>
 
-            <SplitBar label="60% Cause" value={`$${totals.cause.toFixed(2)}`} width="60%" />
-            <SplitBar label="25% Platform" value={`$${totals.platform.toFixed(2)}`} width="25%" />
-            <SplitBar label="15% Lottery" value={`$${totals.lottery.toFixed(2)}`} width="15%" />
+            <SplitBar
+              label="60% Cause"
+              value={`$${totals.cause.toFixed(2)}`}
+              width="60%"
+            />
+            <SplitBar
+              label="25% Platform"
+              value={`$${totals.platform.toFixed(2)}`}
+              width="25%"
+            />
+            <SplitBar
+              label="15% Lottery"
+              value={`$${totals.lottery.toFixed(2)}`}
+              width="15%"
+            />
 
             <p className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4 text-sm text-textSecondary">
               These values are returned from backend-filtered audit records.
