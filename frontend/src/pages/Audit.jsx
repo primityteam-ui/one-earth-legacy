@@ -19,20 +19,64 @@ const missionFilters = [
   "Children & Education"
 ];
 
-function buildMissionParams(missionFilter) {
-  if (missionFilter === "All Missions") {
-    return {};
+const impactFilters = {
+  "Human Survival": [
+    "Clean Water for Life",
+    "Meals for the Hungry",
+    "Emergency Medical Aid",
+    "Shelter & Warmth",
+    "Disaster Rescue Fund",
+    "Refugee & Crisis Relief"
+  ],
+  "Planet Protection": [
+    "Forests of the Future",
+    "Ocean Cleanup Mission",
+    "Wildlife Guardians",
+    "Climate Repair Fund",
+    "Plastic-Free Earth",
+    "Land Restoration"
+  ],
+  "Children & Education": [
+    "School Starter Kits",
+    "Child Health Shield",
+    "Girls’ Education Fund",
+    "Scholarship Pathways",
+    "Digital Learning Access",
+    "Orphan & Vulnerable Child Care"
+  ]
+};
+
+function buildFilterParams(missionFilter, impactFilter) {
+  const params = {};
+
+  if (missionFilter !== "All Missions") {
+    params.mission = missionFilter;
   }
 
-  return {
-    mission: missionFilter
-  };
+  if (impactFilter !== "All Impacts") {
+    params.impact = impactFilter;
+  }
+
+  return params;
 }
 
 export default function Audit() {
   const [entries, setEntries] = useState([]);
   const [missionFilter, setMissionFilter] = useState("All Missions");
+  const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [loading, setLoading] = useState(true);
+
+  const availableImpacts = useMemo(() => {
+    if (missionFilter === "All Missions") {
+      return [];
+    }
+
+    return impactFilters[missionFilter] || [];
+  }, [missionFilter]);
+
+  useEffect(() => {
+    setImpactFilter("All Impacts");
+  }, [missionFilter]);
 
   useEffect(() => {
     async function loadAudit() {
@@ -40,7 +84,7 @@ export default function Audit() {
         setLoading(true);
 
         const response = await api.get("/public/audit", {
-          params: buildMissionParams(missionFilter)
+          params: buildFilterParams(missionFilter, impactFilter)
         });
 
         setEntries(response.data.entries || []);
@@ -52,7 +96,7 @@ export default function Audit() {
     }
 
     loadAudit();
-  }, [missionFilter]);
+  }, [missionFilter, impactFilter]);
 
   const totals = useMemo(() => {
     return entries.reduce(
@@ -139,13 +183,13 @@ export default function Audit() {
       </section>
 
       <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="grid gap-4 md:grid-cols-[1fr_260px_300px] md:items-end">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-gold">
-              Filter by Mission
+              Filter Audit
             </p>
             <p className="mt-1 text-sm text-textSecondary">
-              This dropdown now reloads audit entries directly from the backend.
+              Select a mission first, then narrow by exact impact.
             </p>
           </div>
 
@@ -157,6 +201,22 @@ export default function Audit() {
             {missionFilters.map((mission) => (
               <option key={mission} value={mission} className="bg-royalBlack">
                 {mission}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={impactFilter}
+            onChange={(event) => setImpactFilter(event.target.value)}
+            disabled={missionFilter === "All Missions"}
+            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="All Impacts" className="bg-royalBlack">
+              All Impacts
+            </option>
+            {availableImpacts.map((impact) => (
+              <option key={impact} value={impact} className="bg-royalBlack">
+                {impact}
               </option>
             ))}
           </select>
@@ -188,7 +248,7 @@ export default function Audit() {
             </div>
           ) : (
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
-              No audit entries found for this mission.
+              No audit entries found for this mission or exact impact.
             </div>
           )}
         </div>
@@ -204,7 +264,7 @@ export default function Audit() {
             <SplitBar label="15% Lottery" value={`$${totals.lottery.toFixed(2)}`} width="15%" />
 
             <p className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4 text-sm text-textSecondary">
-              These values are now returned from backend-filtered audit records.
+              These values are returned from backend-filtered audit records.
             </p>
           </div>
 
@@ -215,8 +275,8 @@ export default function Audit() {
             </p>
 
             <TrustLine text="Mission and exact impact are saved separately in MongoDB." />
+            <TrustLine text="Audit records can be filtered by mission and exact impact." />
             <TrustLine text="Ranks update only after verified payment settlement." />
-            <TrustLine text="Stripe and Razorpay webhooks must be signature verified." />
             <TrustLine text="Large donations require manual review." />
             <TrustLine text="Public proof links will be attached to cause payouts." />
           </div>

@@ -4,6 +4,7 @@ import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
 import api from "../api/client.js";
 
 const tabs = ["Global", "By Country", "This Month", "All Time"];
+
 const missionFilters = [
   "All Missions",
   "Human Survival",
@@ -11,30 +12,74 @@ const missionFilters = [
   "Children & Education"
 ];
 
-function buildMissionParams(missionFilter) {
-  if (missionFilter === "All Missions") {
-    return {};
+const impactFilters = {
+  "Human Survival": [
+    "Clean Water for Life",
+    "Meals for the Hungry",
+    "Emergency Medical Aid",
+    "Shelter & Warmth",
+    "Disaster Rescue Fund",
+    "Refugee & Crisis Relief"
+  ],
+  "Planet Protection": [
+    "Forests of the Future",
+    "Ocean Cleanup Mission",
+    "Wildlife Guardians",
+    "Climate Repair Fund",
+    "Plastic-Free Earth",
+    "Land Restoration"
+  ],
+  "Children & Education": [
+    "School Starter Kits",
+    "Child Health Shield",
+    "Girls’ Education Fund",
+    "Scholarship Pathways",
+    "Digital Learning Access",
+    "Orphan & Vulnerable Child Care"
+  ]
+};
+
+function buildFilterParams(missionFilter, impactFilter) {
+  const params = {};
+
+  if (missionFilter !== "All Missions") {
+    params.mission = missionFilter;
   }
 
-  return {
-    mission: missionFilter
-  };
+  if (impactFilter !== "All Impacts") {
+    params.impact = impactFilter;
+  }
+
+  return params;
 }
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Global");
   const [search, setSearch] = useState("");
   const [missionFilter, setMissionFilter] = useState("All Missions");
+  const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [leaderboard, setLeaderboard] = useState([]);
   const [countryStats, setCountryStats] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const availableImpacts = useMemo(() => {
+    if (missionFilter === "All Missions") {
+      return [];
+    }
+
+    return impactFilters[missionFilter] || [];
+  }, [missionFilter]);
+
+  useEffect(() => {
+    setImpactFilter("All Impacts");
+  }, [missionFilter]);
 
   useEffect(() => {
     async function loadLeaderboard() {
       try {
         setLoading(true);
 
-        const params = buildMissionParams(missionFilter);
+        const params = buildFilterParams(missionFilter, impactFilter);
 
         const [leaderboardResponse, countriesResponse] = await Promise.all([
           api.get("/public/leaderboard", { params }),
@@ -51,7 +96,7 @@ export default function Leaderboard() {
     }
 
     loadLeaderboard();
-  }, [missionFilter]);
+  }, [missionFilter, impactFilter]);
 
   const visibleDonors = useMemo(() => {
     let list = [...leaderboard];
@@ -138,6 +183,22 @@ export default function Leaderboard() {
               ))}
             </select>
 
+            <select
+              value={impactFilter}
+              onChange={(event) => setImpactFilter(event.target.value)}
+              disabled={missionFilter === "All Missions"}
+              className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="All Impacts" className="bg-royalBlack">
+                All Impacts
+              </option>
+              {availableImpacts.map((impact) => (
+                <option key={impact} value={impact} className="bg-royalBlack">
+                  {impact}
+                </option>
+              ))}
+            </select>
+
             <div className="relative w-full md:w-80">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
               <input
@@ -212,7 +273,7 @@ export default function Leaderboard() {
         </>
       ) : (
         <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-          No donors found for this mission or search.
+          No donors found for this mission, impact, or search.
         </div>
       )}
     </main>
@@ -387,7 +448,7 @@ function CountryLeaderboard({ countryStats }) {
 
         <p className="mt-4 text-textSecondary">
           This country leaderboard is loaded from the backend route:
-          /api/public/leaderboard/countries and follows the selected mission filter.
+          /api/public/leaderboard/countries and follows the selected mission and impact filters.
         </p>
 
         <div className="mt-8 grid grid-cols-3 gap-3">
