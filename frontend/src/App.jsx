@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -33,7 +34,6 @@ export default function App() {
         <Route path="/u/:username" element={<Profile />} />
         <Route path="/emperor" element={<Emperor />} />
         <Route path="/audit" element={<Audit />} />
-        <Route path="/admin" element={<Admin />} />
         <Route path="/legal/:page" element={<LegalPage />} />
         <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
         <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
@@ -46,6 +46,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Admin />
             </ProtectedRoute>
           }
         />
