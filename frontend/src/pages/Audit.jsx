@@ -22,6 +22,7 @@ export default function Audit() {
   const [missionFilter, setMissionFilter] = useState("All Missions");
   const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const availableImpacts = useMemo(() => {
     return getImpactsForMission(missionFilter);
@@ -35,6 +36,7 @@ export default function Audit() {
     async function loadAudit() {
       try {
         setLoading(true);
+        setErrorMessage("");
 
         const response = await api.get("/public/audit", {
           params: buildPublicFilterParams(missionFilter, impactFilter)
@@ -43,6 +45,12 @@ export default function Audit() {
         setEntries(response.data.entries || []);
       } catch (error) {
         console.error("Could not load audit entries", error);
+
+        setEntries([]);
+        setErrorMessage(
+          error.response?.data?.message ||
+            "Could not load audit entries. Please try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -176,6 +184,8 @@ export default function Audit() {
         </div>
       </section>
 
+      {errorMessage && <ErrorBox message={errorMessage} />}
+
       <section className="mb-8 grid gap-5 md:grid-cols-4">
         {auditStats.map((stat) => (
           <StatCard key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} />
@@ -201,7 +211,9 @@ export default function Audit() {
             </div>
           ) : (
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
-              No audit entries found for this mission or exact impact.
+              {errorMessage
+                ? "Fix the filter issue above and try again."
+                : "No audit entries found for this mission or exact impact."}
             </div>
           )}
         </div>
@@ -246,6 +258,15 @@ export default function Audit() {
         </aside>
       </section>
     </main>
+  );
+}
+
+function ErrorBox({ message }) {
+  return (
+    <div className="mb-8 rounded-[1.5rem] border border-crimson/40 bg-crimson/10 p-5">
+      <p className="font-bold text-crimsonLight">Could not load filtered data</p>
+      <p className="mt-2 text-sm text-textSecondary">{message}</p>
+    </div>
   );
 }
 

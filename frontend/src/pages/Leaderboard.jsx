@@ -18,6 +18,7 @@ export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [countryStats, setCountryStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const availableImpacts = useMemo(() => {
     return getImpactsForMission(missionFilter);
@@ -31,6 +32,7 @@ export default function Leaderboard() {
     async function loadLeaderboard() {
       try {
         setLoading(true);
+        setErrorMessage("");
 
         const params = buildPublicFilterParams(missionFilter, impactFilter);
 
@@ -43,6 +45,13 @@ export default function Leaderboard() {
         setCountryStats(countriesResponse.data.countries || []);
       } catch (error) {
         console.error("Could not load leaderboard", error);
+
+        setLeaderboard([]);
+        setCountryStats([]);
+        setErrorMessage(
+          error.response?.data?.message ||
+            "Could not load leaderboard. Please try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -165,12 +174,14 @@ export default function Leaderboard() {
         </div>
       </section>
 
+      {errorMessage && <ErrorBox message={errorMessage} />}
+
       {loading ? (
         <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
           Loading leaderboard from backend...
         </div>
       ) : activeTab === "By Country" ? (
-        <CountryLeaderboard countryStats={countryStats} />
+        <CountryLeaderboard countryStats={countryStats} errorMessage={errorMessage} />
       ) : visibleDonors.length > 0 ? (
         <>
           <section className="mb-8 grid gap-5 lg:grid-cols-3">
@@ -226,10 +237,21 @@ export default function Leaderboard() {
         </>
       ) : (
         <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-          No donors found for this mission, impact, or search.
+          {errorMessage
+            ? "Fix the filter issue above and try again."
+            : "No donors found for this mission, impact, or search."}
         </div>
       )}
     </main>
+  );
+}
+
+function ErrorBox({ message }) {
+  return (
+    <div className="mb-8 rounded-[1.5rem] border border-crimson/40 bg-crimson/10 p-5">
+      <p className="font-bold text-crimsonLight">Could not load filtered data</p>
+      <p className="mt-2 text-sm text-textSecondary">{message}</p>
+    </div>
   );
 }
 
@@ -338,8 +360,18 @@ function RankRow({ donor, position }) {
   );
 }
 
-function CountryLeaderboard({ countryStats }) {
+function CountryLeaderboard({ countryStats, errorMessage }) {
   const maxTotal = Math.max(...countryStats.map((item) => item.totalDonated || 0), 1);
+
+  if (countryStats.length === 0) {
+    return (
+      <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
+        {errorMessage
+          ? "Fix the filter issue above and try again."
+          : "No country data found for this mission or impact."}
+      </div>
+    );
+  }
 
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_420px]">

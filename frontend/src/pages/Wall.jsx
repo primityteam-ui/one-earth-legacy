@@ -32,6 +32,7 @@ export default function Wall() {
   const [missionFilter, setMissionFilter] = useState("All Missions");
   const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const availableImpacts = useMemo(() => {
     return getImpactsForMission(missionFilter);
@@ -45,6 +46,7 @@ export default function Wall() {
     async function loadTiles() {
       try {
         setLoading(true);
+        setErrorMessage("");
 
         const response = await api.get("/public/tiles", {
           params: buildPublicFilterParams(missionFilter, impactFilter)
@@ -53,6 +55,12 @@ export default function Wall() {
         setTiles(response.data.tiles || []);
       } catch (error) {
         console.error("Could not load tiles", error);
+
+        setTiles([]);
+        setErrorMessage(
+          error.response?.data?.message ||
+            "Could not load wall tiles. Please try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -172,6 +180,8 @@ export default function Wall() {
         </select>
       </section>
 
+      {errorMessage && <ErrorBox message={errorMessage} />}
+
       {loading ? (
         <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
           Loading wall tiles from backend...
@@ -188,11 +198,22 @@ export default function Wall() {
         <div className="mt-10 rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center">
           <p className="font-display text-2xl text-goldLight">No tiles found</p>
           <p className="mt-2 text-textSecondary">
-            Try another search, rank, country, mission, or exact impact filter.
+            {errorMessage
+              ? "Fix the filter issue above and try again."
+              : "Try another search, rank, country, mission, or exact impact filter."}
           </p>
         </div>
       )}
     </main>
+  );
+}
+
+function ErrorBox({ message }) {
+  return (
+    <div className="mb-8 rounded-[1.5rem] border border-crimson/40 bg-crimson/10 p-5">
+      <p className="font-bold text-crimsonLight">Could not load filtered data</p>
+      <p className="mt-2 text-sm text-textSecondary">{message}</p>
+    </div>
   );
 }
 
