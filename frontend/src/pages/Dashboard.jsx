@@ -1,20 +1,25 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarHeart,
+  Camera,
   Copy,
   Crown,
   Gift,
   History,
   Link as LinkIcon,
+  Loader2,
   PenLine,
   Share2,
   ShieldCheck,
   Sparkles,
   Target,
+  Upload,
   Users,
   UserRound
 } from "lucide-react";
+
+import api from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const mockDonations = [
@@ -58,7 +63,9 @@ const rankSteps = [
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+
+  const fileInputRef = useRef(null);
 
   const [tileName, setTileName] = useState(user?.displayName || "Vamshi");
   const [tileMessage, setTileMessage] = useState("My mark on One Earth.");
@@ -66,13 +73,20 @@ export default function Dashboard() {
   const [birthdayMode, setBirthdayMode] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const totalDonated = 40;
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const [avatarError, setAvatarError] = useState("");
+
+  const totalDonated = Number(user?.totalDonated || 0);
 
   const currentRank = useMemo(() => {
-    return rankSteps
-      .slice()
-      .reverse()
-      .find((rank) => totalDonated >= rank.min);
+    return (
+      rankSteps
+        .slice()
+        .reverse()
+        .find((rank) => totalDonated >= rank.min) || rankSteps[0]
+    );
   }, [totalDonated]);
 
   const nextRank = useMemo(() => {
@@ -89,6 +103,61 @@ export default function Dashboard() {
     setCopied(true);
 
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  function handleAvatarButtonClick() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleAvatarChange(event) {
+    const file = event.target.files?.[0];
+
+    setAvatarMessage("");
+    setAvatarError("");
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      setAvatarError("Please upload a JPG, PNG, or WEBP image.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError("Image must be smaller than 2 MB.");
+      return;
+    }
+
+    const localPreview = URL.createObjectURL(file);
+    setAvatarPreview(localPreview);
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      setAvatarUploading(true);
+
+      const response = await api.post("/users/me/avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      setAvatarPreview(response.data.avatar);
+      setUser(response.data.user);
+      setAvatarMessage("Avatar uploaded successfully.");
+    } catch (error) {
+      setAvatarError(
+        error.response?.data?.message ||
+          "Avatar upload failed. Cloudinary keys may not be configured yet."
+      );
+    } finally {
+      setAvatarUploading(false);
+      event.target.value = "";
+    }
   }
 
   return (
@@ -109,21 +178,65 @@ export default function Dashboard() {
             </h1>
 
             <p className="mt-3 max-w-3xl text-textSecondary">
-              Your secure account foundation is ready. Manage your rank, tile, donation history,
-              referral link, share card, streaks, and future squad features here.
+              Manage your rank, profile photo, tile, donation history, referral link,
+              share card, streaks, and future squad features here.
             </p>
           </div>
 
-          <div className="flex h-20 w-20 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-gold">
-            <Crown className="h-10 w-10" />
+          <div className="relative">
+            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-gold/40 bg-gold/10 text-gold">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Profile avatar"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Crown className="h-12 w-12" />
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAvatarButtonClick}
+              className="absolute -bottom-2 -right-2 flex h-10 w-10 items-center justify-center rounded-full bg-gold text-black shadow-gold hover:bg-goldLight"
+              aria-label="Upload avatar"
+            >
+              {avatarUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Camera className="h-5 w-5" />
+              )}
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
           </div>
         </div>
+
+        {(avatarMessage || avatarError) && (
+          <div
+            className={`mt-6 rounded-2xl border px-4 py-3 text-sm ${
+              avatarError
+                ? "border-crimson/40 bg-crimson/10 text-crimsonLight"
+                : "border-gold/30 bg-gold/10 text-goldLight"
+            }`}
+          >
+            {avatarError || avatarMessage}
+          </div>
+        )}
       </motion.section>
 
-      <section className="mb-8 grid gap-5 md:grid-cols-3">
+      <section className="mb-8 grid gap-5 md:grid-cols-4">
         <InfoCard icon={<UserRound />} label="Username" value={user?.username || "Not set"} />
-        <InfoCard icon={<Crown />} label="Current rank" value={currentRank?.name || "Spark"} />
+        <InfoCard icon={<Crown />} label="Current rank" value={user?.currentRank || currentRank?.name || "Spark"} />
         <InfoCard icon={<ShieldCheck />} label="2FA status" value={user?.twoFactorEnabled ? "Enabled" : "Not enabled"} />
+        <InfoCard icon={<Upload />} label="Avatar" value={user?.avatar ? "Uploaded" : "Not uploaded"} />
       </section>
 
       <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
@@ -145,7 +258,7 @@ export default function Dashboard() {
                 <div className="text-right">
                   <p className="text-sm text-textSecondary">Current rank</p>
                   <p className="font-display text-2xl font-bold text-textPrimary">
-                    {currentRank?.name}
+                    {user?.currentRank || currentRank?.name}
                   </p>
                 </div>
               </div>
@@ -228,7 +341,7 @@ export default function Dashboard() {
           <Panel
             icon={<History className="h-5 w-5" />}
             title="Donation history"
-            subtitle="Mock data for now. Real Stripe and Razorpay records will appear here."
+            subtitle="Mock data for now. Real Stripe records will appear here."
           >
             <div className="space-y-3">
               {mockDonations.map((donation) => (
@@ -263,9 +376,20 @@ export default function Dashboard() {
             <div className="rounded-[1.5rem] border border-gold/30 bg-black/40 p-6">
               <div className="mb-5 flex items-center justify-between">
                 <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
-                  {currentRank?.name}
+                  {user?.currentRank || currentRank?.name}
                 </span>
-                <Crown className="h-8 w-8 text-gold" />
+
+                <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gold/30 bg-gold/10 text-gold">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Tile avatar"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Crown className="h-7 w-7" />
+                  )}
+                </div>
               </div>
 
               <h2 className="font-display text-3xl font-bold text-textPrimary">
