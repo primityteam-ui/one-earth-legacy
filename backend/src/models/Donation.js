@@ -28,6 +28,30 @@ const donationSchema = new mongoose.Schema(
       min: 1
     },
 
+    causeCategory: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: "Human Survival",
+      index: true
+    },
+
+    causeImpact: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: "Clean Water for Life",
+      index: true
+    },
+
+    cause: {
+      type: String,
+      trim: true,
+      maxlength: 220,
+      default: "Human Survival — Clean Water for Life",
+      index: true
+    },
+
     paymentMethod: {
       type: String,
       enum: ["stripe", "razorpay", "manual", "mock"],

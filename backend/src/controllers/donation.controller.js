@@ -45,10 +45,42 @@ function createSafeUsername(email) {
   return `${base}_${suffix}`;
 }
 
+function normalizeCauseSelection(body) {
+  const rawCategory = String(body.causeCategory || "").trim();
+  const rawImpact = String(body.causeImpact || "").trim();
+  const rawCause = String(body.cause || "").trim();
+
+  let causeCategory = rawCategory;
+  let causeImpact = rawImpact;
+
+  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
+    const parts = rawCause.split("—").map((part) => part.trim());
+    causeCategory = causeCategory || parts[0];
+    causeImpact = causeImpact || parts.slice(1).join(" — ");
+  }
+
+  if (!causeCategory) {
+    causeCategory = "Human Survival";
+  }
+
+  if (!causeImpact) {
+    causeImpact = "Clean Water for Life";
+  }
+
+  const cause = `${causeCategory} — ${causeImpact}`;
+
+  return {
+    causeCategory,
+    causeImpact,
+    cause
+  };
+}
+
 function calculatePreview(body) {
   const amount = Number(body.amount);
   const currency = String(body.currency || "USD").toUpperCase();
   const addOns = Array.isArray(body.addOns) ? body.addOns : [];
+  const causeSelection = normalizeCauseSelection(body);
 
   const amountUSD = amount;
 
@@ -75,6 +107,9 @@ function calculatePreview(body) {
     amount,
     currency,
     amountUSD,
+    causeCategory: causeSelection.causeCategory,
+    causeImpact: causeSelection.causeImpact,
+    cause: causeSelection.cause,
     addOns: addOnDetails,
     addOnTotal: Number(addOnTotal.toFixed(2)),
     totalToday: Number(totalToday.toFixed(2)),
@@ -90,7 +125,9 @@ function calculatePreview(body) {
       displayName: body.displayName || "Anonymous Donor",
       message: body.message || "",
       theme: body.theme || "Gold",
-      cause: body.cause || "Clean drinking water",
+      causeCategory: causeSelection.causeCategory,
+      causeImpact: causeSelection.causeImpact,
+      cause: causeSelection.cause,
       anonymous: Boolean(body.anonymous)
     }
   };
@@ -124,10 +161,22 @@ export const donationPreviewValidators = [
     .isLength({ max: 30 })
     .withMessage("Theme is invalid"),
 
-  body("cause")
+  body("causeCategory")
     .optional()
     .isString()
     .isLength({ max: 80 })
+    .withMessage("Cause category is invalid"),
+
+  body("causeImpact")
+    .optional()
+    .isString()
+    .isLength({ max: 120 })
+    .withMessage("Cause impact is invalid"),
+
+  body("cause")
+    .optional()
+    .isString()
+    .isLength({ max: 220 })
     .withMessage("Cause is invalid"),
 
   body("anonymous")
@@ -203,6 +252,9 @@ export async function mockCreateDonation(req, res, next) {
       amount: preview.amount,
       currency: preview.currency,
       amountUSD: preview.amountUSD,
+      causeCategory: preview.causeCategory,
+      causeImpact: preview.causeImpact,
+      cause: preview.cause,
       paymentMethod: "mock",
       paymentId: `mock_${crypto.randomUUID()}`,
       paymentStatus: "paid",
@@ -233,6 +285,9 @@ export async function mockCreateDonation(req, res, next) {
         amount: preview.amountUSD,
         currency: preview.currency,
         recipient: "One Earth Legacy",
+        causeCategory: preview.causeCategory,
+        causeImpact: preview.causeImpact,
+        cause: preview.cause,
         description: `Mock donation received from ${preview.tile.anonymous ? "Anonymous" : user.displayName}.`,
         initiatedBy: user._id
       },
@@ -240,7 +295,10 @@ export async function mockCreateDonation(req, res, next) {
         type: "cause_allocation",
         amount: preview.split.causeAmount,
         currency: preview.currency,
-        recipient: preview.tile.cause,
+        recipient: preview.cause,
+        causeCategory: preview.causeCategory,
+        causeImpact: preview.causeImpact,
+        cause: preview.cause,
         description: "60% allocation reserved for verified global cause payout.",
         initiatedBy: user._id
       },
@@ -249,6 +307,9 @@ export async function mockCreateDonation(req, res, next) {
         amount: preview.split.platformAmount,
         currency: preview.currency,
         recipient: "Platform operations",
+        causeCategory: preview.causeCategory,
+        causeImpact: preview.causeImpact,
+        cause: preview.cause,
         description: "25% allocation reserved for hosting, security, monitoring, and platform sustainability.",
         initiatedBy: user._id
       },
@@ -257,6 +318,9 @@ export async function mockCreateDonation(req, res, next) {
         amount: preview.split.lotteryAmount,
         currency: preview.currency,
         recipient: "Monthly donor lottery",
+        causeCategory: preview.causeCategory,
+        causeImpact: preview.causeImpact,
+        cause: preview.cause,
         description: "15% allocation added to monthly donor prize pool.",
         initiatedBy: user._id
       }
@@ -267,6 +331,9 @@ export async function mockCreateDonation(req, res, next) {
       donation: {
         id: donation._id,
         amountUSD: donation.amountUSD,
+        causeCategory: donation.causeCategory,
+        causeImpact: donation.causeImpact,
+        cause: donation.cause,
         rankAtTime: donation.rankAtTime,
         paymentStatus: donation.paymentStatus,
         settlementStatus: donation.settlementStatus

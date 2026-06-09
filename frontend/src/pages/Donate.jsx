@@ -225,18 +225,20 @@ export default function Donate() {
   }
 
   function buildPayload() {
-    return {
-      email,
-      amount,
-      currency: "USD",
-      displayName,
-      message,
-      theme,
-      cause,
-      anonymous,
-      addOns: selectedAddOns
-    };
-  }
+  return {
+    email,
+    amount,
+    currency: "USD",
+    displayName,
+    message,
+    theme,
+    causeCategory: selectedMission.name,
+    causeImpact: selectedImpact.name,
+    cause,
+    anonymous,
+    addOns: selectedAddOns
+  };
+}
 
   async function handleBackendPreview() {
     setPreviewLoading(true);

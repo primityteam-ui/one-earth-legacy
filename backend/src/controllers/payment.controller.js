@@ -80,6 +80,68 @@ function parseAddOns(metadata) {
   }
 }
 
+function normalizeCauseSelectionFromBody(body) {
+  const rawCategory = String(body.causeCategory || "").trim();
+  const rawImpact = String(body.causeImpact || "").trim();
+  const rawCause = String(body.cause || "").trim();
+
+  let causeCategory = rawCategory;
+  let causeImpact = rawImpact;
+
+  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
+    const parts = rawCause.split("—").map((part) => part.trim());
+    causeCategory = causeCategory || parts[0];
+    causeImpact = causeImpact || parts.slice(1).join(" — ");
+  }
+
+  if (!causeCategory) {
+    causeCategory = "Human Survival";
+  }
+
+  if (!causeImpact) {
+    causeImpact = "Clean Water for Life";
+  }
+
+  const cause = `${causeCategory} — ${causeImpact}`;
+
+  return {
+    causeCategory,
+    causeImpact,
+    cause
+  };
+}
+
+function normalizeCauseSelectionFromMetadata(metadata) {
+  const rawCategory = String(metadata.causeCategory || "").trim();
+  const rawImpact = String(metadata.causeImpact || "").trim();
+  const rawCause = String(metadata.cause || "").trim();
+
+  let causeCategory = rawCategory;
+  let causeImpact = rawImpact;
+
+  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
+    const parts = rawCause.split("—").map((part) => part.trim());
+    causeCategory = causeCategory || parts[0];
+    causeImpact = causeImpact || parts.slice(1).join(" — ");
+  }
+
+  if (!causeCategory) {
+    causeCategory = "Human Survival";
+  }
+
+  if (!causeImpact) {
+    causeImpact = "Clean Water for Life";
+  }
+
+  const cause = `${causeCategory} — ${causeImpact}`;
+
+  return {
+    causeCategory,
+    causeImpact,
+    cause
+  };
+}
+
 function assertStripeSessionIsSafe(session) {
   if (!session) {
     throw new Error("Stripe session is missing");
@@ -119,7 +181,9 @@ export const stripeCheckoutValidators = [
   body("displayName").optional().isString().isLength({ max: 40 }),
   body("message").optional().isString().isLength({ max: 280 }),
   body("theme").optional().isString().isLength({ max: 30 }),
-  body("cause").optional().isString().isLength({ max: 80 }),
+  body("causeCategory").optional().isString().isLength({ max: 80 }),
+  body("causeImpact").optional().isString().isLength({ max: 120 }),
+  body("cause").optional().isString().isLength({ max: 220 }),
   body("anonymous").optional().isBoolean(),
   body("addOns").optional().isArray()
 ];
@@ -130,6 +194,7 @@ export async function createStripeCheckoutSession(req, res, next) {
 
     const totalAmount = calculateTotalAmount(req.body);
     const currency = String(req.body.currency || "USD").toLowerCase();
+    const causeSelection = normalizeCauseSelectionFromBody(req.body);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -158,7 +223,9 @@ export async function createStripeCheckoutSession(req, res, next) {
         displayName: req.body.displayName || "",
         message: req.body.message || "",
         theme: req.body.theme || "Gold",
-        cause: req.body.cause || "Clean drinking water",
+        causeCategory: causeSelection.causeCategory,
+        causeImpact: causeSelection.causeImpact,
+        cause: causeSelection.cause,
         anonymous: String(Boolean(req.body.anonymous)),
         addOns: JSON.stringify(req.body.addOns || [])
       }
@@ -257,7 +324,7 @@ async function saveStripeDonation(session) {
   const displayName = metadata.displayName || email.split("@")[0];
   const message = metadata.message || "";
   const theme = metadata.theme || "Gold";
-  const cause = metadata.cause || "Clean drinking water";
+  const causeSelection = normalizeCauseSelectionFromMetadata(metadata);
   const anonymous = metadata.anonymous === "true";
   const addOns = parseAddOns(metadata);
 
@@ -303,6 +370,9 @@ async function saveStripeDonation(session) {
     amount: amountUSD,
     currency,
     amountUSD,
+    causeCategory: causeSelection.causeCategory,
+    causeImpact: causeSelection.causeImpact,
+    cause: causeSelection.cause,
     paymentMethod: "stripe",
     paymentId: session.id,
     paymentStatus: "paid",
@@ -337,6 +407,9 @@ async function saveStripeDonation(session) {
       amount: amountUSD,
       currency,
       recipient: "One Earth Legacy",
+      causeCategory: causeSelection.causeCategory,
+      causeImpact: causeSelection.causeImpact,
+      cause: causeSelection.cause,
       description: `Stripe donation received from ${anonymous ? "Anonymous" : user.displayName}.`,
       initiatedBy: user._id
     },
@@ -344,7 +417,10 @@ async function saveStripeDonation(session) {
       type: "cause_allocation",
       amount: split.causeAmount,
       currency,
-      recipient: cause,
+      recipient: causeSelection.cause,
+      causeCategory: causeSelection.causeCategory,
+      causeImpact: causeSelection.causeImpact,
+      cause: causeSelection.cause,
       description: "60% allocation reserved for verified global cause payout.",
       initiatedBy: user._id
     },
@@ -353,6 +429,9 @@ async function saveStripeDonation(session) {
       amount: split.platformAmount,
       currency,
       recipient: "Platform operations",
+      causeCategory: causeSelection.causeCategory,
+      causeImpact: causeSelection.causeImpact,
+      cause: causeSelection.cause,
       description: "25% allocation reserved for hosting, security, monitoring, and platform sustainability.",
       initiatedBy: user._id
     },
@@ -361,6 +440,9 @@ async function saveStripeDonation(session) {
       amount: split.lotteryAmount,
       currency,
       recipient: "Monthly donor lottery",
+      causeCategory: causeSelection.causeCategory,
+      causeImpact: causeSelection.causeImpact,
+      cause: causeSelection.cause,
       description: "15% allocation added to monthly donor prize pool.",
       initiatedBy: user._id
     }
@@ -371,7 +453,10 @@ async function saveStripeDonation(session) {
     donationId: donation._id.toString(),
     tileId: tile._id.toString(),
     email,
-    amountUSD
+    amountUSD,
+    causeCategory: causeSelection.causeCategory,
+    causeImpact: causeSelection.causeImpact,
+    cause: causeSelection.cause
   });
 
   return donation;

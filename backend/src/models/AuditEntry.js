@@ -36,6 +36,27 @@ const auditEntrySchema = new mongoose.Schema(
       required: true
     },
 
+    causeCategory: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      index: true
+    },
+
+    causeImpact: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      index: true
+    },
+
+    cause: {
+      type: String,
+      trim: true,
+      maxlength: 220,
+      index: true
+    },
+
     proofUrl: String,
 
     description: {
