@@ -1,24 +1,11 @@
-import crypto from "crypto";
-
-import User from "../models/User.js";
-import Donation from "../models/Donation.js";
-import Tile from "../models/Tile.js";
-import AuditEntry from "../models/AuditEntry.js";
-
 import {
   donationPreviewValidators,
   mockCreateDonationValidators
 } from "../validators/donation.validators.js";
 
-import { buildDonationAuditEntries } from "../utils/audit.helpers.js";
+import { calculateDonationPreview } from "../utils/donation.helpers.js";
 
-import {
-  applyDonationRankToUser,
-  calculateDonationPreview,
-  createSafeUsername,
-  hasVideoTile,
-  selectedBorderFromAddOns
-} from "../utils/donation.helpers.js";
+import { saveConfirmedDonation } from "../services/donation.service.js";
 
 export { donationPreviewValidators, mockCreateDonationValidators };
 
@@ -39,70 +26,26 @@ export async function mockCreateDonation(req, res, next) {
     const preview = calculateDonationPreview(req.body);
     const email = req.body.email.toLowerCase();
 
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = await User.create({
-        email,
-        username: createSafeUsername(email),
-        displayName: req.body.displayName || email.split("@")[0],
-        referralCode: crypto.randomUUID().slice(0, 8)
-      });
-    }
-
-    user.displayName = req.body.displayName || user.displayName;
-    applyDonationRankToUser(user, preview.amountUSD);
-
-    await user.save();
-
-    const tileBorder = selectedBorderFromAddOns(preview.addOns);
-
-    const donation = await Donation.create({
-      userId: user._id,
+    const result = await saveConfirmedDonation({
+      email,
       amount: preview.amount,
       currency: preview.currency,
       amountUSD: preview.amountUSD,
+      displayName: req.body.displayName || email.split("@")[0],
+      message: preview.tile.message,
+      theme: preview.tile.theme,
       causeCategory: preview.causeCategory,
       causeImpact: preview.causeImpact,
       cause: preview.cause,
+      anonymous: preview.tile.anonymous,
+      addOns: preview.addOns,
       paymentMethod: "mock",
-      paymentId: `mock_${crypto.randomUUID()}`,
-      paymentStatus: "paid",
       settlementStatus: "settled",
-      tileMessage: preview.tile.message,
-      tileBorder,
-      tileTheme: preview.tile.theme,
-      isVideoTile: hasVideoTile(preview.addOns),
-      rankAtTime: preview.rank,
-      isAnonymous: preview.tile.anonymous,
       ipAddress: req.ip,
       userAgent: req.get("user-agent")
     });
 
-    const tile = await Tile.create({
-      userId: user._id,
-      donationId: donation._id,
-      message: preview.tile.message,
-      borderType: tileBorder,
-      themeColor: preview.tile.theme,
-      sizeScore: Math.max(1, Math.log10(preview.amountUSD + 1)),
-      isFeatured: preview.amountUSD >= 1000
-    });
-
-    await AuditEntry.insertMany(
-      buildDonationAuditEntries({
-        userId: user._id,
-        amountUSD: preview.amountUSD,
-        currency: preview.currency,
-        displayName: user.displayName,
-        anonymous: preview.tile.anonymous,
-        causeCategory: preview.causeCategory,
-        causeImpact: preview.causeImpact,
-        cause: preview.cause,
-        split: preview.split,
-        paymentMethod: "mock"
-      })
-    );
+    const { user, donation, tile, split } = result;
 
     res.status(201).json({
       message: "Mock donation saved to MongoDB",
@@ -131,7 +74,7 @@ export async function mockCreateDonation(req, res, next) {
         currentRank: user.currentRank,
         role: user.role
       },
-      split: preview.split
+      split
     });
   } catch (error) {
     next(error);

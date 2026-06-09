@@ -1,26 +1,16 @@
 import Stripe from "stripe";
-import crypto from "crypto";
 
-import User from "../models/User.js";
 import Donation from "../models/Donation.js";
-import Tile from "../models/Tile.js";
-import AuditEntry from "../models/AuditEntry.js";
 
 import { stripeCheckoutValidators } from "../validators/donation.validators.js";
 
-import { buildDonationAuditEntries } from "../utils/audit.helpers.js";
-
 import {
-  applyDonationRankToUser,
-  calculateMoneySplit,
   calculateTotalAmount,
-  createSafeUsername,
-  getRank,
-  hasVideoTile,
   normalizeCauseSelection,
-  parseAddOnsFromMetadata,
-  selectedBorderFromAddOns
+  parseAddOnsFromMetadata
 } from "../utils/donation.helpers.js";
+
+import { saveConfirmedDonation } from "../services/donation.service.js";
 
 export { stripeCheckoutValidators };
 
@@ -214,76 +204,33 @@ async function saveStripeDonation(session) {
     throw new Error("Donation amount is missing or invalid");
   }
 
-  let user = await User.findOne({ email });
-
-  if (!user) {
-    user = await User.create({
-      email,
-      username: createSafeUsername(email),
-      displayName,
-      referralCode: crypto.randomUUID().slice(0, 8)
-    });
-  }
-
-  user.displayName = displayName || user.displayName;
-  applyDonationRankToUser(user, amountUSD);
-
-  await user.save();
-
-  const rankAtTime = getRank(amountUSD).name;
-  const tileBorder = selectedBorderFromAddOns(addOns);
-
-  const donation = await Donation.create({
-    userId: user._id,
+  const result = await saveConfirmedDonation({
+    email,
     amount: amountUSD,
     currency,
     amountUSD,
+    displayName,
+    message,
+    theme,
     causeCategory: causeSelection.causeCategory,
     causeImpact: causeSelection.causeImpact,
     cause: causeSelection.cause,
+    anonymous,
+    addOns,
     paymentMethod: "stripe",
     paymentId: session.id,
-    paymentStatus: "paid",
-    settlementStatus: "settled",
-    tileMessage: message,
-    tileBorder,
-    tileTheme: theme,
-    isVideoTile: hasVideoTile(addOns),
-    rankAtTime,
-    isAnonymous: anonymous
+    settlementStatus: "settled"
   });
 
-  const tile = await Tile.create({
-    userId: user._id,
-    donationId: donation._id,
-    message,
-    borderType: tileBorder,
-    themeColor: theme,
-    sizeScore: Math.max(1, Math.log10(amountUSD + 1)),
-    isFeatured: amountUSD >= 1000
-  });
-
-  const split = calculateMoneySplit(amountUSD);
-
-  await AuditEntry.insertMany(
-    buildDonationAuditEntries({
-      userId: user._id,
-      amountUSD,
-      currency,
-      displayName: user.displayName,
-      anonymous,
-      causeCategory: causeSelection.causeCategory,
-      causeImpact: causeSelection.causeImpact,
-      cause: causeSelection.cause,
-      split,
-      paymentMethod: "stripe"
-    })
-  );
+  if (result.alreadyExists) {
+    console.log("Stripe donation already saved:", session.id);
+    return result.donation;
+  }
 
   console.log("Stripe paid donation saved:", {
     sessionId: session.id,
-    donationId: donation._id.toString(),
-    tileId: tile._id.toString(),
+    donationId: result.donation._id.toString(),
+    tileId: result.tile._id.toString(),
     email,
     amountUSD,
     causeCategory: causeSelection.causeCategory,
@@ -291,5 +238,5 @@ async function saveStripeDonation(session) {
     cause: causeSelection.cause
   });
 
-  return donation;
+  return result.donation;
 }
