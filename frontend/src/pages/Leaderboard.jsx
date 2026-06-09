@@ -4,10 +4,17 @@ import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
 import api from "../api/client.js";
 
 const tabs = ["Global", "By Country", "This Month", "All Time"];
+const missionFilters = [
+  "All Missions",
+  "Human Survival",
+  "Planet Protection",
+  "Children & Education"
+];
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Global");
   const [search, setSearch] = useState("");
+  const [missionFilter, setMissionFilter] = useState("All Missions");
   const [leaderboard, setLeaderboard] = useState([]);
   const [countryStats, setCountryStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,16 +46,25 @@ export default function Leaderboard() {
       list = list.filter((donor) => !donor.isEmperor);
     }
 
+    if (missionFilter !== "All Missions") {
+      list = list.filter((donor) => donor.causeCategory === missionFilter);
+    }
+
     return list
       .sort((a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0))
       .filter((donor) => {
+        const query = search.toLowerCase();
+
         return (
-          donor.name?.toLowerCase().includes(search.toLowerCase()) ||
-          donor.country?.toLowerCase().includes(search.toLowerCase()) ||
-          donor.rank?.toLowerCase().includes(search.toLowerCase())
+          donor.name?.toLowerCase().includes(query) ||
+          donor.country?.toLowerCase().includes(query) ||
+          donor.rank?.toLowerCase().includes(query) ||
+          donor.causeCategory?.toLowerCase().includes(query) ||
+          donor.causeImpact?.toLowerCase().includes(query) ||
+          donor.cause?.toLowerCase().includes(query)
         );
       });
-  }, [activeTab, search, leaderboard]);
+  }, [activeTab, search, missionFilter, leaderboard]);
 
   const podium = visibleDonors.slice(0, 3);
   const rest = visibleDonors.slice(3);
@@ -67,22 +83,22 @@ export default function Leaderboard() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              Track the highest donors, strongest countries, monthly leaders, and all-time legends.
-              This page is now loading ranking data from your backend API.
+              Track the highest donors, strongest countries, monthly leaders, all-time legends,
+              and mission-based support across One Earth Legacy.
             </p>
           </div>
 
           <div className="rounded-2xl border border-gold/30 bg-gold/10 px-5 py-4">
             <p className="text-sm text-goldLight">Current leader</p>
             <p className="font-display text-3xl font-bold text-textPrimary">
-              {leaderboard[0]?.name || "Loading..."}
+              {visibleDonors[0]?.name || leaderboard[0]?.name || "Loading..."}
             </p>
           </div>
         </div>
       </section>
 
       <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap gap-3">
             {tabs.map((tab) => (
               <button
@@ -99,14 +115,28 @@ export default function Leaderboard() {
             ))}
           </div>
 
-          <div className="relative w-full lg:w-80">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search rankings..."
-              className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
-            />
+          <div className="flex flex-col gap-3 md:flex-row">
+            <select
+              value={missionFilter}
+              onChange={(event) => setMissionFilter(event.target.value)}
+              className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
+            >
+              {missionFilters.map((mission) => (
+                <option key={mission} value={mission} className="bg-royalBlack">
+                  {mission}
+                </option>
+              ))}
+            </select>
+
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search rankings..."
+                className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -117,7 +147,7 @@ export default function Leaderboard() {
         </div>
       ) : activeTab === "By Country" ? (
         <CountryLeaderboard countryStats={countryStats} />
-      ) : (
+      ) : visibleDonors.length > 0 ? (
         <>
           <section className="mb-8 grid gap-5 lg:grid-cols-3">
             {podium.map((donor, index) => (
@@ -170,6 +200,10 @@ export default function Leaderboard() {
             </div>
           </section>
         </>
+      ) : (
+        <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
+          No donors found for this mission or search.
+        </div>
       )}
     </main>
   );
@@ -213,12 +247,20 @@ function PodiumCard({ donor, position, activeTab }) {
       </p>
 
       <p className="mt-1 text-sm text-textSecondary">
-        {activeTab === "This Month" ? "Backend mock monthly total" : "Total donated"}
+        {activeTab === "This Month" ? "Backend monthly total" : "Total donated"}
       </p>
 
-      <p className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4 text-sm text-textSecondary">
-        Cause: {donor.cause}
-      </p>
+      <div className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4">
+        <p className="text-xs uppercase tracking-[0.25em] text-gold">
+          Mission
+        </p>
+        <p className="mt-2 font-bold text-textPrimary">
+          {donor.causeCategory || "Mission Pending"}
+        </p>
+        <p className="mt-1 text-sm text-textSecondary">
+          {donor.causeImpact || donor.cause || "Impact Pending"}
+        </p>
+      </div>
     </motion.article>
   );
 }
@@ -230,7 +272,7 @@ function RankRow({ donor, position }) {
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="grid gap-4 rounded-[1.25rem] border border-borderRoyal bg-black/30 p-4 md:grid-cols-[80px_1fr_180px_180px]"
+      className="grid gap-4 rounded-[1.25rem] border border-borderRoyal bg-black/30 p-4 md:grid-cols-[80px_1fr_180px_220px_180px]"
     >
       <div className="flex items-center">
         <span className="font-numbers text-2xl font-bold text-goldLight">
@@ -250,6 +292,17 @@ function RankRow({ donor, position }) {
         <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
           {donor.rank}
         </span>
+      </div>
+
+      <div className="flex items-center">
+        <div>
+          <p className="text-sm font-bold text-textPrimary">
+            {donor.causeCategory || "Mission Pending"}
+          </p>
+          <p className="text-xs text-textSecondary">
+            {donor.causeImpact || "Impact Pending"}
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center justify-start md:justify-end">
@@ -323,7 +376,7 @@ function CountryLeaderboard({ countryStats }) {
         </h2>
 
         <p className="mt-4 text-textSecondary">
-          This country leaderboard is now loaded from the backend route:
+          This country leaderboard is loaded from the backend route:
           /api/public/leaderboard/countries
         </p>
 

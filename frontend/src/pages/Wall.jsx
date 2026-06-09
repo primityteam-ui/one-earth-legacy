@@ -5,12 +5,19 @@ import api from "../api/client.js";
 
 const ranks = ["All", "Spark", "Citizen", "Merchant", "Knight", "Lord", "Baron", "Duke", "Sovereign", "King/Queen", "Emperor"];
 const countries = ["All", "Global", "India", "Brazil", "United States"];
+const missionFilters = [
+  "All Missions",
+  "Human Survival",
+  "Planet Protection",
+  "Children & Education"
+];
 
 export default function Wall() {
   const [tiles, setTiles] = useState([]);
   const [search, setSearch] = useState("");
   const [rank, setRank] = useState("All");
   const [country, setCountry] = useState("All");
+  const [missionFilter, setMissionFilter] = useState("All Missions");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,17 +37,23 @@ export default function Wall() {
 
   const filteredTiles = useMemo(() => {
     return tiles.filter((tile) => {
+      const query = search.toLowerCase();
+
       const matchesSearch =
-        tile.name?.toLowerCase().includes(search.toLowerCase()) ||
-        tile.message?.toLowerCase().includes(search.toLowerCase()) ||
-        tile.username?.toLowerCase().includes(search.toLowerCase());
+        tile.name?.toLowerCase().includes(query) ||
+        tile.message?.toLowerCase().includes(query) ||
+        tile.username?.toLowerCase().includes(query) ||
+        tile.causeCategory?.toLowerCase().includes(query) ||
+        tile.causeImpact?.toLowerCase().includes(query) ||
+        tile.cause?.toLowerCase().includes(query);
 
       const matchesRank = rank === "All" || tile.rank === rank;
       const matchesCountry = country === "All" || tile.country === country;
+      const matchesMission = missionFilter === "All Missions" || tile.causeCategory === missionFilter;
 
-      return matchesSearch && matchesRank && matchesCountry;
+      return matchesSearch && matchesRank && matchesCountry && matchesMission;
     });
-  }, [tiles, search, rank, country]);
+  }, [tiles, search, rank, country, missionFilter]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
@@ -56,7 +69,8 @@ export default function Wall() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              Every donor receives a permanent tile. This page is now loading tile data from your backend API.
+              Every donor receives a permanent tile. Tiles now show both the selected
+              mission and the exact impact saved in MongoDB.
             </p>
           </div>
 
@@ -69,13 +83,13 @@ export default function Wall() {
         </div>
       </section>
 
-      <section className="mb-8 grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5 lg:grid-cols-[1fr_220px_220px]">
+      <section className="mb-8 grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5 lg:grid-cols-[1fr_220px_220px_240px]">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search donor name, username, or message..."
+            placeholder="Search donor, message, mission, or impact..."
             className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
           />
         </div>
@@ -103,6 +117,18 @@ export default function Wall() {
             </option>
           ))}
         </select>
+
+        <select
+          value={missionFilter}
+          onChange={(event) => setMissionFilter(event.target.value)}
+          className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
+        >
+          {missionFilters.map((mission) => (
+            <option key={mission} value={mission} className="bg-royalBlack">
+              {mission}
+            </option>
+          ))}
+        </select>
       </section>
 
       {loading ? (
@@ -110,7 +136,7 @@ export default function Wall() {
           Loading wall tiles from backend...
         </div>
       ) : (
-        <section className="grid auto-rows-[180px] grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-4">
+        <section className="grid auto-rows-[210px] grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-4">
           {filteredTiles.map((tile, index) => (
             <DonorTile key={tile.id} tile={tile} index={index} />
           ))}
@@ -120,7 +146,7 @@ export default function Wall() {
       {!loading && filteredTiles.length === 0 && (
         <div className="mt-10 rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center">
           <p className="font-display text-2xl text-goldLight">No tiles found</p>
-          <p className="mt-2 text-textSecondary">Try another search, rank, or country filter.</p>
+          <p className="mt-2 text-textSecondary">Try another search, rank, country, or mission filter.</p>
         </div>
       )}
     </main>
@@ -171,7 +197,14 @@ function DonorTile({ tile, index }) {
             <p className="text-xs uppercase tracking-[0.25em] text-textSecondary">
               {tile.country}
             </p>
-            <p className="mt-1 text-sm text-textSecondary">Cause: {tile.cause}</p>
+
+            <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-gold">
+              {tile.causeCategory || "Mission Pending"}
+            </p>
+
+            <p className="mt-1 line-clamp-1 text-sm text-textSecondary">
+              {tile.causeImpact || tile.cause || "Impact Pending"}
+            </p>
           </div>
 
           <div className="text-right">

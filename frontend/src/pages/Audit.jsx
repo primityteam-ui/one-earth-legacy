@@ -12,8 +12,16 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 
+const missionFilters = [
+  "All Missions",
+  "Human Survival",
+  "Planet Protection",
+  "Children & Education"
+];
+
 export default function Audit() {
   const [entries, setEntries] = useState([]);
+  const [missionFilter, setMissionFilter] = useState("All Missions");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,8 +39,16 @@ export default function Audit() {
     loadAudit();
   }, []);
 
+  const filteredEntries = useMemo(() => {
+    if (missionFilter === "All Missions") {
+      return entries;
+    }
+
+    return entries.filter((entry) => entry.causeCategory === missionFilter);
+  }, [entries, missionFilter]);
+
   const totals = useMemo(() => {
-    return entries.reduce(
+    return filteredEntries.reduce(
       (acc, entry) => {
         const amount = Number(entry.amount || 0);
 
@@ -61,7 +77,7 @@ export default function Audit() {
         lottery: 0
       }
     );
-  }, [entries]);
+  }, [filteredEntries]);
 
   const auditStats = [
     {
@@ -100,18 +116,43 @@ export default function Audit() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              One Earth Legacy shows how money is split: 60% to the selected cause,
-              25% to platform sustainability, and 15% to the monthly donor lottery.
-              This page is now loading audit entries from your backend API.
+              One Earth Legacy shows how money is split by mission and exact impact:
+              60% to the selected cause, 25% to platform sustainability, and 15%
+              to the monthly donor lottery.
             </p>
           </div>
 
           <div className="rounded-2xl border border-gold/30 bg-gold/10 px-5 py-4">
             <p className="text-sm text-goldLight">Transparency mode</p>
             <p className="font-display text-2xl font-bold text-textPrimary">
-              Backend Connected
+              Mission Tracking
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-gold">
+              Filter by Mission
+            </p>
+            <p className="mt-1 text-sm text-textSecondary">
+              View all audit entries or only one mission category.
+            </p>
+          </div>
+
+          <select
+            value={missionFilter}
+            onChange={(event) => setMissionFilter(event.target.value)}
+            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
+          >
+            {missionFilters.map((mission) => (
+              <option key={mission} value={mission} className="bg-royalBlack">
+                {mission}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
 
@@ -132,11 +173,15 @@ export default function Audit() {
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
               Loading audit entries from backend...
             </div>
-          ) : (
+          ) : filteredEntries.length > 0 ? (
             <div className="space-y-4">
-              {entries.map((entry, index) => (
+              {filteredEntries.map((entry, index) => (
                 <AuditEntry key={entry.id} entry={entry} index={index} />
               ))}
+            </div>
+          ) : (
+            <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-10 text-center text-textSecondary">
+              No audit entries found for this mission.
             </div>
           )}
         </div>
@@ -152,7 +197,7 @@ export default function Audit() {
             <SplitBar label="15% Lottery" value={`$${totals.lottery.toFixed(2)}`} width="15%" />
 
             <p className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4 text-sm text-textSecondary">
-              These values are now calculated from backend audit records.
+              These values are calculated from backend audit records and can now be filtered by mission.
             </p>
           </div>
 
@@ -162,10 +207,10 @@ export default function Audit() {
               Trust Rules
             </p>
 
+            <TrustLine text="Mission and exact impact are saved separately in MongoDB." />
             <TrustLine text="Ranks update only after verified payment settlement." />
             <TrustLine text="Stripe and Razorpay webhooks must be signature verified." />
             <TrustLine text="Large donations require manual review." />
-            <TrustLine text="Chargeback causes rank revocation and account review." />
             <TrustLine text="Public proof links will be attached to cause payouts." />
           </div>
 
@@ -226,6 +271,17 @@ function AuditEntry({ entry, index }) {
           </div>
 
           <p className="font-bold text-textPrimary">{entry.recipient}</p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-goldLight">
+              {entry.causeCategory || "Mission Pending"}
+            </span>
+
+            <span className="rounded-full border border-borderRoyal bg-black/40 px-3 py-1 text-xs text-textSecondary">
+              {entry.causeImpact || "Impact Pending"}
+            </span>
+          </div>
+
           <p className="mt-2 text-textSecondary">{entry.description}</p>
 
           <button className="mt-4 flex items-center gap-2 text-sm text-goldLight hover:text-gold">

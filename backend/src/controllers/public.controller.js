@@ -4,6 +4,10 @@ import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
 import Emperor from "../models/Emperor.js";
 
+const defaultCauseCategory = "Human Survival";
+const defaultCauseImpact = "Clean Water for Life";
+const defaultCause = `${defaultCauseCategory} — ${defaultCauseImpact}`;
+
 const mockDonors = [
   {
     id: "emperor-empty",
@@ -15,6 +19,8 @@ const mockDonors = [
     rank: "Emperor",
     amountUSD: 1000000,
     message: "The throne awaits the first Emperor of Earth.",
+    causeCategory: "Not chosen yet",
+    causeImpact: "Not chosen yet",
     cause: "Not chosen yet",
     isEmperor: true
   },
@@ -28,7 +34,9 @@ const mockDonors = [
     rank: "Duke",
     amountUSD: 25000,
     message: "Let this stand as a promise.",
-    cause: "Hunger relief",
+    causeCategory: "Human Survival",
+    causeImpact: "Meals for the Hungry",
+    cause: "Human Survival — Meals for the Hungry",
     isEmperor: false
   },
   {
@@ -41,7 +49,9 @@ const mockDonors = [
     rank: "Baron",
     amountUSD: 6800,
     message: "A legacy bigger than one lifetime.",
-    cause: "Climate action",
+    causeCategory: "Planet Protection",
+    causeImpact: "Climate Repair Fund",
+    cause: "Planet Protection — Climate Repair Fund",
     isEmperor: false
   },
   {
@@ -54,7 +64,9 @@ const mockDonors = [
     rank: "Lord",
     amountUSD: 1250,
     message: "For clean water and future generations.",
-    cause: "Clean drinking water",
+    causeCategory: "Human Survival",
+    causeImpact: "Clean Water for Life",
+    cause: "Human Survival — Clean Water for Life",
     isEmperor: false
   }
 ];
@@ -76,6 +88,59 @@ function getFlag(countryCode) {
   return flags[countryCode] || "🌍";
 }
 
+function normalizeCauseData(source = {}) {
+  const rawCategory = String(source.causeCategory || "").trim();
+  const rawImpact = String(source.causeImpact || "").trim();
+  const rawCause = String(source.cause || "").trim();
+
+  let causeCategory = rawCategory;
+  let causeImpact = rawImpact;
+
+  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
+    const parts = rawCause.split("—").map((part) => part.trim());
+    causeCategory = causeCategory || parts[0];
+    causeImpact = causeImpact || parts.slice(1).join(" — ");
+  }
+
+  if (!causeCategory) {
+    causeCategory = defaultCauseCategory;
+  }
+
+  if (!causeImpact) {
+    causeImpact = defaultCauseImpact;
+  }
+
+  const cause = rawCause && rawCause !== "Clean drinking water"
+    ? rawCause
+    : `${causeCategory} — ${causeImpact}`;
+
+  return {
+    causeCategory,
+    causeImpact,
+    cause
+  };
+}
+
+async function getLatestDonationsByUserIds(userIds) {
+  const donations = await Donation.find({
+    userId: { $in: userIds }
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const latestMap = new Map();
+
+  for (const donation of donations) {
+    const key = donation.userId?.toString();
+
+    if (key && !latestMap.has(key)) {
+      latestMap.set(key, donation);
+    }
+  }
+
+  return latestMap;
+}
+
 async function getDatabaseDonors() {
   const users = await User.find({
     totalDonated: { $gt: 0 },
@@ -85,26 +150,37 @@ async function getDatabaseDonors() {
     .limit(200)
     .lean();
 
-  return users.map((user) => ({
-    id: user._id.toString(),
-    name: user.isAnonymous ? "Anonymous" : user.displayName || user.username || user.email,
-    username: user.username,
-    country: user.country || "Unknown",
-    countryCode: user.countryCode || "UN",
-    flag: getFlag(user.countryCode || "UN"),
-    rank: user.currentRank || "Spark",
-    amountUSD: Number(user.totalDonated || 0),
-    message: "Saved MongoDB donor profile.",
-    cause: "Clean drinking water",
-    isEmperor: user.role === "emperor",
-    createdAt: user.createdAt
-  }));
+  const latestDonationMap = await getLatestDonationsByUserIds(
+    users.map((user) => user._id)
+  );
+
+  return users.map((user) => {
+    const latestDonation = latestDonationMap.get(user._id.toString());
+    const causeData = normalizeCauseData(latestDonation);
+
+    return {
+      id: user._id.toString(),
+      name: user.isAnonymous ? "Anonymous" : user.displayName || user.username || user.email,
+      username: user.username,
+      country: user.country || "Unknown",
+      countryCode: user.countryCode || "UN",
+      flag: getFlag(user.countryCode || "UN"),
+      rank: user.currentRank || "Spark",
+      amountUSD: Number(user.totalDonated || 0),
+      message: latestDonation?.tileMessage || "Saved MongoDB donor profile.",
+      causeCategory: causeData.causeCategory,
+      causeImpact: causeData.causeImpact,
+      cause: causeData.cause,
+      isEmperor: user.role === "emperor",
+      createdAt: user.createdAt
+    };
+  });
 }
 
 async function getDatabaseTiles() {
   const tiles = await Tile.find({})
     .populate("userId", "displayName username email country countryCode currentRank totalDonated isAnonymous role")
-    .populate("donationId", "amountUSD rankAtTime tileMessage isAnonymous tileTheme createdAt")
+    .populate("donationId", "amountUSD rankAtTime tileMessage isAnonymous tileTheme causeCategory causeImpact cause createdAt")
     .sort({ createdAt: -1 })
     .limit(200)
     .lean();
@@ -112,6 +188,7 @@ async function getDatabaseTiles() {
   return tiles.map((tile) => {
     const user = tile.userId || {};
     const donation = tile.donationId || {};
+    const causeData = normalizeCauseData(donation);
 
     return {
       id: tile._id.toString(),
@@ -125,7 +202,9 @@ async function getDatabaseTiles() {
       rank: donation.rankAtTime || user.currentRank || "Spark",
       amountUSD: Number(donation.amountUSD || user.totalDonated || 0),
       message: tile.message || donation.tileMessage || "Saved MongoDB legacy tile.",
-      cause: "Clean drinking water",
+      causeCategory: causeData.causeCategory,
+      causeImpact: causeData.causeImpact,
+      cause: causeData.cause,
       isEmperor: user.role === "emperor",
       createdAt: tile.createdAt
     };
@@ -185,6 +264,8 @@ export async function getTiles(req, res, next) {
             rank: "Emperor",
             amountUSD: 1000000,
             message: "The throne awaits the first Emperor of Earth.",
+            causeCategory: "Not chosen yet",
+            causeImpact: "Not chosen yet",
             cause: "Not chosen yet",
             isEmperor: true
           },
@@ -218,6 +299,8 @@ export async function getLeaderboard(req, res, next) {
         rank: "Emperor",
         amountUSD: 1000000,
         message: "The throne awaits the first Emperor of Earth.",
+        causeCategory: "Not chosen yet",
+        causeImpact: "Not chosen yet",
         cause: "Not chosen yet",
         isEmperor: true
       };
@@ -328,17 +411,24 @@ export async function getAuditEntries(req, res, next) {
 
     if (dbEntries.length > 0) {
       return res.status(200).json({
-        entries: dbEntries.map((entry) => ({
-          id: entry._id.toString(),
-          type: entry.type,
-          amount: Number(entry.amount || 0),
-          currency: entry.currency || "USD",
-          recipient: entry.recipient,
-          description: entry.description,
-          status: "recorded",
-          proofUrl: entry.proofUrl,
-          createdAt: entry.createdAt
-        })),
+        entries: dbEntries.map((entry) => {
+          const causeData = normalizeCauseData(entry);
+
+          return {
+            id: entry._id.toString(),
+            type: entry.type,
+            amount: Number(entry.amount || 0),
+            currency: entry.currency || "USD",
+            recipient: entry.recipient,
+            causeCategory: causeData.causeCategory,
+            causeImpact: causeData.causeImpact,
+            cause: causeData.cause,
+            description: entry.description,
+            status: "recorded",
+            proofUrl: entry.proofUrl,
+            createdAt: entry.createdAt
+          };
+        }),
         source: "mongodb"
       });
     }
@@ -351,6 +441,9 @@ export async function getAuditEntries(req, res, next) {
           amount: 25,
           currency: "USD",
           recipient: "One Earth Legacy",
+          causeCategory: "Human Survival",
+          causeImpact: "Clean Water for Life",
+          cause: "Human Survival — Clean Water for Life",
           description: "Citizen rank donation received from mock donor.",
           status: "settled",
           createdAt: new Date().toISOString()
@@ -360,7 +453,10 @@ export async function getAuditEntries(req, res, next) {
           type: "cause_allocation",
           amount: 15,
           currency: "USD",
-          recipient: "Clean drinking water",
+          recipient: "Human Survival — Clean Water for Life",
+          causeCategory: "Human Survival",
+          causeImpact: "Clean Water for Life",
+          cause: "Human Survival — Clean Water for Life",
           description: "60% allocation reserved for verified global cause payout.",
           status: "reserved",
           createdAt: new Date().toISOString()
@@ -371,6 +467,9 @@ export async function getAuditEntries(req, res, next) {
           amount: 6.25,
           currency: "USD",
           recipient: "Platform operations",
+          causeCategory: "Human Survival",
+          causeImpact: "Clean Water for Life",
+          cause: "Human Survival — Clean Water for Life",
           description: "25% allocation reserved for hosting, security, monitoring, and operations.",
           status: "reserved",
           createdAt: new Date().toISOString()
@@ -381,6 +480,9 @@ export async function getAuditEntries(req, res, next) {
           amount: 3.75,
           currency: "USD",
           recipient: "Monthly donor lottery",
+          causeCategory: "Human Survival",
+          causeImpact: "Clean Water for Life",
+          cause: "Human Survival — Clean Water for Life",
           description: "15% allocation added to monthly donor prize pool.",
           status: "reserved",
           createdAt: new Date().toISOString()
@@ -404,8 +506,12 @@ export async function getPublicProfile(req, res, next) {
 
     if (user) {
       const latestTile = await Tile.findOne({ userId: user._id })
+        .populate("donationId", "causeCategory causeImpact cause amountUSD rankAtTime tileMessage isAnonymous tileTheme createdAt")
         .sort({ createdAt: -1 })
         .lean();
+
+      const latestDonation = latestTile?.donationId || {};
+      const causeData = normalizeCauseData(latestDonation);
 
       return res.status(200).json({
         profile: {
@@ -417,7 +523,9 @@ export async function getPublicProfile(req, res, next) {
           rank: user.currentRank || "Spark",
           totalDonated: Number(user.totalDonated || 0),
           message: latestTile?.message || "Saved MongoDB donor profile.",
-          cause: "Clean drinking water",
+          causeCategory: causeData.causeCategory,
+          causeImpact: causeData.causeImpact,
+          cause: causeData.cause,
           joined: new Date(user.createdAt).getFullYear().toString(),
           tileTheme: latestTile?.themeColor || "Gold",
           impact: {
@@ -440,7 +548,7 @@ export async function getPublicProfile(req, res, next) {
               title: "Legacy tile created",
               date: latestTile ? "Saved in MongoDB" : "Pending",
               text: latestTile
-                ? "A public tile was saved in MongoDB."
+                ? `A public tile was saved for ${causeData.cause}.`
                 : "This donor does not have a saved tile yet."
             }
           ]
@@ -469,6 +577,8 @@ export async function getPublicProfile(req, res, next) {
         rank: donor.rank,
         totalDonated: donor.amountUSD,
         message: donor.message,
+        causeCategory: donor.causeCategory,
+        causeImpact: donor.causeImpact,
         cause: donor.cause,
         joined: "2026",
         tileTheme: "Gold",
@@ -491,7 +601,7 @@ export async function getPublicProfile(req, res, next) {
           {
             title: "Legacy tile created",
             date: "Mock",
-            text: "A permanent public tile was added to the wall."
+            text: `A permanent public tile was added for ${donor.cause}.`
           }
         ]
       },
