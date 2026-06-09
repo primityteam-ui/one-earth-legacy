@@ -14,6 +14,7 @@ import {
   Sparkles
 } from "lucide-react";
 import api from "../api/client.js";
+import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import {
   addOns,
   getNextRankForAmount,
@@ -584,24 +585,15 @@ export default function Donate() {
               </p>
             </div>
 
-            <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
-              <p className="mb-4 font-display text-xl font-bold text-textPrimary">
-                Transparent money split
-              </p>
-
-              <SplitRow
-                label={`60% → ${cause}`}
-                value={backendPreview?.split?.causeAmount ?? causeAmount}
-              />
-              <SplitRow
-                label="25% → Platform sustainability"
-                value={backendPreview?.split?.platformAmount ?? platformAmount}
-              />
-              <SplitRow
-                label="15% → Monthly donor lottery"
-                value={backendPreview?.split?.lotteryAmount ?? lotteryAmount}
-              />
-            </div>
+            <MoneySplitCard
+              title="Transparent money split"
+              causeLabel={`60% → ${cause}`}
+              causeAmount={backendPreview?.split?.causeAmount ?? causeAmount}
+              platformLabel="25% → Platform sustainability"
+              platformAmount={backendPreview?.split?.platformAmount ?? platformAmount}
+              lotteryLabel="15% → Monthly donor lottery"
+              lotteryAmount={backendPreview?.split?.lotteryAmount ?? lotteryAmount}
+            />
 
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
               <SummaryRow label="Donation" value={`$${Number(amount || 0).toFixed(2)}`} />
@@ -675,17 +667,6 @@ function Panel({ icon, title, subtitle, children }) {
 
       {children}
     </motion.section>
-  );
-}
-
-function SplitRow({ label, value }) {
-  return (
-    <div className="mb-3 flex items-center justify-between gap-4 text-sm">
-      <span className="text-textSecondary">{label}</span>
-      <span className="font-numbers font-bold text-goldLight">
-        ${Number(value || 0).toFixed(2)}
-      </span>
-    </div>
   );
 }
 

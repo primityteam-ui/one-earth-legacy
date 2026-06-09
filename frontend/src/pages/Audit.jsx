@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
+import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
 import { buildPublicFilterParams } from "../constants/legacyOptions.js";
@@ -195,29 +196,17 @@ export default function Audit() {
 
         <aside className="space-y-6">
           <div className="rounded-[2rem] border border-gold/25 bg-royalCard p-6 shadow-gold">
-            <p className="mb-4 font-display text-2xl font-bold text-textPrimary">
-              Money Split
-            </p>
-
-            <SplitBar
-              label="60% Cause"
-              value={`$${totals.cause.toFixed(2)}`}
-              width="60%"
+            <MoneySplitCard
+              title="Money Split"
+              causeLabel="60% Cause"
+              causeAmount={totals.cause}
+              platformLabel="25% Platform"
+              platformAmount={totals.platform}
+              lotteryLabel="15% Lottery"
+              lotteryAmount={totals.lottery}
+              showBars
+              note="These values are returned from backend-filtered audit records."
             />
-            <SplitBar
-              label="25% Platform"
-              value={`$${totals.platform.toFixed(2)}`}
-              width="25%"
-            />
-            <SplitBar
-              label="15% Lottery"
-              value={`$${totals.lottery.toFixed(2)}`}
-              width="15%"
-            />
-
-            <p className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4 text-sm text-textSecondary">
-              These values are returned from backend-filtered audit records.
-            </p>
           </div>
 
           <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -314,21 +303,6 @@ function AuditEntry({ entry, index }) {
         </p>
       </div>
     </motion.article>
-  );
-}
-
-function SplitBar({ label, value, width }) {
-  return (
-    <div className="mb-5">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-textSecondary">{label}</span>
-        <span className="font-numbers font-bold text-goldLight">{value}</span>
-      </div>
-
-      <div className="h-3 overflow-hidden rounded-full bg-royalBlack">
-        <div className="h-full rounded-full bg-gold" style={{ width }} />
-      </div>
-    </div>
   );
 }
 
