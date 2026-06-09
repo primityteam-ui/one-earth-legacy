@@ -1,4 +1,5 @@
-import express from "express";
+import { Router } from "express";
+
 import {
   getAuditEntries,
   getCountryLeaderboard,
@@ -9,14 +10,25 @@ import {
   getTiles
 } from "../controllers/public.controller.js";
 
-const router = express.Router();
+import {
+  publicCauseFilterValidators,
+  validatePublicQuery
+} from "../validators/public.validators.js";
 
-router.get("/stats", getPublicStats);
-router.get("/tiles", getTiles);
-router.get("/leaderboard", getLeaderboard);
-router.get("/leaderboard/countries", getCountryLeaderboard);
+const router = Router();
+
+const validatePublicFilters = [
+  ...publicCauseFilterValidators,
+  validatePublicQuery
+];
+
+router.get("/stats", validatePublicFilters, getPublicStats);
+router.get("/tiles", validatePublicFilters, getTiles);
+router.get("/leaderboard", validatePublicFilters, getLeaderboard);
+router.get("/leaderboard/countries", validatePublicFilters, getCountryLeaderboard);
+router.get("/audit", validatePublicFilters, getAuditEntries);
+
 router.get("/emperor", getCurrentEmperor);
-router.get("/audit", getAuditEntries);
 router.get("/profiles/:username", getPublicProfile);
 
 export default router;
