@@ -88,6 +88,57 @@ function getFlag(countryCode) {
   return flags[countryCode] || "🌍";
 }
 
+function cleanQueryValue(value) {
+  return String(value || "").trim();
+}
+
+function getCauseFilters(req) {
+  const mission = cleanQueryValue(req.query.mission || req.query.causeCategory);
+  const impact = cleanQueryValue(req.query.impact || req.query.causeImpact);
+  const cause = cleanQueryValue(req.query.cause);
+
+  return {
+    mission,
+    impact,
+    cause
+  };
+}
+
+function buildCauseMongoFilter(req) {
+  const filters = getCauseFilters(req);
+  const query = {};
+
+  if (filters.mission) {
+    query.causeCategory = filters.mission;
+  }
+
+  if (filters.impact) {
+    query.causeImpact = filters.impact;
+  }
+
+  if (filters.cause) {
+    query.cause = filters.cause;
+  }
+
+  return query;
+}
+
+function matchesCauseFilters(item, filters) {
+  if (filters.mission && item.causeCategory !== filters.mission) {
+    return false;
+  }
+
+  if (filters.impact && item.causeImpact !== filters.impact) {
+    return false;
+  }
+
+  if (filters.cause && item.cause !== filters.cause) {
+    return false;
+  }
+
+  return true;
+}
+
 function normalizeCauseData(source = {}) {
   const rawCategory = String(source.causeCategory || "").trim();
   const rawImpact = String(source.causeImpact || "").trim();
@@ -121,9 +172,10 @@ function normalizeCauseData(source = {}) {
   };
 }
 
-async function getLatestDonationsByUserIds(userIds) {
+async function getLatestDonationsByUserIds(userIds, donationFilter = {}) {
   const donations = await Donation.find({
-    userId: { $in: userIds }
+    userId: { $in: userIds },
+    ...donationFilter
   })
     .sort({ createdAt: -1 })
     .lean();
@@ -141,7 +193,10 @@ async function getLatestDonationsByUserIds(userIds) {
   return latestMap;
 }
 
-async function getDatabaseDonors() {
+async function getDatabaseDonors(req) {
+  const donationFilter = buildCauseMongoFilter(req);
+  const hasCauseFilter = Object.keys(donationFilter).length > 0;
+
   const users = await User.find({
     totalDonated: { $gt: 0 },
     isBanned: false
@@ -151,34 +206,59 @@ async function getDatabaseDonors() {
     .lean();
 
   const latestDonationMap = await getLatestDonationsByUserIds(
-    users.map((user) => user._id)
+    users.map((user) => user._id),
+    donationFilter
   );
 
-  return users.map((user) => {
-    const latestDonation = latestDonationMap.get(user._id.toString());
-    const causeData = normalizeCauseData(latestDonation);
+  return users
+    .map((user) => {
+      const latestDonation = latestDonationMap.get(user._id.toString());
 
-    return {
-      id: user._id.toString(),
-      name: user.isAnonymous ? "Anonymous" : user.displayName || user.username || user.email,
-      username: user.username,
-      country: user.country || "Unknown",
-      countryCode: user.countryCode || "UN",
-      flag: getFlag(user.countryCode || "UN"),
-      rank: user.currentRank || "Spark",
-      amountUSD: Number(user.totalDonated || 0),
-      message: latestDonation?.tileMessage || "Saved MongoDB donor profile.",
-      causeCategory: causeData.causeCategory,
-      causeImpact: causeData.causeImpact,
-      cause: causeData.cause,
-      isEmperor: user.role === "emperor",
-      createdAt: user.createdAt
-    };
-  });
+      if (hasCauseFilter && !latestDonation) {
+        return null;
+      }
+
+      const causeData = normalizeCauseData(latestDonation);
+
+      return {
+        id: user._id.toString(),
+        name: user.isAnonymous ? "Anonymous" : user.displayName || user.username || user.email,
+        username: user.username,
+        country: user.country || "Unknown",
+        countryCode: user.countryCode || "UN",
+        flag: getFlag(user.countryCode || "UN"),
+        rank: user.currentRank || "Spark",
+        amountUSD: Number(user.totalDonated || 0),
+        message: latestDonation?.tileMessage || "Saved MongoDB donor profile.",
+        causeCategory: causeData.causeCategory,
+        causeImpact: causeData.causeImpact,
+        cause: causeData.cause,
+        isEmperor: user.role === "emperor",
+        createdAt: user.createdAt
+      };
+    })
+    .filter(Boolean);
 }
 
-async function getDatabaseTiles() {
-  const tiles = await Tile.find({})
+async function getDatabaseTiles(req) {
+  const donationFilter = buildCauseMongoFilter(req);
+  const hasCauseFilter = Object.keys(donationFilter).length > 0;
+
+  let matchingDonationIds = null;
+
+  if (hasCauseFilter) {
+    const matchingDonations = await Donation.find(donationFilter)
+      .select("_id")
+      .lean();
+
+    matchingDonationIds = matchingDonations.map((donation) => donation._id);
+  }
+
+  const tileQuery = hasCauseFilter
+    ? { donationId: { $in: matchingDonationIds } }
+    : {};
+
+  const tiles = await Tile.find(tileQuery)
     .populate("userId", "displayName username email country countryCode currentRank totalDonated isAnonymous role")
     .populate("donationId", "amountUSD rankAtTime tileMessage isAnonymous tileTheme causeCategory causeImpact cause createdAt")
     .sort({ createdAt: -1 })
@@ -211,27 +291,43 @@ async function getDatabaseTiles() {
   });
 }
 
+function getFilteredMockDonors(req) {
+  const filters = getCauseFilters(req);
+  return mockDonors.filter((donor) => matchesCauseFilters(donor, filters));
+}
+
 export async function getPublicStats(req, res, next) {
   try {
-    const users = await User.find({
-      totalDonated: { $gt: 0 },
-      isBanned: false
-    }).lean();
+    const donationFilter = buildCauseMongoFilter(req);
 
-    if (users.length > 0) {
-      const totalDonated = users.reduce((sum, user) => sum + Number(user.totalDonated || 0), 0);
-      const countries = new Set(users.map((user) => user.countryCode || "UN"));
+    const matchingDonations = await Donation.find(donationFilter)
+      .populate("userId", "countryCode isBanned")
+      .lean();
+
+    const validDonations = matchingDonations.filter((donation) => {
+      return donation.userId && !donation.userId.isBanned;
+    });
+
+    if (validDonations.length > 0) {
+      const totalDonated = validDonations.reduce(
+        (sum, donation) => sum + Number(donation.amountUSD || 0),
+        0
+      );
+
+      const donors = new Set(validDonations.map((donation) => donation.userId._id.toString()));
+      const countries = new Set(validDonations.map((donation) => donation.userId.countryCode || "UN"));
 
       return res.status(200).json({
         totalDonated: Number(totalDonated.toFixed(2)),
-        donors: users.length,
+        donors: donors.size,
         countries: countries.size,
         livesImpacted: Math.floor(totalDonated * 2.4),
+        filters: getCauseFilters(req),
         source: "mongodb"
       });
     }
 
-    const realDonors = mockDonors.filter((donor) => !donor.isEmperor);
+    const realDonors = getFilteredMockDonors(req).filter((donor) => !donor.isEmperor);
     const totalDonated = realDonors.reduce((sum, donor) => sum + donor.amountUSD, 0);
     const countries = new Set(realDonors.map((donor) => donor.countryCode));
 
@@ -240,6 +336,7 @@ export async function getPublicStats(req, res, next) {
       donors: realDonors.length,
       countries: countries.size,
       livesImpacted: Math.floor(totalDonated * 2.4),
+      filters: getCauseFilters(req),
       source: "mock"
     });
   } catch (error) {
@@ -249,46 +346,11 @@ export async function getPublicStats(req, res, next) {
 
 export async function getTiles(req, res, next) {
   try {
-    const dbTiles = await getDatabaseTiles();
+    const dbTiles = await getDatabaseTiles(req);
+    const filters = getCauseFilters(req);
+    const hasCauseFilter = Boolean(filters.mission || filters.impact || filters.cause);
 
-    if (dbTiles.length > 0) {
-      return res.status(200).json({
-        tiles: [
-          {
-            id: "emperor-empty",
-            name: "The Empty Throne",
-            username: "empty-throne",
-            country: "Global",
-            countryCode: "GL",
-            flag: "🌍",
-            rank: "Emperor",
-            amountUSD: 1000000,
-            message: "The throne awaits the first Emperor of Earth.",
-            causeCategory: "Not chosen yet",
-            causeImpact: "Not chosen yet",
-            cause: "Not chosen yet",
-            isEmperor: true
-          },
-          ...dbTiles
-        ],
-        source: "mongodb"
-      });
-    }
-
-    return res.status(200).json({
-      tiles: mockDonors,
-      source: "mock"
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-export async function getLeaderboard(req, res, next) {
-  try {
-    const dbDonors = await getDatabaseDonors();
-
-    if (dbDonors.length > 0) {
+    if (dbTiles.length > 0 || hasCauseFilter) {
       const throne = {
         id: "emperor-empty",
         name: "The Empty Throne",
@@ -305,14 +367,60 @@ export async function getLeaderboard(req, res, next) {
         isEmperor: true
       };
 
+      const tiles = hasCauseFilter ? dbTiles : [throne, ...dbTiles];
+
       return res.status(200).json({
-        leaderboard: [throne, ...dbDonors].sort((a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0)),
+        tiles,
+        filters,
         source: "mongodb"
       });
     }
 
     return res.status(200).json({
-      leaderboard: [...mockDonors].sort((a, b) => b.amountUSD - a.amountUSD),
+      tiles: getFilteredMockDonors(req),
+      filters,
+      source: "mock"
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getLeaderboard(req, res, next) {
+  try {
+    const dbDonors = await getDatabaseDonors(req);
+    const filters = getCauseFilters(req);
+    const hasCauseFilter = Boolean(filters.mission || filters.impact || filters.cause);
+
+    if (dbDonors.length > 0 || hasCauseFilter) {
+      const throne = {
+        id: "emperor-empty",
+        name: "The Empty Throne",
+        username: "empty-throne",
+        country: "Global",
+        countryCode: "GL",
+        flag: "🌍",
+        rank: "Emperor",
+        amountUSD: 1000000,
+        message: "The throne awaits the first Emperor of Earth.",
+        causeCategory: "Not chosen yet",
+        causeImpact: "Not chosen yet",
+        cause: "Not chosen yet",
+        isEmperor: true
+      };
+
+      const leaderboard = hasCauseFilter ? dbDonors : [throne, ...dbDonors];
+
+      return res.status(200).json({
+        leaderboard: leaderboard.sort((a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0)),
+        filters,
+        source: "mongodb"
+      });
+    }
+
+    return res.status(200).json({
+      leaderboard: getFilteredMockDonors(req).sort((a, b) => b.amountUSD - a.amountUSD),
+      filters,
       source: "mock"
     });
   } catch (error) {
@@ -322,8 +430,11 @@ export async function getLeaderboard(req, res, next) {
 
 export async function getCountryLeaderboard(req, res, next) {
   try {
-    const dbDonors = await getDatabaseDonors();
-    const sourceDonors = dbDonors.length > 0 ? dbDonors : mockDonors.filter((item) => !item.isEmperor);
+    const dbDonors = await getDatabaseDonors(req);
+    const filters = getCauseFilters(req);
+    const sourceDonors = dbDonors.length > 0
+      ? dbDonors
+      : getFilteredMockDonors(req).filter((item) => !item.isEmperor);
 
     const countryMap = new Map();
 
@@ -356,6 +467,7 @@ export async function getCountryLeaderboard(req, res, next) {
           totalDonated: Number(item.totalDonated.toFixed(2))
         }))
         .sort((a, b) => b.totalDonated - a.totalDonated),
+      filters,
       source: dbDonors.length > 0 ? "mongodb" : "mock"
     });
   } catch (error) {
@@ -404,12 +516,15 @@ export async function getCurrentEmperor(req, res, next) {
 
 export async function getAuditEntries(req, res, next) {
   try {
-    const dbEntries = await AuditEntry.find({})
+    const auditFilter = buildCauseMongoFilter(req);
+    const filters = getCauseFilters(req);
+
+    const dbEntries = await AuditEntry.find(auditFilter)
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
 
-    if (dbEntries.length > 0) {
+    if (dbEntries.length > 0 || Object.keys(auditFilter).length > 0) {
       return res.status(200).json({
         entries: dbEntries.map((entry) => {
           const causeData = normalizeCauseData(entry);
@@ -429,6 +544,7 @@ export async function getAuditEntries(req, res, next) {
             createdAt: entry.createdAt
           };
         }),
+        filters,
         source: "mongodb"
       });
     }
@@ -487,7 +603,8 @@ export async function getAuditEntries(req, res, next) {
           status: "reserved",
           createdAt: new Date().toISOString()
         }
-      ],
+      ].filter((entry) => matchesCauseFilters(entry, filters)),
+      filters,
       source: "mock"
     });
   } catch (error) {
