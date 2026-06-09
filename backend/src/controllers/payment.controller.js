@@ -31,8 +31,12 @@ const rankTable = [
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
 
-  if (!secretKey || !secretKey.startsWith("sk_test_")) {
-    throw new Error("Stripe test secret key is missing or invalid. Check backend/.env");
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY is missing. Check backend/.env");
+  }
+
+  if (!secretKey.startsWith("sk_test_") && !secretKey.startsWith("sk_live_")) {
+    throw new Error("STRIPE_SECRET_KEY must start with sk_test_ or sk_live_");
   }
 
   return new Stripe(secretKey);
@@ -65,6 +69,47 @@ function calculateTotalAmount(body) {
   }, 0);
 
   return Number((donationAmount + addOnTotal).toFixed(2));
+}
+
+function parseAddOns(metadata) {
+  try {
+    const parsed = JSON.parse(metadata.addOns || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function assertStripeSessionIsSafe(session) {
+  if (!session) {
+    throw new Error("Stripe session is missing");
+  }
+
+  if (session.mode !== "payment") {
+    throw new Error(`Invalid Stripe session mode: ${session.mode}`);
+  }
+
+  if (session.payment_status !== "paid") {
+    throw new Error(`Stripe payment is not paid yet. Current status: ${session.payment_status}`);
+  }
+
+  const metadata = session.metadata || {};
+  const expectedTotal = Number(metadata.totalCharged || 0);
+  const stripeAmountTotal = Number(session.amount_total || 0) / 100;
+
+  if (!expectedTotal || expectedTotal <= 0) {
+    throw new Error("Stripe metadata totalCharged is missing or invalid");
+  }
+
+  if (Number(stripeAmountTotal.toFixed(2)) !== Number(expectedTotal.toFixed(2))) {
+    throw new Error(
+      `Stripe amount mismatch. Stripe=${stripeAmountTotal}, Metadata=${expectedTotal}`
+    );
+  }
+
+  if (!metadata.email && !session.customer_email) {
+    throw new Error("Stripe session is missing customer email");
+  }
 }
 
 export const stripeCheckoutValidators = [
@@ -107,7 +152,7 @@ export async function createStripeCheckoutSession(req, res, next) {
       cancel_url: process.env.STRIPE_CANCEL_URL || "http://localhost:5173/donate",
       metadata: {
         email: req.body.email,
-        donationAmount: String(req.body.amount),
+        donationAmount: String(Number(req.body.amount || 0)),
         totalCharged: String(totalAmount),
         currency: String(req.body.currency || "USD").toUpperCase(),
         displayName: req.body.displayName || "",
@@ -119,19 +164,28 @@ export async function createStripeCheckoutSession(req, res, next) {
       }
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       checkoutUrl: session.url,
       sessionId: session.id,
       amount: totalAmount,
       currency: currency.toUpperCase()
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 
 export async function stripeWebhook(req, res) {
-  const stripe = getStripeClient();
+  let stripe;
+
+  try {
+    stripe = getStripeClient();
+  } catch (error) {
+    console.error("Stripe client setup failed:", error.message);
+    return res.status(500).json({
+      message: "Stripe configuration error"
+    });
+  }
 
   if (!process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET === "temporary_later") {
     return res.status(400).json({
@@ -140,6 +194,12 @@ export async function stripeWebhook(req, res) {
   }
 
   const signature = req.headers["stripe-signature"];
+
+  if (!signature) {
+    return res.status(400).json({
+      message: "Stripe signature header is missing"
+    });
+  }
 
   let event;
 
@@ -150,18 +210,22 @@ export async function stripeWebhook(req, res) {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (error) {
+    console.error("Stripe webhook signature verification failed:", error.message);
     return res.status(400).send(`Webhook Error: ${error.message}`);
   }
 
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
+
+      assertStripeSessionIsSafe(session);
       await saveStripeDonation(session);
     }
 
     return res.status(200).json({ received: true });
   } catch (error) {
-    console.error("Stripe webhook save failed:", error);
+    console.error("Stripe webhook save failed:", error.message);
+
     return res.status(500).json({
       message: "Webhook received but database save failed"
     });
@@ -169,6 +233,8 @@ export async function stripeWebhook(req, res) {
 }
 
 async function saveStripeDonation(session) {
+  assertStripeSessionIsSafe(session);
+
   const existingDonation = await Donation.findOne({
     paymentId: session.id
   });
@@ -193,13 +259,10 @@ async function saveStripeDonation(session) {
   const theme = metadata.theme || "Gold";
   const cause = metadata.cause || "Clean drinking water";
   const anonymous = metadata.anonymous === "true";
+  const addOns = parseAddOns(metadata);
 
-  let addOns = [];
-
-  try {
-    addOns = JSON.parse(metadata.addOns || "[]");
-  } catch {
-    addOns = [];
+  if (!amountUSD || amountUSD <= 0) {
+    throw new Error("Donation amount is missing or invalid");
   }
 
   let user = await User.findOne({ email });
