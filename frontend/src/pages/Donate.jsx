@@ -14,6 +14,7 @@ import {
   Sparkles
 } from "lucide-react";
 import api from "../api/client.js";
+import { legacyMissions } from "../constants/legacyOptions.js";
 
 const ranks = [
   { name: "Spark", min: 1, max: 9 },
@@ -28,123 +29,6 @@ const ranks = [
   { name: "Emperor", min: 1000000, max: Infinity }
 ];
 
-const legacyMissions = [
-  {
-    id: "human-survival",
-    name: "Human Survival",
-    icon: <HeartPulse className="h-6 w-6" />,
-    tagline: "Immediate help for people fighting hunger, thirst, sickness, homelessness, and crisis.",
-    impacts: [
-      {
-        id: "clean-water-for-life",
-        name: "Clean Water for Life",
-        description: "Support safe drinking water, wells, filtration, and hygiene access."
-      },
-      {
-        id: "meals-for-the-hungry",
-        name: "Meals for the Hungry",
-        description: "Help provide food support for families facing hunger."
-      },
-      {
-        id: "emergency-medical-aid",
-        name: "Emergency Medical Aid",
-        description: "Support urgent medical care, basic treatment, and health response."
-      },
-      {
-        id: "shelter-and-warmth",
-        name: "Shelter & Warmth",
-        description: "Help people facing homelessness, cold, and unsafe living conditions."
-      },
-      {
-        id: "disaster-rescue-fund",
-        name: "Disaster Rescue Fund",
-        description: "Support relief after floods, fires, earthquakes, storms, and emergencies."
-      },
-      {
-        id: "refugee-crisis-relief",
-        name: "Refugee & Crisis Relief",
-        description: "Help displaced families with survival essentials and emergency support."
-      }
-    ]
-  },
-  {
-    id: "planet-protection",
-    name: "Planet Protection",
-    icon: <Globe2 className="h-6 w-6" />,
-    tagline: "Protect forests, oceans, animals, climate, land, and the future of Earth.",
-    impacts: [
-      {
-        id: "forests-of-the-future",
-        name: "Forests of the Future",
-        description: "Support tree planting, forest protection, and reforestation."
-      },
-      {
-        id: "ocean-cleanup-mission",
-        name: "Ocean Cleanup Mission",
-        description: "Help remove plastic waste and protect marine ecosystems."
-      },
-      {
-        id: "wildlife-guardians",
-        name: "Wildlife Guardians",
-        description: "Support animal protection, rescue, habitats, and anti-poaching efforts."
-      },
-      {
-        id: "climate-repair-fund",
-        name: "Climate Repair Fund",
-        description: "Support climate action, clean energy, and carbon reduction projects."
-      },
-      {
-        id: "plastic-free-earth",
-        name: "Plastic-Free Earth",
-        description: "Support plastic waste reduction, cleanup, and recycling initiatives."
-      },
-      {
-        id: "land-restoration",
-        name: "Land Restoration",
-        description: "Help restore damaged soil, farms, grasslands, and natural habitats."
-      }
-    ]
-  },
-  {
-    id: "children-education",
-    name: "Children & Education",
-    icon: <School className="h-6 w-6" />,
-    tagline: "Help children survive, learn, grow, and build a better future.",
-    impacts: [
-      {
-        id: "school-starter-kits",
-        name: "School Starter Kits",
-        description: "Support books, bags, uniforms, supplies, and classroom basics."
-      },
-      {
-        id: "child-health-shield",
-        name: "Child Health Shield",
-        description: "Support child nutrition, basic healthcare, vaccines, and wellness."
-      },
-      {
-        id: "girls-education-fund",
-        name: "Girls’ Education Fund",
-        description: "Help girls stay in school and access safe learning opportunities."
-      },
-      {
-        id: "scholarship-pathways",
-        name: "Scholarship Pathways",
-        description: "Support student fees, scholarships, and long-term education access."
-      },
-      {
-        id: "digital-learning-access",
-        name: "Digital Learning Access",
-        description: "Support laptops, internet access, digital tools, and remote learning."
-      },
-      {
-        id: "vulnerable-child-care",
-        name: "Orphan & Vulnerable Child Care",
-        description: "Support children without stable family, safety, or basic resources."
-      }
-    ]
-  }
-];
-
 const presetAmounts = [5, 10, 25, 50, 100, 250, 1000];
 
 const addOns = [
@@ -154,6 +38,18 @@ const addOns = [
   { id: "resurrection", name: "Tile resurrection", price: 19.99 },
   { id: "nft", name: "NFT certificate", price: 9.99 }
 ];
+
+function getMissionIcon(iconName) {
+  if (iconName === "heart") {
+    return <HeartPulse className="h-6 w-6" />;
+  }
+
+  if (iconName === "school") {
+    return <School className="h-6 w-6" />;
+  }
+
+  return <Globe2 className="h-6 w-6" />;
+}
 
 export default function Donate() {
   const [amount, setAmount] = useState(25);
@@ -225,20 +121,20 @@ export default function Donate() {
   }
 
   function buildPayload() {
-  return {
-    email,
-    amount,
-    currency: "USD",
-    displayName,
-    message,
-    theme,
-    causeCategory: selectedMission.name,
-    causeImpact: selectedImpact.name,
-    cause,
-    anonymous,
-    addOns: selectedAddOns
-  };
-}
+    return {
+      email,
+      amount,
+      currency: "USD",
+      displayName,
+      message,
+      theme,
+      causeCategory: selectedMission.name,
+      causeImpact: selectedImpact.name,
+      cause,
+      anonymous,
+      addOns: selectedAddOns
+    };
+  }
 
   async function handleBackendPreview() {
     setPreviewLoading(true);
@@ -385,7 +281,7 @@ export default function Donate() {
                   }`}
                 >
                   <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
-                    {mission.icon}
+                    {getMissionIcon(mission.iconName)}
                   </div>
 
                   <p className="font-display text-xl font-bold text-textPrimary">

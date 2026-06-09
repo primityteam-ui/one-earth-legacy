@@ -32,6 +32,123 @@ export const impactFilters = {
   ]
 };
 
+export const legacyMissions = [
+  {
+    id: "human-survival",
+    name: "Human Survival",
+    iconName: "heart",
+    tagline: "Immediate help for people fighting hunger, thirst, sickness, homelessness, and crisis.",
+    impacts: [
+      {
+        id: "clean-water-for-life",
+        name: "Clean Water for Life",
+        description: "Support safe drinking water, wells, filtration, and hygiene access."
+      },
+      {
+        id: "meals-for-the-hungry",
+        name: "Meals for the Hungry",
+        description: "Help provide food support for families facing hunger."
+      },
+      {
+        id: "emergency-medical-aid",
+        name: "Emergency Medical Aid",
+        description: "Support urgent medical care, basic treatment, and health response."
+      },
+      {
+        id: "shelter-and-warmth",
+        name: "Shelter & Warmth",
+        description: "Help people facing homelessness, cold, and unsafe living conditions."
+      },
+      {
+        id: "disaster-rescue-fund",
+        name: "Disaster Rescue Fund",
+        description: "Support relief after floods, fires, earthquakes, storms, and emergencies."
+      },
+      {
+        id: "refugee-crisis-relief",
+        name: "Refugee & Crisis Relief",
+        description: "Help displaced families with survival essentials and emergency support."
+      }
+    ]
+  },
+  {
+    id: "planet-protection",
+    name: "Planet Protection",
+    iconName: "globe",
+    tagline: "Protect forests, oceans, animals, climate, land, and the future of Earth.",
+    impacts: [
+      {
+        id: "forests-of-the-future",
+        name: "Forests of the Future",
+        description: "Support tree planting, forest protection, and reforestation."
+      },
+      {
+        id: "ocean-cleanup-mission",
+        name: "Ocean Cleanup Mission",
+        description: "Help remove plastic waste and protect marine ecosystems."
+      },
+      {
+        id: "wildlife-guardians",
+        name: "Wildlife Guardians",
+        description: "Support animal protection, rescue, habitats, and anti-poaching efforts."
+      },
+      {
+        id: "climate-repair-fund",
+        name: "Climate Repair Fund",
+        description: "Support climate action, clean energy, and carbon reduction projects."
+      },
+      {
+        id: "plastic-free-earth",
+        name: "Plastic-Free Earth",
+        description: "Support plastic waste reduction, cleanup, and recycling initiatives."
+      },
+      {
+        id: "land-restoration",
+        name: "Land Restoration",
+        description: "Help restore damaged soil, farms, grasslands, and natural habitats."
+      }
+    ]
+  },
+  {
+    id: "children-education",
+    name: "Children & Education",
+    iconName: "school",
+    tagline: "Help children survive, learn, grow, and build a better future.",
+    impacts: [
+      {
+        id: "school-starter-kits",
+        name: "School Starter Kits",
+        description: "Support books, bags, uniforms, supplies, and classroom basics."
+      },
+      {
+        id: "child-health-shield",
+        name: "Child Health Shield",
+        description: "Support child nutrition, basic healthcare, vaccines, and wellness."
+      },
+      {
+        id: "girls-education-fund",
+        name: "Girls’ Education Fund",
+        description: "Help girls stay in school and access safe learning opportunities."
+      },
+      {
+        id: "scholarship-pathways",
+        name: "Scholarship Pathways",
+        description: "Support student fees, scholarships, and long-term education access."
+      },
+      {
+        id: "digital-learning-access",
+        name: "Digital Learning Access",
+        description: "Support laptops, internet access, digital tools, and remote learning."
+      },
+      {
+        id: "vulnerable-child-care",
+        name: "Orphan & Vulnerable Child Care",
+        description: "Support children without stable family, safety, or basic resources."
+      }
+    ]
+  }
+];
+
 export function getImpactsForMission(missionFilter) {
   if (missionFilter === "All Missions") {
     return [];
