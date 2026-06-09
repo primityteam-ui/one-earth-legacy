@@ -11,6 +11,7 @@ import {
   Trophy
 } from "lucide-react";
 import api from "../api/client.js";
+import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import {
   buildPublicFilterParams,
   getImpactsForMission,
@@ -184,7 +185,7 @@ export default function Audit() {
         </div>
       </section>
 
-      {errorMessage && <ErrorBox message={errorMessage} />}
+      {errorMessage && <PublicErrorBox message={errorMessage} />}
 
       <section className="mb-8 grid gap-5 md:grid-cols-4">
         {auditStats.map((stat) => (
@@ -258,15 +259,6 @@ export default function Audit() {
         </aside>
       </section>
     </main>
-  );
-}
-
-function ErrorBox({ message }) {
-  return (
-    <div className="mb-8 rounded-[1.5rem] border border-crimson/40 bg-crimson/10 p-5">
-      <p className="font-bold text-crimsonLight">Could not load filtered data</p>
-      <p className="mt-2 text-sm text-textSecondary">{message}</p>
-    </div>
   );
 }
 

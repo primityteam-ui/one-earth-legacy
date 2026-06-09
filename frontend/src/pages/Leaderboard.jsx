@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
 import api from "../api/client.js";
+import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import {
   buildPublicFilterParams,
   getImpactsForMission,
@@ -174,7 +175,7 @@ export default function Leaderboard() {
         </div>
       </section>
 
-      {errorMessage && <ErrorBox message={errorMessage} />}
+      {errorMessage && <PublicErrorBox message={errorMessage} />}
 
       {loading ? (
         <div className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
@@ -243,15 +244,6 @@ export default function Leaderboard() {
         </div>
       )}
     </main>
-  );
-}
-
-function ErrorBox({ message }) {
-  return (
-    <div className="mb-8 rounded-[1.5rem] border border-crimson/40 bg-crimson/10 p-5">
-      <p className="font-bold text-crimsonLight">Could not load filtered data</p>
-      <p className="mt-2 text-sm text-textSecondary">{message}</p>
-    </div>
   );
 }
 
