@@ -1,11 +1,12 @@
 import Stripe from "stripe";
-import { body } from "express-validator";
 import crypto from "crypto";
 
 import User from "../models/User.js";
 import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
+
+import { stripeCheckoutValidators } from "../validators/donation.validators.js";
 
 import {
   applyDonationRankToUser,
@@ -18,6 +19,8 @@ import {
   parseAddOnsFromMetadata,
   selectedBorderFromAddOns
 } from "../utils/donation.helpers.js";
+
+export { stripeCheckoutValidators };
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -64,20 +67,6 @@ function assertStripeSessionIsSafe(session) {
     throw new Error("Stripe session is missing customer email");
   }
 }
-
-export const stripeCheckoutValidators = [
-  body("email").isEmail().normalizeEmail().withMessage("Valid email is required"),
-  body("amount").isFloat({ min: 1 }).withMessage("Amount must be at least 1"),
-  body("currency").optional().isLength({ min: 3, max: 3 }),
-  body("displayName").optional().isString().isLength({ max: 40 }),
-  body("message").optional().isString().isLength({ max: 280 }),
-  body("theme").optional().isString().isLength({ max: 30 }),
-  body("causeCategory").optional().isString().isLength({ max: 80 }),
-  body("causeImpact").optional().isString().isLength({ max: 120 }),
-  body("cause").optional().isString().isLength({ max: 220 }),
-  body("anonymous").optional().isBoolean(),
-  body("addOns").optional().isArray()
-];
 
 export async function createStripeCheckoutSession(req, res, next) {
   try {

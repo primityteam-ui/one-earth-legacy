@@ -1,10 +1,14 @@
-import { body } from "express-validator";
 import crypto from "crypto";
 
 import User from "../models/User.js";
 import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
+
+import {
+  donationPreviewValidators,
+  mockCreateDonationValidators
+} from "../validators/donation.validators.js";
 
 import {
   applyDonationRankToUser,
@@ -14,62 +18,7 @@ import {
   selectedBorderFromAddOns
 } from "../utils/donation.helpers.js";
 
-export const donationPreviewValidators = [
-  body("amount")
-    .isFloat({ min: 1 })
-    .withMessage("Donation amount must be at least 1"),
-
-  body("currency")
-    .optional()
-    .isLength({ min: 3, max: 3 })
-    .withMessage("Currency must be a 3-letter code"),
-
-  body("message")
-    .optional()
-    .isString()
-    .isLength({ max: 280 })
-    .withMessage("Message cannot exceed 280 characters"),
-
-  body("displayName")
-    .optional()
-    .isString()
-    .isLength({ max: 40 })
-    .withMessage("Display name cannot exceed 40 characters"),
-
-  body("theme")
-    .optional()
-    .isString()
-    .isLength({ max: 30 })
-    .withMessage("Theme is invalid"),
-
-  body("causeCategory")
-    .optional()
-    .isString()
-    .isLength({ max: 80 })
-    .withMessage("Cause category is invalid"),
-
-  body("causeImpact")
-    .optional()
-    .isString()
-    .isLength({ max: 120 })
-    .withMessage("Cause impact is invalid"),
-
-  body("cause")
-    .optional()
-    .isString()
-    .isLength({ max: 220 })
-    .withMessage("Cause is invalid"),
-
-  body("anonymous")
-    .optional()
-    .isBoolean()
-    .withMessage("Anonymous must be true or false"),
-
-  body("addOns")
-    .optional()
-    .isArray()
-    .withMessage("Add-ons must be an array")
-];
+export { donationPreviewValidators, mockCreateDonationValidators };
 
 export async function previewDonation(req, res) {
   const preview = calculateDonationPreview(req.body);
@@ -82,15 +31,6 @@ export async function previewDonation(req, res) {
     }
   });
 }
-
-export const mockCreateDonationValidators = [
-  ...donationPreviewValidators,
-
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Valid email is required to create mock donation")
-];
 
 export async function mockCreateDonation(req, res, next) {
   try {
