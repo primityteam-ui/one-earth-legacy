@@ -8,6 +8,8 @@ import AuditEntry from "../models/AuditEntry.js";
 
 import { stripeCheckoutValidators } from "../validators/donation.validators.js";
 
+import { buildDonationAuditEntries } from "../utils/audit.helpers.js";
+
 import {
   applyDonationRankToUser,
   calculateMoneySplit,
@@ -263,52 +265,20 @@ async function saveStripeDonation(session) {
 
   const split = calculateMoneySplit(amountUSD);
 
-  await AuditEntry.insertMany([
-    {
-      type: "donation_received",
-      amount: amountUSD,
+  await AuditEntry.insertMany(
+    buildDonationAuditEntries({
+      userId: user._id,
+      amountUSD,
       currency,
-      recipient: "One Earth Legacy",
+      displayName: user.displayName,
+      anonymous,
       causeCategory: causeSelection.causeCategory,
       causeImpact: causeSelection.causeImpact,
       cause: causeSelection.cause,
-      description: `Stripe donation received from ${anonymous ? "Anonymous" : user.displayName}.`,
-      initiatedBy: user._id
-    },
-    {
-      type: "cause_allocation",
-      amount: split.causeAmount,
-      currency,
-      recipient: causeSelection.cause,
-      causeCategory: causeSelection.causeCategory,
-      causeImpact: causeSelection.causeImpact,
-      cause: causeSelection.cause,
-      description: "60% allocation reserved for verified global cause payout.",
-      initiatedBy: user._id
-    },
-    {
-      type: "platform_allocation",
-      amount: split.platformAmount,
-      currency,
-      recipient: "Platform operations",
-      causeCategory: causeSelection.causeCategory,
-      causeImpact: causeSelection.causeImpact,
-      cause: causeSelection.cause,
-      description: "25% allocation reserved for hosting, security, monitoring, and platform sustainability.",
-      initiatedBy: user._id
-    },
-    {
-      type: "lottery_allocation",
-      amount: split.lotteryAmount,
-      currency,
-      recipient: "Monthly donor lottery",
-      causeCategory: causeSelection.causeCategory,
-      causeImpact: causeSelection.causeImpact,
-      cause: causeSelection.cause,
-      description: "15% allocation added to monthly donor prize pool.",
-      initiatedBy: user._id
-    }
-  ]);
+      split,
+      paymentMethod: "stripe"
+    })
+  );
 
   console.log("Stripe paid donation saved:", {
     sessionId: session.id,

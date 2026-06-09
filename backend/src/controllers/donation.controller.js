@@ -10,6 +10,8 @@ import {
   mockCreateDonationValidators
 } from "../validators/donation.validators.js";
 
+import { buildDonationAuditEntries } from "../utils/audit.helpers.js";
+
 import {
   applyDonationRankToUser,
   calculateDonationPreview,
@@ -87,52 +89,20 @@ export async function mockCreateDonation(req, res, next) {
       isFeatured: preview.amountUSD >= 1000
     });
 
-    await AuditEntry.insertMany([
-      {
-        type: "donation_received",
-        amount: preview.amountUSD,
+    await AuditEntry.insertMany(
+      buildDonationAuditEntries({
+        userId: user._id,
+        amountUSD: preview.amountUSD,
         currency: preview.currency,
-        recipient: "One Earth Legacy",
+        displayName: user.displayName,
+        anonymous: preview.tile.anonymous,
         causeCategory: preview.causeCategory,
         causeImpact: preview.causeImpact,
         cause: preview.cause,
-        description: `Mock donation received from ${preview.tile.anonymous ? "Anonymous" : user.displayName}.`,
-        initiatedBy: user._id
-      },
-      {
-        type: "cause_allocation",
-        amount: preview.split.causeAmount,
-        currency: preview.currency,
-        recipient: preview.cause,
-        causeCategory: preview.causeCategory,
-        causeImpact: preview.causeImpact,
-        cause: preview.cause,
-        description: "60% allocation reserved for verified global cause payout.",
-        initiatedBy: user._id
-      },
-      {
-        type: "platform_allocation",
-        amount: preview.split.platformAmount,
-        currency: preview.currency,
-        recipient: "Platform operations",
-        causeCategory: preview.causeCategory,
-        causeImpact: preview.causeImpact,
-        cause: preview.cause,
-        description: "25% allocation reserved for hosting, security, monitoring, and platform sustainability.",
-        initiatedBy: user._id
-      },
-      {
-        type: "lottery_allocation",
-        amount: preview.split.lotteryAmount,
-        currency: preview.currency,
-        recipient: "Monthly donor lottery",
-        causeCategory: preview.causeCategory,
-        causeImpact: preview.causeImpact,
-        cause: preview.cause,
-        description: "15% allocation added to monthly donor prize pool.",
-        initiatedBy: user._id
-      }
-    ]);
+        split: preview.split,
+        paymentMethod: "mock"
+      })
+    );
 
     res.status(201).json({
       message: "Mock donation saved to MongoDB",
