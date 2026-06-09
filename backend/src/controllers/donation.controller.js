@@ -6,132 +6,13 @@ import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
 
-const rankTable = [
-  { name: "Spark", min: 1, max: 9 },
-  { name: "Citizen", min: 10, max: 49 },
-  { name: "Merchant", min: 50, max: 249 },
-  { name: "Knight", min: 250, max: 999 },
-  { name: "Lord", min: 1000, max: 4999 },
-  { name: "Baron", min: 5000, max: 19999 },
-  { name: "Duke", min: 20000, max: 49999 },
-  { name: "Sovereign", min: 50000, max: 99999 },
-  { name: "King/Queen", min: 100000, max: 999999 },
-  { name: "Emperor", min: 1000000, max: Infinity }
-];
-
-const addOnPrices = {
-  animatedBorder: 4.99,
-  videoTile: 9.99,
-  analytics: 2.99,
-  resurrection: 19.99,
-  nft: 9.99
-};
-
-function getRank(amountUSD) {
-  return rankTable.find((rank) => amountUSD >= rank.min && amountUSD <= rank.max) || rankTable[0];
-}
-
-function getNextRank(amountUSD) {
-  return rankTable.find((rank) => rank.min > amountUSD) || null;
-}
-
-function createSafeUsername(email) {
-  const base = email
-    .split("@")[0]
-    .replace(/[^a-zA-Z0-9_]/g, "_")
-    .slice(0, 20);
-
-  const suffix = crypto.randomInt(1000, 9999);
-  return `${base}_${suffix}`;
-}
-
-function normalizeCauseSelection(body) {
-  const rawCategory = String(body.causeCategory || "").trim();
-  const rawImpact = String(body.causeImpact || "").trim();
-  const rawCause = String(body.cause || "").trim();
-
-  let causeCategory = rawCategory;
-  let causeImpact = rawImpact;
-
-  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
-    const parts = rawCause.split("—").map((part) => part.trim());
-    causeCategory = causeCategory || parts[0];
-    causeImpact = causeImpact || parts.slice(1).join(" — ");
-  }
-
-  if (!causeCategory) {
-    causeCategory = "Human Survival";
-  }
-
-  if (!causeImpact) {
-    causeImpact = "Clean Water for Life";
-  }
-
-  const cause = `${causeCategory} — ${causeImpact}`;
-
-  return {
-    causeCategory,
-    causeImpact,
-    cause
-  };
-}
-
-function calculatePreview(body) {
-  const amount = Number(body.amount);
-  const currency = String(body.currency || "USD").toUpperCase();
-  const addOns = Array.isArray(body.addOns) ? body.addOns : [];
-  const causeSelection = normalizeCauseSelection(body);
-
-  const amountUSD = amount;
-
-  const addOnDetails = addOns
-    .filter((id) => Object.prototype.hasOwnProperty.call(addOnPrices, id))
-    .map((id) => ({
-      id,
-      price: addOnPrices[id]
-    }));
-
-  const addOnTotal = addOnDetails.reduce((sum, item) => sum + item.price, 0);
-  const totalToday = amountUSD + addOnTotal;
-
-  const currentRank = getRank(amountUSD);
-  const nextRank = getNextRank(amountUSD);
-
-  const split = {
-    causeAmount: Number((amountUSD * 0.6).toFixed(2)),
-    platformAmount: Number((amountUSD * 0.25).toFixed(2)),
-    lotteryAmount: Number((amountUSD * 0.15).toFixed(2))
-  };
-
-  return {
-    amount,
-    currency,
-    amountUSD,
-    causeCategory: causeSelection.causeCategory,
-    causeImpact: causeSelection.causeImpact,
-    cause: causeSelection.cause,
-    addOns: addOnDetails,
-    addOnTotal: Number(addOnTotal.toFixed(2)),
-    totalToday: Number(totalToday.toFixed(2)),
-    rank: currentRank.name,
-    nextRank: nextRank
-      ? {
-          name: nextRank.name,
-          amountNeeded: Number((nextRank.min - amountUSD).toFixed(2))
-        }
-      : null,
-    split,
-    tile: {
-      displayName: body.displayName || "Anonymous Donor",
-      message: body.message || "",
-      theme: body.theme || "Gold",
-      causeCategory: causeSelection.causeCategory,
-      causeImpact: causeSelection.causeImpact,
-      cause: causeSelection.cause,
-      anonymous: Boolean(body.anonymous)
-    }
-  };
-}
+import {
+  applyDonationRankToUser,
+  calculateDonationPreview,
+  createSafeUsername,
+  hasVideoTile,
+  selectedBorderFromAddOns
+} from "../utils/donation.helpers.js";
 
 export const donationPreviewValidators = [
   body("amount")
@@ -191,7 +72,7 @@ export const donationPreviewValidators = [
 ];
 
 export async function previewDonation(req, res) {
-  const preview = calculatePreview(req.body);
+  const preview = calculateDonationPreview(req.body);
 
   res.status(200).json({
     preview: {
@@ -213,7 +94,7 @@ export const mockCreateDonationValidators = [
 
 export async function mockCreateDonation(req, res, next) {
   try {
-    const preview = calculatePreview(req.body);
+    const preview = calculateDonationPreview(req.body);
     const email = req.body.email.toLowerCase();
 
     let user = await User.findOne({ email });
@@ -228,24 +109,11 @@ export async function mockCreateDonation(req, res, next) {
     }
 
     user.displayName = req.body.displayName || user.displayName;
-    user.totalDonated = Number((Number(user.totalDonated || 0) + preview.amountUSD).toFixed(2));
-    user.currentRank = getRank(user.totalDonated).name;
-
-    if (user.totalDonated >= 1000 && user.role === "user") {
-      user.role = "lord_plus";
-    }
-
-    if (user.totalDonated >= 1000000) {
-      user.role = "emperor";
-    }
-
-    user.rankHistory.push({
-      rank: user.currentRank,
-      totalDonated: user.totalDonated,
-      changedAt: new Date()
-    });
+    applyDonationRankToUser(user, preview.amountUSD);
 
     await user.save();
+
+    const tileBorder = selectedBorderFromAddOns(preview.addOns);
 
     const donation = await Donation.create({
       userId: user._id,
@@ -260,9 +128,9 @@ export async function mockCreateDonation(req, res, next) {
       paymentStatus: "paid",
       settlementStatus: "settled",
       tileMessage: preview.tile.message,
-      tileBorder: selectedBorderFromAddOns(preview.addOns),
+      tileBorder,
       tileTheme: preview.tile.theme,
-      isVideoTile: preview.addOns.some((item) => item.id === "videoTile"),
+      isVideoTile: hasVideoTile(preview.addOns),
       rankAtTime: preview.rank,
       isAnonymous: preview.tile.anonymous,
       ipAddress: req.ip,
@@ -273,7 +141,7 @@ export async function mockCreateDonation(req, res, next) {
       userId: user._id,
       donationId: donation._id,
       message: preview.tile.message,
-      borderType: selectedBorderFromAddOns(preview.addOns),
+      borderType: tileBorder,
       themeColor: preview.tile.theme,
       sizeScore: Math.max(1, Math.log10(preview.amountUSD + 1)),
       isFeatured: preview.amountUSD >= 1000
@@ -358,8 +226,4 @@ export async function mockCreateDonation(req, res, next) {
   } catch (error) {
     next(error);
   }
-}
-
-function selectedBorderFromAddOns(addOns) {
-  return addOns.some((item) => item.id === "animatedBorder") ? "animated" : "standard";
 }

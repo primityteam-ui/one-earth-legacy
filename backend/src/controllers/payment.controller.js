@@ -7,26 +7,17 @@ import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
 
-const addOnPrices = {
-  animatedBorder: 4.99,
-  videoTile: 9.99,
-  analytics: 2.99,
-  resurrection: 19.99,
-  nft: 9.99
-};
-
-const rankTable = [
-  { name: "Spark", min: 1, max: 9 },
-  { name: "Citizen", min: 10, max: 49 },
-  { name: "Merchant", min: 50, max: 249 },
-  { name: "Knight", min: 250, max: 999 },
-  { name: "Lord", min: 1000, max: 4999 },
-  { name: "Baron", min: 5000, max: 19999 },
-  { name: "Duke", min: 20000, max: 49999 },
-  { name: "Sovereign", min: 50000, max: 99999 },
-  { name: "King/Queen", min: 100000, max: 999999 },
-  { name: "Emperor", min: 1000000, max: Infinity }
-];
+import {
+  applyDonationRankToUser,
+  calculateMoneySplit,
+  calculateTotalAmount,
+  createSafeUsername,
+  getRank,
+  hasVideoTile,
+  normalizeCauseSelection,
+  parseAddOnsFromMetadata,
+  selectedBorderFromAddOns
+} from "../utils/donation.helpers.js";
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -40,106 +31,6 @@ function getStripeClient() {
   }
 
   return new Stripe(secretKey);
-}
-
-function getRank(amountUSD) {
-  return rankTable.find((rank) => amountUSD >= rank.min && amountUSD <= rank.max) || rankTable[0];
-}
-
-function createSafeUsername(email) {
-  const base = email
-    .split("@")[0]
-    .replace(/[^a-zA-Z0-9_]/g, "_")
-    .slice(0, 20);
-
-  const suffix = crypto.randomInt(1000, 9999);
-  return `${base}_${suffix}`;
-}
-
-function selectedBorderFromAddOns(addOns) {
-  return addOns.includes("animatedBorder") ? "animated" : "standard";
-}
-
-function calculateTotalAmount(body) {
-  const donationAmount = Number(body.amount || 0);
-  const addOns = Array.isArray(body.addOns) ? body.addOns : [];
-
-  const addOnTotal = addOns.reduce((sum, id) => {
-    return sum + Number(addOnPrices[id] || 0);
-  }, 0);
-
-  return Number((donationAmount + addOnTotal).toFixed(2));
-}
-
-function parseAddOns(metadata) {
-  try {
-    const parsed = JSON.parse(metadata.addOns || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function normalizeCauseSelectionFromBody(body) {
-  const rawCategory = String(body.causeCategory || "").trim();
-  const rawImpact = String(body.causeImpact || "").trim();
-  const rawCause = String(body.cause || "").trim();
-
-  let causeCategory = rawCategory;
-  let causeImpact = rawImpact;
-
-  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
-    const parts = rawCause.split("—").map((part) => part.trim());
-    causeCategory = causeCategory || parts[0];
-    causeImpact = causeImpact || parts.slice(1).join(" — ");
-  }
-
-  if (!causeCategory) {
-    causeCategory = "Human Survival";
-  }
-
-  if (!causeImpact) {
-    causeImpact = "Clean Water for Life";
-  }
-
-  const cause = `${causeCategory} — ${causeImpact}`;
-
-  return {
-    causeCategory,
-    causeImpact,
-    cause
-  };
-}
-
-function normalizeCauseSelectionFromMetadata(metadata) {
-  const rawCategory = String(metadata.causeCategory || "").trim();
-  const rawImpact = String(metadata.causeImpact || "").trim();
-  const rawCause = String(metadata.cause || "").trim();
-
-  let causeCategory = rawCategory;
-  let causeImpact = rawImpact;
-
-  if ((!causeCategory || !causeImpact) && rawCause.includes("—")) {
-    const parts = rawCause.split("—").map((part) => part.trim());
-    causeCategory = causeCategory || parts[0];
-    causeImpact = causeImpact || parts.slice(1).join(" — ");
-  }
-
-  if (!causeCategory) {
-    causeCategory = "Human Survival";
-  }
-
-  if (!causeImpact) {
-    causeImpact = "Clean Water for Life";
-  }
-
-  const cause = `${causeCategory} — ${causeImpact}`;
-
-  return {
-    causeCategory,
-    causeImpact,
-    cause
-  };
 }
 
 function assertStripeSessionIsSafe(session) {
@@ -194,7 +85,7 @@ export async function createStripeCheckoutSession(req, res, next) {
 
     const totalAmount = calculateTotalAmount(req.body);
     const currency = String(req.body.currency || "USD").toLowerCase();
-    const causeSelection = normalizeCauseSelectionFromBody(req.body);
+    const causeSelection = normalizeCauseSelection(req.body);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -324,9 +215,9 @@ async function saveStripeDonation(session) {
   const displayName = metadata.displayName || email.split("@")[0];
   const message = metadata.message || "";
   const theme = metadata.theme || "Gold";
-  const causeSelection = normalizeCauseSelectionFromMetadata(metadata);
+  const causeSelection = normalizeCauseSelection(metadata);
   const anonymous = metadata.anonymous === "true";
-  const addOns = parseAddOns(metadata);
+  const addOns = parseAddOnsFromMetadata(metadata);
 
   if (!amountUSD || amountUSD <= 0) {
     throw new Error("Donation amount is missing or invalid");
@@ -344,26 +235,12 @@ async function saveStripeDonation(session) {
   }
 
   user.displayName = displayName || user.displayName;
-  user.totalDonated = Number((Number(user.totalDonated || 0) + amountUSD).toFixed(2));
-  user.currentRank = getRank(user.totalDonated).name;
-
-  if (user.totalDonated >= 1000 && user.role === "user") {
-    user.role = "lord_plus";
-  }
-
-  if (user.totalDonated >= 1000000) {
-    user.role = "emperor";
-  }
-
-  user.rankHistory.push({
-    rank: user.currentRank,
-    totalDonated: user.totalDonated,
-    changedAt: new Date()
-  });
+  applyDonationRankToUser(user, amountUSD);
 
   await user.save();
 
   const rankAtTime = getRank(amountUSD).name;
+  const tileBorder = selectedBorderFromAddOns(addOns);
 
   const donation = await Donation.create({
     userId: user._id,
@@ -378,9 +255,9 @@ async function saveStripeDonation(session) {
     paymentStatus: "paid",
     settlementStatus: "settled",
     tileMessage: message,
-    tileBorder: selectedBorderFromAddOns(addOns),
+    tileBorder,
     tileTheme: theme,
-    isVideoTile: addOns.includes("videoTile"),
+    isVideoTile: hasVideoTile(addOns),
     rankAtTime,
     isAnonymous: anonymous
   });
@@ -389,17 +266,13 @@ async function saveStripeDonation(session) {
     userId: user._id,
     donationId: donation._id,
     message,
-    borderType: selectedBorderFromAddOns(addOns),
+    borderType: tileBorder,
     themeColor: theme,
     sizeScore: Math.max(1, Math.log10(amountUSD + 1)),
     isFeatured: amountUSD >= 1000
   });
 
-  const split = {
-    causeAmount: Number((amountUSD * 0.6).toFixed(2)),
-    platformAmount: Number((amountUSD * 0.25).toFixed(2)),
-    lotteryAmount: Number((amountUSD * 0.15).toFixed(2))
-  };
+  const split = calculateMoneySplit(amountUSD);
 
   await AuditEntry.insertMany([
     {
