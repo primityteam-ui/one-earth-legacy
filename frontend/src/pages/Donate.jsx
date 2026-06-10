@@ -4,10 +4,8 @@ import {
   Crown,
   CreditCard,
   Globe2,
-  HeartPulse,
   ImagePlus,
   Loader2,
-  School,
   ShieldCheck,
   Sparkles
 } from "lucide-react";
@@ -15,6 +13,7 @@ import api from "../api/client.js";
 import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
 import DonationSuccessBox from "../components/DonationSuccessBox.jsx";
 import ErrorMessageBox from "../components/ErrorMessageBox.jsx";
+import MissionIcon from "../components/MissionIcon.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
@@ -27,18 +26,6 @@ import {
   legacyMissions,
   presetAmounts
 } from "../constants/legacyOptions.js";
-
-function getMissionIcon(iconName) {
-  if (iconName === "heart") {
-    return <HeartPulse className="h-6 w-6" />;
-  }
-
-  if (iconName === "school") {
-    return <School className="h-6 w-6" />;
-  }
-
-  return <Globe2 className="h-6 w-6" />;
-}
 
 export default function Donate() {
   const [amount, setAmount] = useState(25);
@@ -252,7 +239,7 @@ export default function Donate() {
                   }`}
                 >
                   <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
-                    {getMissionIcon(mission.iconName)}
+                    <MissionIcon iconName={mission.iconName} />
                   </div>
 
                   <p className="font-display text-xl font-bold text-textPrimary">
