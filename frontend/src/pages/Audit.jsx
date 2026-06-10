@@ -13,6 +13,7 @@ import {
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
+import PageHero from "../components/PageHero.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -109,32 +110,13 @@ export default function Audit() {
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
-      <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalCard p-8 shadow-gold">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gold">
-              Public Audit Log
-            </p>
-
-            <h1 className="font-display text-4xl font-bold md:text-6xl">
-              Every Dollar Visible
-            </h1>
-
-            <p className="mt-4 max-w-3xl text-textSecondary">
-              One Earth Legacy shows how money is split by mission and exact impact:
-              60% to the selected cause, 25% to platform sustainability, and 15%
-              to the monthly donor lottery.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gold/30 bg-gold/10 px-5 py-4">
-            <p className="text-sm text-goldLight">Transparency mode</p>
-            <p className="font-display text-2xl font-bold text-textPrimary">
-              Backend Filtered
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Public Audit Log"
+        title="Every Dollar Visible"
+        description="One Earth Legacy shows how money is split by mission and exact impact: 60% to the selected cause, 25% to platform sustainability, and 15% to the monthly donor lottery."
+        rightLabel="Transparency mode"
+        rightValue="Backend Filtered"
+      />
 
       <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
         <div className="grid gap-4 md:grid-cols-[1fr_570px] md:items-end">
