@@ -123,6 +123,34 @@ function validateCountry(value, { req }) {
   return true;
 }
 
+function validateDonorLat(value) {
+  if (value === undefined || value === null || value === "") {
+    return true;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number) || number < -90 || number > 90) {
+    throw new Error("Latitude must be between -90 and 90");
+  }
+
+  return true;
+}
+
+function validateDonorLng(value) {
+  if (value === undefined || value === null || value === "") {
+    return true;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number) || number < -180 || number > 180) {
+    throw new Error("Longitude must be between -180 and 180");
+  }
+
+  return true;
+}
+
 export const sharedDonationInputValidators = [
   body("amount")
     .isFloat({ min: 1 })
@@ -152,6 +180,36 @@ export const sharedDonationInputValidators = [
     .isLength({ max: 80 })
     .withMessage("Country is invalid")
     .custom(validateCountry),
+
+  body("donorCity")
+    .optional()
+    .isString()
+    .isLength({ max: 80 })
+    .withMessage("City cannot exceed 80 characters"),
+
+  body("donorRegion")
+    .optional()
+    .isString()
+    .isLength({ max: 80 })
+    .withMessage("Region cannot exceed 80 characters"),
+
+  body("donorLat")
+    .optional()
+    .custom(validateDonorLat),
+
+  body("donorLng")
+    .optional()
+    .custom(validateDonorLng),
+
+  body("donorLocationPrecision")
+    .optional()
+    .isIn(["country", "city", "approximate"])
+    .withMessage("Location precision is invalid"),
+
+  body("donorLocationSource")
+    .optional()
+    .isIn(["manual", "browser", "default"])
+    .withMessage("Location source is invalid"),
 
   body("message")
     .optional()

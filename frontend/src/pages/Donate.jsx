@@ -3,6 +3,7 @@ import {
   BadgeDollarSign,
   Globe2,
   ImagePlus,
+  LocateFixed,
   MapPin,
   ShieldCheck,
   Sparkles
@@ -46,13 +47,29 @@ const donorCountries = [
   { country: "United Arab Emirates", countryCode: "AE", flag: "🇦🇪" }
 ];
 
+function roundCoordinate(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "";
+  }
+
+  return Number(number.toFixed(2));
+}
+
 export default function Donate() {
   const [amount, setAmount] = useState(25);
   const [email, setEmail] = useState("vamshiyalavarthi11@gmail.com");
   const [message, setMessage] = useState("My mark on One Earth.");
   const [displayName, setDisplayName] = useState("Vamshi");
   const [theme, setTheme] = useState("Gold");
+
   const [donorCountryCode, setDonorCountryCode] = useState("US");
+  const [donorCity, setDonorCity] = useState("Dallas");
+  const [donorRegion, setDonorRegion] = useState("Texas");
+  const [donorLat, setDonorLat] = useState("");
+  const [donorLng, setDonorLng] = useState("");
+  const [locationMessage, setLocationMessage] = useState("");
 
   const [selectedMissionId, setSelectedMissionId] = useState("human-survival");
   const [selectedImpactId, setSelectedImpactId] = useState("clean-water-for-life");
@@ -125,7 +142,39 @@ export default function Donate() {
     );
   }
 
+  function handleUseApproximateLocation() {
+    setLocationMessage("");
+
+    if (!navigator.geolocation) {
+      setLocationMessage("Location is not supported by this browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setDonorLat(roundCoordinate(position.coords.latitude));
+        setDonorLng(roundCoordinate(position.coords.longitude));
+        setLocationMessage(
+          "Approximate location added. Coordinates are rounded for privacy."
+        );
+      },
+      () => {
+        setLocationMessage(
+          "Location permission was not allowed. You can still enter city and region manually."
+        );
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  }
+
   function buildPayload() {
+    const safeLat = donorLat === "" ? undefined : Number(donorLat);
+    const safeLng = donorLng === "" ? undefined : Number(donorLng);
+
     return {
       email,
       amount,
@@ -133,6 +182,20 @@ export default function Donate() {
       displayName,
       country: selectedDonorCountry.country,
       countryCode: selectedDonorCountry.countryCode,
+      donorCity,
+      donorRegion,
+      donorLat: Number.isFinite(safeLat) ? safeLat : undefined,
+      donorLng: Number.isFinite(safeLng) ? safeLng : undefined,
+      donorLocationPrecision:
+        Number.isFinite(safeLat) && Number.isFinite(safeLng)
+          ? "approximate"
+          : donorCity.trim()
+            ? "city"
+            : "country",
+      donorLocationSource:
+        Number.isFinite(safeLat) && Number.isFinite(safeLng)
+          ? "browser"
+          : "manual",
       message,
       theme,
       causeCategory: selectedMission.name,
@@ -235,7 +298,7 @@ export default function Donate() {
           <Panel
             icon={<ImagePlus className="h-5 w-5" />}
             title="Step 3 — Customize tile"
-            subtitle="This data is sent to the backend and saved into Donation, Tile, AuditEntry, and User country records."
+            subtitle="This data is saved into Donation, Tile, AuditEntry, and safe donor location records."
           >
             <TileCustomizer
               email={email}
@@ -258,16 +321,42 @@ export default function Donate() {
 
                 <div>
                   <h3 className="font-semibold text-white">
-                    Choose your country on Earth
+                    Add your safe Earth location
                   </h3>
                   <p className="text-sm text-slate-400">
-                    This places your legacy impact on the live globe.
+                    This places your legacy impact near your city on the live globe.
                   </p>
                 </div>
               </div>
 
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">
+                    City
+                  </label>
+                  <input
+                    value={donorCity}
+                    onChange={(event) => setDonorCity(event.target.value)}
+                    placeholder="Dallas"
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">
+                    State / Region
+                  </label>
+                  <input
+                    value={donorRegion}
+                    onChange={(event) => setDonorRegion(event.target.value)}
+                    placeholder="Texas"
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+                  />
+                </div>
+              </div>
+
               <label className="mt-4 block text-sm font-medium text-slate-300">
-                Donor country
+                Country
               </label>
 
               <select
@@ -282,9 +371,65 @@ export default function Donate() {
                 ))}
               </select>
 
+              <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/70 p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      Optional approximate coordinates
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      For privacy, coordinates are rounded before saving.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleUseApproximateLocation}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-400/40 bg-sky-400/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-400/20"
+                  >
+                    <LocateFixed className="h-4 w-4" />
+                    Use approximate current location
+                  </button>
+                </div>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300">
+                      Latitude
+                    </label>
+                    <input
+                      value={donorLat}
+                      onChange={(event) => setDonorLat(event.target.value)}
+                      placeholder="32.78"
+                      className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300">
+                      Longitude
+                    </label>
+                    <input
+                      value={donorLng}
+                      onChange={(event) => setDonorLng(event.target.value)}
+                      placeholder="-96.80"
+                      className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+                    />
+                  </div>
+                </div>
+
+                {locationMessage && (
+                  <p className="mt-3 text-sm text-slate-300">
+                    {locationMessage}
+                  </p>
+                )}
+              </div>
+
               <p className="mt-3 text-sm text-slate-400">
                 Selected:{" "}
                 <span className="font-semibold text-white">
+                  {donorCity ? `${donorCity}, ` : ""}
+                  {donorRegion ? `${donorRegion}, ` : ""}
                   {selectedDonorCountry.flag} {selectedDonorCountry.country}
                 </span>
               </p>

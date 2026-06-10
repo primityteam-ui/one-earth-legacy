@@ -9,14 +9,27 @@ import { saveConfirmedDonation } from "../services/donation.service.js";
 
 export { donationPreviewValidators, mockCreateDonationValidators };
 
+function buildLocationPayload(body) {
+  return {
+    country: body.country || "United States",
+    countryCode: body.countryCode || "US",
+    donorCity: body.donorCity || "",
+    donorRegion: body.donorRegion || "",
+    donorLat: body.donorLat,
+    donorLng: body.donorLng,
+    donorLocationPrecision: body.donorLocationPrecision || "country",
+    donorLocationSource: body.donorLocationSource || "manual"
+  };
+}
+
 export async function previewDonation(req, res) {
   const preview = calculateDonationPreview(req.body);
+  const location = buildLocationPayload(req.body);
 
   res.status(200).json({
     preview: {
       ...preview,
-      country: req.body.country || "United States",
-      countryCode: req.body.countryCode || "US",
+      ...location,
       paymentStatus: "preview_only",
       note: "Stripe and Razorpay checkout will be connected in the next backend payment step."
     }
@@ -27,6 +40,7 @@ export async function mockCreateDonation(req, res, next) {
   try {
     const preview = calculateDonationPreview(req.body);
     const email = req.body.email.toLowerCase();
+    const location = buildLocationPayload(req.body);
 
     const result = await saveConfirmedDonation({
       email,
@@ -34,8 +48,7 @@ export async function mockCreateDonation(req, res, next) {
       currency: preview.currency,
       amountUSD: preview.amountUSD,
       displayName: req.body.displayName || email.split("@")[0],
-      country: req.body.country || "United States",
-      countryCode: req.body.countryCode || "US",
+      ...location,
       message: preview.tile.message,
       theme: preview.tile.theme,
       causeCategory: preview.causeCategory,
@@ -76,6 +89,7 @@ export async function mockCreateDonation(req, res, next) {
         displayName: user.displayName,
         country: user.country,
         countryCode: user.countryCode,
+        donorLocation: user.donorLocation,
         totalDonated: user.totalDonated,
         currentRank: user.currentRank,
         role: user.role

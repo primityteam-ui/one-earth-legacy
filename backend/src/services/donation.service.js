@@ -55,6 +55,75 @@ function normalizeDonationCountry(country, countryCode) {
   };
 }
 
+function roundCoordinate(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return undefined;
+  }
+
+  return Number(number.toFixed(2));
+}
+
+function normalizeDonorLocation({
+  country,
+  countryCode,
+  donorCity = "",
+  donorRegion = "",
+  donorLat,
+  donorLng,
+  donorLocationPrecision = "country",
+  donorLocationSource = "manual"
+}) {
+  const safeCountry = normalizeDonationCountry(country, countryCode);
+
+  const safeLat = roundCoordinate(donorLat);
+  const safeLng = roundCoordinate(donorLng);
+
+  const hasCoordinates =
+    Number.isFinite(safeLat) &&
+    safeLat >= -90 &&
+    safeLat <= 90 &&
+    Number.isFinite(safeLng) &&
+    safeLng >= -180 &&
+    safeLng <= 180;
+
+  const safeCity = String(donorCity || "").trim().slice(0, 80);
+  const safeRegion = String(donorRegion || "").trim().slice(0, 80);
+
+  let precision = "country";
+
+  if (hasCoordinates) {
+    precision = "approximate";
+  } else if (safeCity) {
+    precision = "city";
+  }
+
+  const requestedPrecision = String(donorLocationPrecision || precision).trim();
+
+  if (["country", "city", "approximate"].includes(requestedPrecision)) {
+    precision = requestedPrecision === "approximate" && !hasCoordinates
+      ? precision
+      : requestedPrecision;
+  }
+
+  const source = ["manual", "browser", "default"].includes(donorLocationSource)
+    ? donorLocationSource
+    : "manual";
+
+  return {
+    city: safeCity,
+    region: safeRegion,
+    country: safeCountry.country,
+    countryCode: safeCountry.countryCode,
+    lat: hasCoordinates ? safeLat : undefined,
+    lng: hasCoordinates ? safeLng : undefined,
+    precision,
+    source,
+    updatedAt: new Date()
+  };
+}
+
 export async function saveConfirmedDonation({
   email,
   amount,
@@ -63,6 +132,12 @@ export async function saveConfirmedDonation({
   displayName,
   country = "United States",
   countryCode = "US",
+  donorCity = "",
+  donorRegion = "",
+  donorLat,
+  donorLng,
+  donorLocationPrecision = "country",
+  donorLocationSource = "manual",
   message = "",
   theme = "Gold",
   causeCategory,
@@ -91,7 +166,16 @@ export async function saveConfirmedDonation({
   const safeCurrency = String(currency || "USD").toUpperCase();
   const safeDisplayName = displayName || normalizedEmail.split("@")[0];
   const safePaymentId = paymentId || `${paymentMethod}_${crypto.randomUUID()}`;
-  const safeCountry = normalizeDonationCountry(country, countryCode);
+  const safeLocation = normalizeDonorLocation({
+    country,
+    countryCode,
+    donorCity,
+    donorRegion,
+    donorLat,
+    donorLng,
+    donorLocationPrecision,
+    donorLocationSource
+  });
 
   const existingDonation = await Donation.findOne({
     paymentId: safePaymentId
@@ -113,15 +197,17 @@ export async function saveConfirmedDonation({
       email: normalizedEmail,
       username: createSafeUsername(normalizedEmail),
       displayName: safeDisplayName,
-      country: safeCountry.country,
-      countryCode: safeCountry.countryCode,
+      country: safeLocation.country,
+      countryCode: safeLocation.countryCode,
+      donorLocation: safeLocation,
       referralCode: crypto.randomUUID().slice(0, 8)
     });
   }
 
   user.displayName = safeDisplayName || user.displayName;
-  user.country = safeCountry.country;
-  user.countryCode = safeCountry.countryCode;
+  user.country = safeLocation.country;
+  user.countryCode = safeLocation.countryCode;
+  user.donorLocation = safeLocation;
 
   applyDonationRankToUser(user, safeAmountUSD);
 
