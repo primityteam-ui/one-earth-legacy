@@ -132,6 +132,134 @@ function getAdminHealthChecks() {
   };
 }
 
+function cleanAuditText(value, fallback = "", maxLength = 300) {
+  return String(value || fallback)
+    .trim()
+    .slice(0, maxLength);
+}
+
+function normalizeAuditCurrency(value) {
+  const currency = cleanAuditText(value, "USD", 3).toUpperCase();
+
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    return "USD";
+  }
+
+  return currency;
+}
+
+function normalizeProofUrl(value) {
+  const proofUrl = cleanAuditText(value, "", 500);
+
+  if (!proofUrl) {
+    return "";
+  }
+
+  try {
+    const url = new URL(proofUrl);
+
+    if (url.protocol !== "https:") {
+      return "";
+    }
+
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function normalizeAuditAmount(value) {
+  const amount = Number(value || 0);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 0;
+  }
+
+  return Math.min(amount, 1000000);
+}
+
+function normalizeAuditType(value) {
+  const allowedTypes = [
+    "donation_received",
+    "cause_allocation",
+    "platform_allocation",
+    "lottery_allocation",
+    "manual_note"
+  ];
+
+  const safeType = cleanAuditText(value, "manual_note");
+
+  return allowedTypes.includes(safeType) ? safeType : "manual_note";
+}
+
+export async function createAdminAuditEntry(req, res, next) {
+  try {
+    const amount = normalizeAuditAmount(req.body.amount);
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        message: "Audit amount must be greater than 0."
+      });
+    }
+
+    const rawProofUrl = cleanAuditText(req.body.proofUrl, "", 500);
+    const proofUrl = normalizeProofUrl(rawProofUrl);
+
+    if (rawProofUrl && !proofUrl) {
+      return res.status(400).json({
+        message: "Proof URL must be a valid https:// link."
+      });
+    }
+
+    const causeCategory = cleanAuditText(req.body.causeCategory, "Human Survival", 80);
+    const causeImpact = cleanAuditText(req.body.causeImpact, "Clean Water for Life", 120);
+    const cause = cleanAuditText(
+      req.body.cause,
+      `${causeCategory} — ${causeImpact}`,
+      180
+    );
+
+    const entry = await AuditEntry.create({
+      type: normalizeAuditType(req.body.type),
+      amount,
+      currency: normalizeAuditCurrency(req.body.currency),
+      recipient: cleanAuditText(req.body.recipient, "One Earth Legacy", 120),
+      causeCategory,
+      causeImpact,
+      cause,
+      description: cleanAuditText(req.body.description, "Manual admin audit entry.", 800),
+      proofUrl
+    });
+
+    await writeAdminAction(req, "create_audit_entry", {
+      auditEntryId: entry._id.toString(),
+      type: entry.type,
+      amount: entry.amount,
+      recipient: entry.recipient,
+      cause: entry.cause
+    });
+
+    return res.status(201).json({
+      message: "Audit entry created.",
+      entry: {
+        id: entry._id,
+        type: entry.type,
+        amount: money(entry.amount),
+        currency: entry.currency || "USD",
+        recipient: entry.recipient || "",
+        causeCategory: entry.causeCategory || "Unassigned",
+        causeImpact: entry.causeImpact || "",
+        cause: entry.cause || "",
+        description: entry.description || "",
+        proofUrl: entry.proofUrl || "",
+        createdAt: entry.createdAt
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getAdminDonationDetail(req, res, next) {
   try {
     const { donationId } = req.params;

@@ -870,6 +870,7 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
             <input
               type="number"
               min="1"
+              max="1000000"
               step="0.01"
               value={form.amount || "1"}
               onChange={(event) => onChange("amount", event.target.value)}
@@ -883,6 +884,7 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
             </span>
             <input
               value={form.recipient || ""}
+              maxLength={120}
               onChange={(event) => onChange("recipient", event.target.value)}
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
             />
@@ -894,7 +896,8 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
             </span>
             <input
               value={form.currency || "USD"}
-              onChange={(event) => onChange("currency", event.target.value)}
+              maxLength={3}
+              onChange={(event) => onChange("currency", event.target.value.toUpperCase())}
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
             />
           </label>
@@ -920,6 +923,7 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
             </span>
             <input
               value={form.causeImpact || ""}
+              maxLength={120}
               onChange={(event) => onChange("causeImpact", event.target.value)}
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
             />
@@ -932,6 +936,7 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
             <textarea
               rows="3"
               value={form.description || ""}
+              maxLength={800}
               onChange={(event) => onChange("description", event.target.value)}
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
             />
@@ -943,6 +948,7 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
             </span>
             <input
               value={form.proofUrl || ""}
+              maxLength={500}
               onChange={(event) => onChange("proofUrl", event.target.value)}
               placeholder="https://..."
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
