@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 import ActionButton from "../components/ActionButton.jsx";
+import AddOnSelector from "../components/AddOnSelector.jsx";
 import AmountSelector from "../components/AmountSelector.jsx";
 import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
 import DonationSuccessBox from "../components/DonationSuccessBox.jsx";
@@ -94,7 +95,9 @@ export default function Donate() {
 
   function toggleAddOn(id) {
     setSelectedAddOns((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
     );
   }
 
@@ -227,26 +230,11 @@ export default function Donate() {
             title="Step 4 — Optional add-ons"
             subtitle="Selected add-ons are calculated by the backend."
           >
-            <div className="grid gap-3 md:grid-cols-2">
-              {addOns.map((addOn) => (
-                <button
-                  key={addOn.id}
-                  onClick={() => toggleAddOn(addOn.id)}
-                  className={`rounded-2xl border p-5 text-left ${
-                    selectedAddOns.includes(addOn.id)
-                      ? "border-gold bg-gold/10"
-                      : "border-borderRoyal bg-black/30 hover:border-gold"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-bold text-textPrimary">{addOn.name}</p>
-                    <p className="font-numbers font-bold text-goldLight">
-                      ${addOn.price}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
+            <AddOnSelector
+              addOns={addOns}
+              selectedAddOns={selectedAddOns}
+              onToggleAddOn={toggleAddOn}
+            />
           </Panel>
 
           <Panel
