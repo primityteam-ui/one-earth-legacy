@@ -4,11 +4,11 @@ import {
   CreditCard,
   Globe2,
   ImagePlus,
-  Loader2,
   ShieldCheck,
   Sparkles
 } from "lucide-react";
 import api from "../api/client.js";
+import ActionButton from "../components/ActionButton.jsx";
 import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
 import DonationSuccessBox from "../components/DonationSuccessBox.jsx";
 import DonationTilePreview from "../components/DonationTilePreview.jsx";
@@ -413,36 +413,32 @@ export default function Donate() {
             subtitle="Preview first, save mock donation locally, or open Stripe test checkout."
           >
             <div className="grid gap-4 md:grid-cols-3">
-              <button
+              <ActionButton
                 onClick={handleBackendPreview}
-                disabled={previewLoading}
-                className="flex w-full items-center justify-center gap-3 rounded-full border border-gold px-6 py-4 font-bold text-goldLight hover:bg-gold hover:text-black disabled:cursor-not-allowed disabled:opacity-70"
+                loading={previewLoading}
+                loadingText="Creating Preview..."
               >
-                {previewLoading && <Loader2 className="h-5 w-5 animate-spin" />}
-                {previewLoading ? "Creating Preview..." : "Create Preview"}
-              </button>
+                Create Preview
+              </ActionButton>
 
-              <button
+              <ActionButton
                 onClick={handleSaveMockDonation}
-                disabled={saveLoading}
-                className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-goldLight via-gold to-goldLight px-6 py-4 font-bold text-black shadow-gold hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                loading={saveLoading}
+                loadingText="Saving..."
+                variant="gold"
               >
-                {saveLoading && <Loader2 className="h-5 w-5 animate-spin" />}
-                {saveLoading ? "Saving..." : "Save Mock"}
-              </button>
+                Save Mock
+              </ActionButton>
 
-              <button
+              <ActionButton
                 onClick={handleStripeCheckout}
-                disabled={stripeLoading}
-                className="flex w-full items-center justify-center gap-3 rounded-full border border-green-500/40 bg-green-500/10 px-6 py-4 font-bold text-green-400 hover:bg-green-500 hover:text-black disabled:cursor-not-allowed disabled:opacity-70"
+                loading={stripeLoading}
+                loadingText="Opening..."
+                variant="green"
+                icon={<CreditCard className="h-5 w-5" />}
               >
-                {stripeLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <CreditCard className="h-5 w-5" />
-                )}
-                {stripeLoading ? "Opening..." : "Pay Stripe Test"}
-              </button>
+                Pay Stripe Test
+              </ActionButton>
             </div>
 
             <ErrorMessageBox message={previewError} />
