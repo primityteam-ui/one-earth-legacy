@@ -180,6 +180,8 @@ export default function Admin() {
         </div>
       </section>
 
+      <AdminSecurityBanner />
+
       {loading ? (
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
           <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-gold" />
@@ -353,6 +355,57 @@ export default function Admin() {
         </>
       )}
     </main>
+  );
+}
+
+function AdminSecurityBanner() {
+  return (
+    <section className="mb-8 rounded-[2rem] border border-amber-400/30 bg-amber-400/10 p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-200">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-amber-200">
+              Production Safety Notice
+            </p>
+
+            <h2 className="mt-2 font-display text-2xl font-bold text-textPrimary">
+              Admin dashboard is read-only right now
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-textSecondary">
+              This page can view donations, donors, audit logs, security logs, and CSV exports.
+              Do not add delete, refund, ban, payout, or withdrawal actions until IP whitelist,
+              2FA, and SecurityLog write-audit rules are fully ready.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 text-sm md:grid-cols-2 lg:w-[420px]">
+          <SecurityBadge text="Admin role required" />
+          <SecurityBadge text="JWT protected" />
+          <SecurityBadge text="Read-only actions" />
+          <SecurityBadge text="2FA pending" warning />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SecurityBadge({ text, warning = false }) {
+  return (
+    <div
+      className={`rounded-full border px-4 py-2 text-center font-bold ${
+        warning
+          ? "border-amber-400/40 bg-amber-400/10 text-amber-200"
+          : "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+      }`}
+    >
+      {text}
+    </div>
   );
 }
 
