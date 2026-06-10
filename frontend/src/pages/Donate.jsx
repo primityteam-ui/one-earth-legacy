@@ -3,6 +3,7 @@ import {
   BadgeDollarSign,
   Globe2,
   ImagePlus,
+  MapPin,
   ShieldCheck,
   Sparkles
 } from "lucide-react";
@@ -23,12 +24,35 @@ import {
   presetAmounts
 } from "../constants/legacyOptions.js";
 
+const donorCountries = [
+  { country: "United States", countryCode: "US", flag: "🇺🇸" },
+  { country: "India", countryCode: "IN", flag: "🇮🇳" },
+  { country: "Brazil", countryCode: "BR", flag: "🇧🇷" },
+  { country: "Italy", countryCode: "IT", flag: "🇮🇹" },
+  { country: "Japan", countryCode: "JP", flag: "🇯🇵" },
+  { country: "South Korea", countryCode: "KR", flag: "🇰🇷" },
+  { country: "Canada", countryCode: "CA", flag: "🇨🇦" },
+  { country: "Nigeria", countryCode: "NG", flag: "🇳🇬" },
+  { country: "Australia", countryCode: "AU", flag: "🇦🇺" },
+  { country: "Kenya", countryCode: "KE", flag: "🇰🇪" },
+  { country: "United Kingdom", countryCode: "GB", flag: "🇬🇧" },
+  { country: "Germany", countryCode: "DE", flag: "🇩🇪" },
+  { country: "France", countryCode: "FR", flag: "🇫🇷" },
+  { country: "Spain", countryCode: "ES", flag: "🇪🇸" },
+  { country: "China", countryCode: "CN", flag: "🇨🇳" },
+  { country: "Singapore", countryCode: "SG", flag: "🇸🇬" },
+  { country: "South Africa", countryCode: "ZA", flag: "🇿🇦" },
+  { country: "Egypt", countryCode: "EG", flag: "🇪🇬" },
+  { country: "United Arab Emirates", countryCode: "AE", flag: "🇦🇪" }
+];
+
 export default function Donate() {
   const [amount, setAmount] = useState(25);
   const [email, setEmail] = useState("vamshiyalavarthi11@gmail.com");
   const [message, setMessage] = useState("My mark on One Earth.");
   const [displayName, setDisplayName] = useState("Vamshi");
   const [theme, setTheme] = useState("Gold");
+  const [donorCountryCode, setDonorCountryCode] = useState("US");
 
   const [selectedMissionId, setSelectedMissionId] = useState("human-survival");
   const [selectedImpactId, setSelectedImpactId] = useState("clean-water-for-life");
@@ -57,6 +81,13 @@ export default function Donate() {
       selectedMission.impacts[0]
     );
   }, [selectedMission, selectedImpactId]);
+
+  const selectedDonorCountry = useMemo(() => {
+    return (
+      donorCountries.find((country) => country.countryCode === donorCountryCode) ||
+      donorCountries[0]
+    );
+  }, [donorCountryCode]);
 
   const cause = `${selectedMission.name} — ${selectedImpact.name}`;
 
@@ -100,6 +131,8 @@ export default function Donate() {
       amount,
       currency: "USD",
       displayName,
+      country: selectedDonorCountry.country,
+      countryCode: selectedDonorCountry.countryCode,
       message,
       theme,
       causeCategory: selectedMission.name,
@@ -202,7 +235,7 @@ export default function Donate() {
           <Panel
             icon={<ImagePlus className="h-5 w-5" />}
             title="Step 3 — Customize tile"
-            subtitle="This data is sent to the backend and saved into Donation, Tile, and AuditEntry records."
+            subtitle="This data is sent to the backend and saved into Donation, Tile, AuditEntry, and User country records."
           >
             <TileCustomizer
               email={email}
@@ -216,6 +249,46 @@ export default function Donate() {
               message={message}
               setMessage={setMessage}
             />
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-sky-400/10 p-2 text-sky-300">
+                  <MapPin className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-white">
+                    Choose your country on Earth
+                  </h3>
+                  <p className="text-sm text-slate-400">
+                    This places your legacy impact on the live globe.
+                  </p>
+                </div>
+              </div>
+
+              <label className="mt-4 block text-sm font-medium text-slate-300">
+                Donor country
+              </label>
+
+              <select
+                value={donorCountryCode}
+                onChange={(event) => setDonorCountryCode(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
+              >
+                {donorCountries.map((country) => (
+                  <option key={country.countryCode} value={country.countryCode}>
+                    {country.flag} {country.country}
+                  </option>
+                ))}
+              </select>
+
+              <p className="mt-3 text-sm text-slate-400">
+                Selected:{" "}
+                <span className="font-semibold text-white">
+                  {selectedDonorCountry.flag} {selectedDonorCountry.country}
+                </span>
+              </p>
+            </div>
           </Panel>
 
           <Panel

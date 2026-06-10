@@ -16,12 +16,53 @@ import {
   selectedBorderFromAddOns
 } from "../utils/donation.helpers.js";
 
+const approvedCountries = {
+  US: "United States",
+  IN: "India",
+  BR: "Brazil",
+  IT: "Italy",
+  JP: "Japan",
+  KR: "South Korea",
+  CA: "Canada",
+  NG: "Nigeria",
+  AU: "Australia",
+  KE: "Kenya",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  ES: "Spain",
+  CN: "China",
+  SG: "Singapore",
+  ZA: "South Africa",
+  EG: "Egypt",
+  AE: "United Arab Emirates"
+};
+
+function normalizeDonationCountry(country, countryCode) {
+  const safeCountryCode = String(countryCode || "US").trim().toUpperCase();
+  const approvedCountry = approvedCountries[safeCountryCode];
+
+  if (!approvedCountry) {
+    return {
+      country: "United States",
+      countryCode: "US"
+    };
+  }
+
+  return {
+    country: approvedCountry,
+    countryCode: safeCountryCode
+  };
+}
+
 export async function saveConfirmedDonation({
   email,
   amount,
   currency = "USD",
   amountUSD,
   displayName,
+  country = "United States",
+  countryCode = "US",
   message = "",
   theme = "Gold",
   causeCategory,
@@ -50,6 +91,7 @@ export async function saveConfirmedDonation({
   const safeCurrency = String(currency || "USD").toUpperCase();
   const safeDisplayName = displayName || normalizedEmail.split("@")[0];
   const safePaymentId = paymentId || `${paymentMethod}_${crypto.randomUUID()}`;
+  const safeCountry = normalizeDonationCountry(country, countryCode);
 
   const existingDonation = await Donation.findOne({
     paymentId: safePaymentId
@@ -71,11 +113,16 @@ export async function saveConfirmedDonation({
       email: normalizedEmail,
       username: createSafeUsername(normalizedEmail),
       displayName: safeDisplayName,
+      country: safeCountry.country,
+      countryCode: safeCountry.countryCode,
       referralCode: crypto.randomUUID().slice(0, 8)
     });
   }
 
   user.displayName = safeDisplayName || user.displayName;
+  user.country = safeCountry.country;
+  user.countryCode = safeCountry.countryCode;
+
   applyDonationRankToUser(user, safeAmountUSD);
 
   await user.save();

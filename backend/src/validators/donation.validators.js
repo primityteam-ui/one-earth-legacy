@@ -10,6 +10,28 @@ import {
   isApprovedMission
 } from "../constants/legacyOptions.js";
 
+const approvedCountryMap = {
+  US: "United States",
+  IN: "India",
+  BR: "Brazil",
+  IT: "Italy",
+  JP: "Japan",
+  KR: "South Korea",
+  CA: "Canada",
+  NG: "Nigeria",
+  AU: "Australia",
+  KE: "Kenya",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  ES: "Spain",
+  CN: "China",
+  SG: "Singapore",
+  ZA: "South Africa",
+  EG: "Egypt",
+  AE: "United Arab Emirates"
+};
+
 function getRequestedCauseCategory(req) {
   return String(req.body.causeCategory || defaultCauseCategory).trim();
 }
@@ -73,6 +95,34 @@ function validateAddOns(addOns) {
   return true;
 }
 
+function validateCountryCode(value) {
+  const countryCode = String(value || "US").trim().toUpperCase();
+
+  if (!approvedCountryMap[countryCode]) {
+    throw new Error(
+      `Country code must be one of: ${Object.keys(approvedCountryMap).join(", ")}`
+    );
+  }
+
+  return true;
+}
+
+function validateCountry(value, { req }) {
+  const countryCode = String(req.body.countryCode || "US").trim().toUpperCase();
+  const expectedCountry = approvedCountryMap[countryCode];
+  const country = String(value || expectedCountry || "United States").trim();
+
+  if (!expectedCountry) {
+    throw new Error("Country code is invalid");
+  }
+
+  if (country !== expectedCountry) {
+    throw new Error(`Country must match selected country code ${countryCode}`);
+  }
+
+  return true;
+}
+
 export const sharedDonationInputValidators = [
   body("amount")
     .isFloat({ min: 1 })
@@ -88,6 +138,20 @@ export const sharedDonationInputValidators = [
     .isString()
     .isLength({ max: 40 })
     .withMessage("Display name cannot exceed 40 characters"),
+
+  body("countryCode")
+    .optional()
+    .isString()
+    .isLength({ min: 2, max: 2 })
+    .withMessage("Country code must be 2 letters")
+    .custom(validateCountryCode),
+
+  body("country")
+    .optional()
+    .isString()
+    .isLength({ max: 80 })
+    .withMessage("Country is invalid")
+    .custom(validateCountry),
 
   body("message")
     .optional()
