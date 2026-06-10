@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 
-const tabs = ["Overview", "Donations", "Donors", "Missions", "Audit", "Security"];
+const tabs = ["Overview", "Donations", "Donors", "Missions", "Audit", "Security", "Health"];
 
 function formatMoney(value) {
   return `$${Number(value || 0).toLocaleString(undefined, {
@@ -115,6 +115,7 @@ export default function Admin() {
   const countryTotals = data?.countryTotals || [];
   const recentAuditEntries = data?.recentAuditEntries || [];
   const recentSecurityLogs = data?.recentSecurityLogs || [];
+  const health = data?.health || null;
 
   const revenueStats = useMemo(() => {
     return [
@@ -351,6 +352,10 @@ export default function Admin() {
 
           {activeTab === "Security" && (
             <SecurityPanel logs={recentSecurityLogs} />
+          )}
+
+          {activeTab === "Health" && (
+            <HealthPanel health={health} />
           )}
         </>
       )}
@@ -819,6 +824,161 @@ function AuditPanel({ entries }) {
         </div>
       )}
     </section>
+  );
+}
+
+function HealthPanel({ health }) {
+  if (!health) {
+    return (
+      <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<ShieldCheck />} title="System Health" />
+        <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+          Health data is not available yet.
+        </p>
+      </section>
+    );
+  }
+
+  const checks = [
+    {
+      title: "Backend",
+      status: health.backend?.status === "online",
+      goodText: "Online",
+      badText: "Offline",
+      details: [
+        `Environment: ${health.backend?.nodeEnv || "unknown"}`,
+        `Uptime: ${health.backend?.uptimeSeconds || 0} seconds`
+      ]
+    },
+    {
+      title: "MongoDB Database",
+      status: Boolean(health.database?.connected),
+      goodText: "Connected",
+      badText: health.database?.status || "Not connected",
+      details: [
+        `Ready state: ${health.database?.readyState ?? "unknown"}`,
+        `Status: ${health.database?.status || "unknown"}`
+      ]
+    },
+    {
+      title: "Stripe Checkout",
+      status: Boolean(health.stripe?.readyForCheckout),
+      goodText: "Secret key configured",
+      badText: "Missing STRIPE_SECRET_KEY",
+      details: [
+        `Checkout ready: ${health.stripe?.readyForCheckout ? "yes" : "no"}`,
+        `Webhook ready: ${health.stripe?.readyForWebhooks ? "yes" : "no"}`
+      ]
+    },
+    {
+      title: "Stripe Webhook",
+      status: Boolean(health.stripe?.readyForWebhooks),
+      goodText: "Webhook configured",
+      badText: "Missing webhook secret",
+      details: [
+        `Secret key: ${health.stripe?.secretKeyConfigured ? "configured" : "missing"}`,
+        `Webhook secret: ${health.stripe?.webhookSecretConfigured ? "configured" : "missing"}`
+      ]
+    },
+    {
+      title: "Admin IP Allowlist",
+      status: Boolean(health.security?.adminIpAllowlistEnabled),
+      goodText: "Enabled",
+      badText: "Disabled",
+      warningWhenFalse: true,
+      details: [
+        `Enabled: ${health.security?.adminIpAllowlistEnabled ? "yes" : "no"}`,
+        `Allowed IPs configured: ${health.security?.adminAllowedIpsConfigured ? "yes" : "no"}`
+      ]
+    },
+    {
+      title: "Admin 2FA",
+      status: Boolean(health.security?.adminTwoFactorRequired),
+      goodText: "Required",
+      badText: "Not required",
+      warningWhenFalse: true,
+      details: [
+        `Required: ${health.security?.adminTwoFactorRequired ? "yes" : "no"}`,
+        "Keep disabled until 2FA setup routes are completed."
+      ]
+    },
+    {
+      title: "Admin Rate Limiter",
+      status: Boolean(health.security?.adminRateLimiterEnabled),
+      goodText: "Enabled",
+      badText: "Bypassed in development",
+      warningWhenFalse: false,
+      details: [
+        `Enabled: ${health.security?.adminRateLimiterEnabled ? "yes" : "no"}`,
+        "Development mode intentionally bypasses rate limits."
+      ]
+    }
+  ];
+
+  return (
+    <section className="space-y-8">
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<ShieldCheck />} title="System Health Checks" />
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {checks.map((check) => (
+            <HealthCard key={check.title} check={check} />
+          ))}
+        </div>
+
+        <p className="mt-6 text-sm text-textSecondary">
+          Last generated: {formatDate(health.generatedAt)}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function HealthCard({ check }) {
+  const isGood = Boolean(check.status);
+  const isWarning = !isGood && check.warningWhenFalse;
+
+  return (
+    <div className="rounded-2xl border border-borderRoyal bg-black/30 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-display text-xl font-bold text-textPrimary">
+            {check.title}
+          </p>
+          <p
+            className={`mt-2 text-sm font-bold ${
+              isGood
+                ? "text-emerald-300"
+                : isWarning
+                  ? "text-amber-200"
+                  : "text-crimsonLight"
+            }`}
+          >
+            {isGood ? check.goodText : check.badText}
+          </p>
+        </div>
+
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-bold ${
+            isGood
+              ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+              : isWarning
+                ? "border border-amber-400/30 bg-amber-400/10 text-amber-200"
+                : "border border-crimson/40 bg-crimson/10 text-crimsonLight"
+          }`}
+        >
+          {isGood ? "OK" : isWarning ? "WARN" : "FIX"}
+        </span>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        {(check.details || []).map((detail) => (
+          <p key={detail} className="text-sm text-textSecondary">
+            {detail}
+          </p>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import User from "../models/User.js";
 import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
@@ -88,6 +90,46 @@ function buildDonationCsvRow(donation) {
     donation.rankAtTime || user.currentRank || "Spark",
     donation.createdAt ? new Date(donation.createdAt).toISOString() : ""
   ].map(csvEscape).join(",");
+}
+
+function getAdminHealthChecks() {
+  const mongoReadyState = mongoose.connection.readyState;
+
+  const mongoStatusMap = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+  };
+
+  const stripeSecretConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
+  const stripeWebhookConfigured = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
+
+  return {
+    backend: {
+      status: "online",
+      nodeEnv: process.env.NODE_ENV || "development",
+      uptimeSeconds: Math.round(process.uptime())
+    },
+    database: {
+      status: mongoStatusMap[mongoReadyState] || "unknown",
+      readyState: mongoReadyState,
+      connected: mongoReadyState === 1
+    },
+    stripe: {
+      secretKeyConfigured: stripeSecretConfigured,
+      webhookSecretConfigured: stripeWebhookConfigured,
+      readyForCheckout: stripeSecretConfigured,
+      readyForWebhooks: stripeSecretConfigured && stripeWebhookConfigured
+    },
+    security: {
+      adminIpAllowlistEnabled: process.env.ADMIN_IP_ALLOWLIST_ENABLED === "true",
+      adminAllowedIpsConfigured: Boolean(process.env.ADMIN_ALLOWED_IPS),
+      adminTwoFactorRequired: process.env.ADMIN_2FA_REQUIRED === "true",
+      adminRateLimiterEnabled: process.env.NODE_ENV !== "development"
+    },
+    generatedAt: new Date().toISOString()
+  };
 }
 
 export async function exportAdminDonationsCsv(req, res, next) {
@@ -376,6 +418,7 @@ export async function getAdminOverview(req, res, next) {
         details: log.details || {},
         createdAt: log.createdAt
       })),
+      health: getAdminHealthChecks(),
       filters: {
         search,
         paymentStatus: paymentStatus || "all",
