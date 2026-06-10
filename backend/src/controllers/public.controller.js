@@ -10,6 +10,180 @@ import {
   defaultCauseImpact
 } from "../constants/legacyOptions.js";
 
+const countryDirectory = {
+  US: {
+    country: "United States",
+    countryCode: "US",
+    flag: "🇺🇸",
+    lat: 37.0902,
+    lng: -95.7129
+  },
+  IN: {
+    country: "India",
+    countryCode: "IN",
+    flag: "🇮🇳",
+    lat: 20.5937,
+    lng: 78.9629
+  },
+  BR: {
+    country: "Brazil",
+    countryCode: "BR",
+    flag: "🇧🇷",
+    lat: -14.235,
+    lng: -51.9253
+  },
+  IT: {
+    country: "Italy",
+    countryCode: "IT",
+    flag: "🇮🇹",
+    lat: 41.8719,
+    lng: 12.5674
+  },
+  JP: {
+    country: "Japan",
+    countryCode: "JP",
+    flag: "🇯🇵",
+    lat: 36.2048,
+    lng: 138.2529
+  },
+  KR: {
+    country: "South Korea",
+    countryCode: "KR",
+    flag: "🇰🇷",
+    lat: 35.9078,
+    lng: 127.7669
+  },
+  CA: {
+    country: "Canada",
+    countryCode: "CA",
+    flag: "🇨🇦",
+    lat: 56.1304,
+    lng: -106.3468
+  },
+  NG: {
+    country: "Nigeria",
+    countryCode: "NG",
+    flag: "🇳🇬",
+    lat: 9.082,
+    lng: 8.6753
+  },
+  AU: {
+    country: "Australia",
+    countryCode: "AU",
+    flag: "🇦🇺",
+    lat: -25.2744,
+    lng: 133.7751
+  },
+  KE: {
+    country: "Kenya",
+    countryCode: "KE",
+    flag: "🇰🇪",
+    lat: -0.0236,
+    lng: 37.9062
+  },
+  GB: {
+    country: "United Kingdom",
+    countryCode: "GB",
+    flag: "🇬🇧",
+    lat: 55.3781,
+    lng: -3.436
+  },
+  DE: {
+    country: "Germany",
+    countryCode: "DE",
+    flag: "🇩🇪",
+    lat: 51.1657,
+    lng: 10.4515
+  },
+  FR: {
+    country: "France",
+    countryCode: "FR",
+    flag: "🇫🇷",
+    lat: 46.2276,
+    lng: 2.2137
+  },
+  ES: {
+    country: "Spain",
+    countryCode: "ES",
+    flag: "🇪🇸",
+    lat: 40.4637,
+    lng: -3.7492
+  },
+  CN: {
+    country: "China",
+    countryCode: "CN",
+    flag: "🇨🇳",
+    lat: 35.8617,
+    lng: 104.1954
+  },
+  SG: {
+    country: "Singapore",
+    countryCode: "SG",
+    flag: "🇸🇬",
+    lat: 1.3521,
+    lng: 103.8198
+  },
+  ZA: {
+    country: "South Africa",
+    countryCode: "ZA",
+    flag: "🇿🇦",
+    lat: -30.5595,
+    lng: 22.9375
+  },
+  EG: {
+    country: "Egypt",
+    countryCode: "EG",
+    flag: "🇪🇬",
+    lat: 26.8206,
+    lng: 30.8025
+  },
+  AE: {
+    country: "United Arab Emirates",
+    countryCode: "AE",
+    flag: "🇦🇪",
+    lat: 23.4241,
+    lng: 53.8478
+  },
+  GL: {
+    country: "Global",
+    countryCode: "GL",
+    flag: "🌍",
+    lat: 0,
+    lng: 0
+  }
+};
+
+const countryNameToCode = {
+  "united states": "US",
+  usa: "US",
+  us: "US",
+  america: "US",
+  india: "IN",
+  bharat: "IN",
+  brazil: "BR",
+  italy: "IT",
+  japan: "JP",
+  "south korea": "KR",
+  korea: "KR",
+  canada: "CA",
+  nigeria: "NG",
+  australia: "AU",
+  kenya: "KE",
+  "united kingdom": "GB",
+  uk: "GB",
+  england: "GB",
+  germany: "DE",
+  france: "FR",
+  spain: "ES",
+  china: "CN",
+  singapore: "SG",
+  "south africa": "ZA",
+  egypt: "EG",
+  uae: "AE",
+  "united arab emirates": "AE",
+  global: "GL"
+};
+
 const mockDonors = [
   {
     id: "emperor-empty",
@@ -73,21 +247,31 @@ const mockDonors = [
   }
 ];
 
-function getFlag(countryCode) {
-  const flags = {
-    US: "🇺🇸",
-    IN: "🇮🇳",
-    BR: "🇧🇷",
-    IT: "🇮🇹",
-    JP: "🇯🇵",
-    KR: "🇰🇷",
-    CA: "🇨🇦",
-    NG: "🇳🇬",
-    GL: "🌍",
-    UN: "🌍"
-  };
+function normalizeCountry(user = {}) {
+  const rawCountryCode = String(user.countryCode || "").trim().toUpperCase();
+  const rawCountry = String(user.country || "").trim();
+  const normalizedCountryKey = rawCountry.toLowerCase();
 
-  return flags[countryCode] || "🌍";
+  const countryCodeFromName = countryNameToCode[normalizedCountryKey];
+  const finalCountryCode =
+    countryDirectory[rawCountryCode] && rawCountryCode !== "UN"
+      ? rawCountryCode
+      : countryCodeFromName || "US";
+
+  const countryInfo = countryDirectory[finalCountryCode] || countryDirectory.US;
+
+  return {
+    country: countryInfo.country,
+    countryCode: countryInfo.countryCode,
+    flag: countryInfo.flag,
+    lat: countryInfo.lat,
+    lng: countryInfo.lng
+  };
+}
+
+function getFlag(countryCode) {
+  const code = String(countryCode || "").trim().toUpperCase();
+  return countryDirectory[code]?.flag || "🌍";
 }
 
 function cleanQueryValue(value) {
@@ -222,14 +406,19 @@ async function getDatabaseDonors(req) {
       }
 
       const causeData = normalizeCauseData(latestDonation);
+      const countryData = normalizeCountry(user);
 
       return {
         id: user._id.toString(),
-        name: user.isAnonymous ? "Anonymous" : user.displayName || user.username || user.email,
+        name: user.isAnonymous
+          ? "Anonymous"
+          : user.displayName || user.username || user.email,
         username: user.username,
-        country: user.country || "Unknown",
-        countryCode: user.countryCode || "UN",
-        flag: getFlag(user.countryCode || "UN"),
+        country: countryData.country,
+        countryCode: countryData.countryCode,
+        flag: countryData.flag,
+        lat: countryData.lat,
+        lng: countryData.lng,
         rank: user.currentRank || "Spark",
         amountUSD: Number(user.totalDonated || 0),
         message: latestDonation?.tileMessage || "Saved MongoDB donor profile.",
@@ -262,8 +451,14 @@ async function getDatabaseTiles(req) {
     : {};
 
   const tiles = await Tile.find(tileQuery)
-    .populate("userId", "displayName username email country countryCode currentRank totalDonated isAnonymous role")
-    .populate("donationId", "amountUSD rankAtTime tileMessage isAnonymous tileTheme causeCategory causeImpact cause createdAt")
+    .populate(
+      "userId",
+      "displayName username email country countryCode currentRank totalDonated isAnonymous role"
+    )
+    .populate(
+      "donationId",
+      "amountUSD rankAtTime tileMessage isAnonymous tileTheme causeCategory causeImpact cause createdAt"
+    )
     .sort({ createdAt: -1 })
     .limit(200)
     .lean();
@@ -272,16 +467,20 @@ async function getDatabaseTiles(req) {
     const user = tile.userId || {};
     const donation = tile.donationId || {};
     const causeData = normalizeCauseData(donation);
+    const countryData = normalizeCountry(user);
 
     return {
       id: tile._id.toString(),
-      name: donation.isAnonymous || user.isAnonymous
-        ? "Anonymous"
-        : user.displayName || user.username || user.email || "Unknown Donor",
+      name:
+        donation.isAnonymous || user.isAnonymous
+          ? "Anonymous"
+          : user.displayName || user.username || user.email || "Unknown Donor",
       username: user.username || "unknown",
-      country: user.country || "Unknown",
-      countryCode: user.countryCode || "UN",
-      flag: getFlag(user.countryCode || "UN"),
+      country: countryData.country,
+      countryCode: countryData.countryCode,
+      flag: countryData.flag,
+      lat: countryData.lat,
+      lng: countryData.lng,
       rank: donation.rankAtTime || user.currentRank || "Spark",
       amountUSD: Number(donation.amountUSD || user.totalDonated || 0),
       message: tile.message || donation.tileMessage || "Saved MongoDB legacy tile.",
@@ -304,7 +503,7 @@ export async function getPublicStats(req, res, next) {
     const donationFilter = buildCauseMongoFilter(req);
 
     const matchingDonations = await Donation.find(donationFilter)
-      .populate("userId", "countryCode isBanned")
+      .populate("userId", "countryCode country isBanned")
       .lean();
 
     const validDonations = matchingDonations.filter((donation) => {
@@ -317,8 +516,13 @@ export async function getPublicStats(req, res, next) {
         0
       );
 
-      const donors = new Set(validDonations.map((donation) => donation.userId._id.toString()));
-      const countries = new Set(validDonations.map((donation) => donation.userId.countryCode || "UN"));
+      const donors = new Set(
+        validDonations.map((donation) => donation.userId._id.toString())
+      );
+
+      const countries = new Set(
+        validDonations.map((donation) => normalizeCountry(donation.userId).countryCode)
+      );
 
       return res.status(200).json({
         totalDonated: Number(totalDonated.toFixed(2)),
@@ -361,6 +565,8 @@ export async function getTiles(req, res, next) {
         country: "Global",
         countryCode: "GL",
         flag: "🌍",
+        lat: 0,
+        lng: 0,
         rank: "Emperor",
         amountUSD: 1000000,
         message: "The throne awaits the first Emperor of Earth.",
@@ -403,6 +609,8 @@ export async function getLeaderboard(req, res, next) {
         country: "Global",
         countryCode: "GL",
         flag: "🌍",
+        lat: 0,
+        lng: 0,
         rank: "Emperor",
         amountUSD: 1000000,
         message: "The throne awaits the first Emperor of Earth.",
@@ -415,7 +623,9 @@ export async function getLeaderboard(req, res, next) {
       const leaderboard = hasCauseFilter ? dbDonors : [throne, ...dbDonors];
 
       return res.status(200).json({
-        leaderboard: leaderboard.sort((a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0)),
+        leaderboard: leaderboard.sort(
+          (a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0)
+        ),
         filters,
         source: "mongodb"
       });
@@ -433,45 +643,139 @@ export async function getLeaderboard(req, res, next) {
 
 export async function getCountryLeaderboard(req, res, next) {
   try {
-    const dbDonors = await getDatabaseDonors(req);
-    const filters = getCauseFilters(req);
-    const sourceDonors = dbDonors.length > 0
-      ? dbDonors
-      : getFilteredMockDonors(req).filter((item) => !item.isEmperor);
+    const donationFilter = buildCauseMongoFilter(req);
+
+    const donations = await Donation.find(donationFilter)
+      .populate(
+        "userId",
+        "displayName username email country countryCode totalDonated isAnonymous isBanned"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const validDonations = donations.filter((donation) => {
+      return donation.userId && !donation.userId.isBanned;
+    });
+
+    const sourceItems =
+      validDonations.length > 0
+        ? validDonations.map((donation) => {
+            const user = donation.userId || {};
+            const countryData = normalizeCountry(user);
+            const causeData = normalizeCauseData(donation);
+
+            return {
+              id: donation._id.toString(),
+              name: user.isAnonymous
+                ? "Anonymous"
+                : user.displayName || user.username || user.email || "Unknown Donor",
+              country: countryData.country,
+              countryCode: countryData.countryCode,
+              flag: countryData.flag,
+              lat: countryData.lat,
+              lng: countryData.lng,
+              amountUSD: Number(donation.amountUSD || 0),
+              causeCategory: causeData.causeCategory,
+              causeImpact: causeData.causeImpact,
+              cause: causeData.cause,
+              createdAt: donation.createdAt
+            };
+          })
+        : getFilteredMockDonors(req)
+            .filter((item) => !item.isEmperor)
+            .map((donor) => {
+              const countryData = normalizeCountry(donor);
+
+              return {
+                ...donor,
+                country: countryData.country,
+                countryCode: countryData.countryCode,
+                flag: countryData.flag,
+                lat: countryData.lat,
+                lng: countryData.lng
+              };
+            });
 
     const countryMap = new Map();
 
-    for (const donor of sourceDonors.filter((item) => !item.isEmperor)) {
-      const existing = countryMap.get(donor.countryCode) || {
-        country: donor.country,
-        countryCode: donor.countryCode,
-        flag: donor.flag,
+    for (const item of sourceItems) {
+      const key = item.countryCode || "US";
+
+      const existing = countryMap.get(key) || {
+        country: item.country,
+        countryCode: item.countryCode,
+        flag: item.flag,
+        lat: item.lat,
+        lng: item.lng,
         totalDonated: 0,
+        totalAmount: 0,
         donors: 0,
-        topDonor: donor.name,
-        topAmount: 0
+        donorCount: 0,
+        topDonor: item.name,
+        topAmount: 0,
+        topMission: item.causeCategory,
+        mission: item.causeCategory,
+        causeCategory: item.causeCategory,
+        causeImpact: item.causeImpact,
+        cause: item.cause,
+        missionTotals: {}
       };
 
-      existing.totalDonated += Number(donor.amountUSD || 0);
+      existing.totalDonated += Number(item.amountUSD || 0);
+      existing.totalAmount += Number(item.amountUSD || 0);
       existing.donors += 1;
+      existing.donorCount += 1;
 
-      if (Number(donor.amountUSD || 0) > Number(existing.topAmount || 0)) {
-        existing.topAmount = Number(donor.amountUSD || 0);
-        existing.topDonor = donor.name;
+      const mission = item.causeCategory || defaultCauseCategory;
+      existing.missionTotals[mission] =
+        Number(existing.missionTotals[mission] || 0) + Number(item.amountUSD || 0);
+
+      if (Number(item.amountUSD || 0) > Number(existing.topAmount || 0)) {
+        existing.topAmount = Number(item.amountUSD || 0);
+        existing.topDonor = item.name;
+        existing.topMission = mission;
+        existing.mission = mission;
+        existing.causeCategory = item.causeCategory;
+        existing.causeImpact = item.causeImpact;
+        existing.cause = item.cause;
       }
 
-      countryMap.set(donor.countryCode, existing);
+      countryMap.set(key, existing);
     }
 
+    const countries = Array.from(countryMap.values())
+      .map((item) => {
+        const missionEntries = Object.entries(item.missionTotals || {});
+        const topMissionEntry = missionEntries.sort((a, b) => b[1] - a[1])[0];
+
+        const topMission = topMissionEntry?.[0] || item.topMission || defaultCauseCategory;
+
+        return {
+          country: item.country,
+          countryCode: item.countryCode,
+          flag: item.flag,
+          lat: item.lat,
+          lng: item.lng,
+          totalDonated: Number(item.totalDonated.toFixed(2)),
+          totalAmount: Number(item.totalAmount.toFixed(2)),
+          donors: item.donors,
+          donorCount: item.donorCount,
+          topDonor: item.topDonor,
+          topAmount: Number(item.topAmount.toFixed(2)),
+          topMission,
+          mission: topMission,
+          causeCategory: topMission,
+          causeImpact: item.causeImpact,
+          cause: item.cause
+        };
+      })
+      .sort((a, b) => b.totalDonated - a.totalDonated);
+
     return res.status(200).json({
-      countries: Array.from(countryMap.values())
-        .map((item) => ({
-          ...item,
-          totalDonated: Number(item.totalDonated.toFixed(2))
-        }))
-        .sort((a, b) => b.totalDonated - a.totalDonated),
-      filters,
-      source: dbDonors.length > 0 ? "mongodb" : "mock"
+      countries,
+      data: countries,
+      filters: getCauseFilters(req),
+      source: validDonations.length > 0 ? "mongodb" : "mock"
     });
   } catch (error) {
     next(error);
@@ -503,8 +807,8 @@ export async function getCurrentEmperor(req, res, next) {
         id: activeEmperor.userId?._id,
         name: activeEmperor.userId?.displayName || activeEmperor.userId?.username,
         username: activeEmperor.userId?.username,
-        country: activeEmperor.userId?.country,
-        countryCode: activeEmperor.userId?.countryCode,
+        country: normalizeCountry(activeEmperor.userId).country,
+        countryCode: normalizeCountry(activeEmperor.userId).countryCode,
         totalDonated: activeEmperor.totalDonated
       },
       throneEmpty: false,
@@ -626,20 +930,26 @@ export async function getPublicProfile(req, res, next) {
 
     if (user) {
       const latestTile = await Tile.findOne({ userId: user._id })
-        .populate("donationId", "causeCategory causeImpact cause amountUSD rankAtTime tileMessage isAnonymous tileTheme createdAt")
+        .populate(
+          "donationId",
+          "causeCategory causeImpact cause amountUSD rankAtTime tileMessage isAnonymous tileTheme createdAt"
+        )
         .sort({ createdAt: -1 })
         .lean();
 
       const latestDonation = latestTile?.donationId || {};
       const causeData = normalizeCauseData(latestDonation);
+      const countryData = normalizeCountry(user);
 
       return res.status(200).json({
         profile: {
           displayName: user.displayName || user.username,
           username: user.username,
-          country: user.country || "Unknown",
-          countryCode: user.countryCode || "UN",
-          flag: getFlag(user.countryCode || "UN"),
+          country: countryData.country,
+          countryCode: countryData.countryCode,
+          flag: countryData.flag,
+          lat: countryData.lat,
+          lng: countryData.lng,
           rank: user.currentRank || "Spark",
           totalDonated: Number(user.totalDonated || 0),
           message: latestTile?.message || "Saved MongoDB donor profile.",
@@ -687,13 +997,17 @@ export async function getPublicProfile(req, res, next) {
       });
     }
 
+    const countryData = normalizeCountry(donor);
+
     return res.status(200).json({
       profile: {
         displayName: donor.name,
         username: donor.username,
-        country: donor.country,
-        countryCode: donor.countryCode,
-        flag: donor.flag,
+        country: countryData.country,
+        countryCode: countryData.countryCode,
+        flag: countryData.flag,
+        lat: countryData.lat,
+        lng: countryData.lng,
         rank: donor.rank,
         totalDonated: donor.amountUSD,
         message: donor.message,
