@@ -54,6 +54,13 @@ export const globalLimiter = createLimiter({
   message: "Too many requests. Please try again later."
 });
 
+export const adminLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Too many admin requests. Please wait and try again.",
+  type: "rate_limit_hit"
+});
+
 export const authLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
   max: 10,

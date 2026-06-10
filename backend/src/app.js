@@ -12,7 +12,7 @@ import paymentRoutes from "./routes/payment.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
-import { globalLimiter } from "./middleware/rateLimits.js";
+import { adminLimiter, globalLimiter } from "./middleware/rateLimits.js";
 
 const app = express();
 
@@ -92,7 +92,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/donate", donationRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminLimiter, adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
