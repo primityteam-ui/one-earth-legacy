@@ -1,102 +1,98 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   BadgeDollarSign,
-  Ban,
   Crown,
-  FileWarning,
+  Database,
+  FileText,
+  Globe2,
   Landmark,
-  LockKeyhole,
+  Loader2,
+  MapPin,
   ShieldCheck,
+  Sparkles,
   Ticket,
   Users
 } from "lucide-react";
+import api from "../api/client.js";
 
-const revenueStats = [
-  { label: "Total revenue", value: "$40.00", icon: <BadgeDollarSign /> },
-  { label: "Cause reserve", value: "$24.00", icon: <Landmark /> },
-  { label: "Platform reserve", value: "$10.00", icon: <ShieldCheck /> },
-  { label: "Lottery reserve", value: "$6.00", icon: <Ticket /> }
-];
+const tabs = ["Overview", "Donations", "Donors", "Missions", "Security"];
 
-const donors = [
-  {
-    id: 1,
-    name: "Vamshi Yalavarthi",
-    email: "vamshiyalavarthi11@gmail.com",
-    rank: "Citizen",
-    amount: "$40.00",
-    status: "Active"
-  },
-  {
-    id: 2,
-    name: "Maya Singh",
-    email: "maya@example.com",
-    rank: "Duke",
-    amount: "$25,000.00",
-    status: "Active"
-  },
-  {
-    id: 3,
-    name: "Lucas Silva",
-    email: "lucas@example.com",
-    rank: "Baron",
-    amount: "$6,800.00",
-    status: "Review"
+function formatMoney(value) {
+  return `$${Number(value || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+}
+
+function formatDate(value) {
+  if (!value) return "Unknown";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
   }
-];
 
-const flags = [
-  {
-    id: 1,
-    type: "Suspicious payment",
-    user: "Lucas Silva",
-    detail: "Large donation requires manual review before rank confirmation.",
-    severity: "Medium"
-  },
-  {
-    id: 2,
-    type: "Content report",
-    user: "Anonymous",
-    detail: "Tile message reported by 3 different IP addresses.",
-    severity: "High"
-  },
-  {
-    id: 3,
-    type: "Rate limit hit",
-    user: "Unknown IP",
-    detail: "Multiple OTP attempts from same IP during testing.",
-    severity: "Low"
-  }
-];
-
-const sponsors = [
-  {
-    id: 1,
-    brand: "No active sponsor",
-    placement: "Homepage featured tile",
-    amount: "$499/mo",
-    status: "Open"
-  },
-  {
-    id: 2,
-    brand: "No active sponsor",
-    placement: "Live ticker sponsor",
-    amount: "$199/mo",
-    status: "Open"
-  },
-  {
-    id: 3,
-    brand: "No active sponsor",
-    placement: "Country leaderboard sponsor",
-    amount: "$99/mo",
-    status: "Open"
-  }
-];
+  return date.toLocaleString();
+}
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("Revenue");
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function loadAdminData() {
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = await api.get("/admin/overview");
+      setData(response.data);
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Could not load admin dashboard. Make sure you are logged in as an admin."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadAdminData();
+  }, []);
+
+  const stats = data?.stats || {};
+  const recentDonations = data?.recentDonations || [];
+  const topDonors = data?.topDonors || [];
+  const missionTotals = data?.missionTotals || {};
+
+  const revenueStats = useMemo(() => {
+    return [
+      {
+        label: "Total revenue",
+        value: formatMoney(stats.totalRevenue),
+        icon: <BadgeDollarSign className="h-5 w-5" />
+      },
+      {
+        label: "Cause reserve",
+        value: formatMoney(stats.causeReserve),
+        icon: <Landmark className="h-5 w-5" />
+      },
+      {
+        label: "Platform reserve",
+        value: formatMoney(stats.platformReserve),
+        icon: <ShieldCheck className="h-5 w-5" />
+      },
+      {
+        label: "Lottery reserve",
+        value: formatMoney(stats.lotteryReserve),
+        icon: <Ticket className="h-5 w-5" />
+      }
+    ];
+  }, [stats]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
@@ -104,106 +100,263 @@ export default function Admin() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="mb-2 text-sm uppercase tracking-[0.35em] text-crimsonLight">
-              Admin Preview
+              Admin Control Center
             </p>
 
             <h1 className="font-display text-4xl font-bold md:text-6xl">
-              Control Center
+              Real Donation Dashboard
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              This is a frontend preview of the admin panel. Production admin access must be
-              protected by admin role, IP whitelist, hardware 2FA, security logs, and a separate
-              admin subdomain.
+              View real MongoDB donations, donors, locations, missions, payment status,
+              reserve split, and public legacy activity.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-crimson/40 bg-crimson/10 px-5 py-4">
-            <p className="text-sm text-crimsonLight">Security status</p>
-            <p className="font-display text-2xl font-bold text-textPrimary">
-              Preview Only
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={loadAdminData}
+            className="rounded-full border border-gold/30 bg-gold/10 px-5 py-3 font-bold text-goldLight transition hover:bg-gold hover:text-black"
+          >
+            Refresh dashboard
+          </button>
         </div>
       </section>
 
-      <section className="mb-8 grid gap-5 md:grid-cols-4">
-        {revenueStats.map((stat) => (
-          <StatCard key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} />
-        ))}
-      </section>
-
-      <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
-        <div className="flex flex-wrap gap-3">
-          {["Revenue", "Donors", "Flags", "Sponsors", "Lottery", "Security"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`rounded-full px-5 py-3 text-sm font-bold ${
-                activeTab === tab
-                  ? "bg-gold text-black"
-                  : "border border-borderRoyal bg-black/30 text-textSecondary hover:border-gold hover:text-gold"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+      {loading ? (
+        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
+          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-gold" />
+          Loading admin dashboard...
         </div>
-      </section>
+      ) : errorMessage ? (
+        <div className="rounded-[2rem] border border-crimson/40 bg-crimson/10 p-8">
+          <AlertTriangle className="mb-4 h-10 w-10 text-crimsonLight" />
+          <p className="font-display text-2xl font-bold text-textPrimary">
+            Admin data unavailable
+          </p>
+          <p className="mt-3 text-textSecondary">{errorMessage}</p>
+        </div>
+      ) : (
+        <>
+          <section className="mb-8 grid gap-5 md:grid-cols-4">
+            {revenueStats.map((stat) => (
+              <StatCard
+                key={stat.label}
+                icon={stat.icon}
+                label={stat.label}
+                value={stat.value}
+              />
+            ))}
+          </section>
 
-      {activeTab === "Revenue" && <RevenuePanel />}
-      {activeTab === "Donors" && <DonorsPanel />}
-      {activeTab === "Flags" && <FlagsPanel />}
-      {activeTab === "Sponsors" && <SponsorsPanel />}
-      {activeTab === "Lottery" && <LotteryPanel />}
-      {activeTab === "Security" && <SecurityPanel />}
+          <section className="mb-8 grid gap-5 md:grid-cols-4">
+            <StatCard
+              icon={<Users className="h-5 w-5" />}
+              label="Paid donors"
+              value={Number(stats.totalDonors || 0).toLocaleString()}
+            />
+            <StatCard
+              icon={<Globe2 className="h-5 w-5" />}
+              label="Active countries"
+              value={Number(stats.activeCountries || 0).toLocaleString()}
+            />
+            <StatCard
+              icon={<Database className="h-5 w-5" />}
+              label="Paid donations"
+              value={Number(stats.donationsCount || 0).toLocaleString()}
+            />
+            <StatCard
+              icon={<FileText className="h-5 w-5" />}
+              label="Audit entries"
+              value={Number(stats.auditCount || 0).toLocaleString()}
+            />
+          </section>
+
+          <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
+            <div className="flex flex-wrap gap-3">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`rounded-full px-5 py-3 text-sm font-bold ${
+                    activeTab === tab
+                      ? "bg-gold text-black"
+                      : "border border-borderRoyal bg-black/30 text-textSecondary hover:border-gold hover:text-gold"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {activeTab === "Overview" && (
+            <OverviewPanel
+              stats={stats}
+              recentDonations={recentDonations}
+              missionTotals={missionTotals}
+            />
+          )}
+
+          {activeTab === "Donations" && (
+            <DonationsPanel donations={recentDonations} />
+          )}
+
+          {activeTab === "Donors" && (
+            <DonorsPanel donors={topDonors} />
+          )}
+
+          {activeTab === "Missions" && (
+            <MissionsPanel missionTotals={missionTotals} />
+          )}
+
+          {activeTab === "Security" && <SecurityPanel />}
+        </>
+      )}
     </main>
   );
 }
 
-function RevenuePanel() {
+function OverviewPanel({ stats, recentDonations, missionTotals }) {
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<BadgeDollarSign />} title="Revenue Breakdown" />
+        <PanelHeader icon={<BadgeDollarSign />} title="Revenue Split" />
 
         <div className="space-y-5">
-          <RevenueBar label="60% Cause allocation" amount="$24.00" width="60%" />
-          <RevenueBar label="25% Platform sustainability" amount="$10.00" width="25%" />
-          <RevenueBar label="15% Lottery pool" amount="$6.00" width="15%" />
-          <RevenueBar label="Add-ons revenue" amount="$0.00" width="5%" />
-          <RevenueBar label="Subscriptions revenue" amount="$0.00" width="5%" />
-          <RevenueBar label="Sponsored placements" amount="$0.00" width="5%" />
+          <RevenueBar
+            label="60% Cause allocation"
+            amount={formatMoney(stats.causeReserve)}
+            width="60%"
+          />
+          <RevenueBar
+            label="25% Platform sustainability"
+            amount={formatMoney(stats.platformReserve)}
+            width="25%"
+          />
+          <RevenueBar
+            label="15% Lottery pool"
+            amount={formatMoney(stats.lotteryReserve)}
+            width="15%"
+          />
+        </div>
+
+        <div className="mt-8">
+          <PanelHeader icon={<Sparkles />} title="Mission Totals" />
+          <MissionTotals missionTotals={missionTotals} />
         </div>
       </div>
 
-      <AdminWarning />
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<Crown />} title="Latest Donations" />
+
+        <div className="space-y-4">
+          {recentDonations.slice(0, 5).map((donation) => (
+            <DonationMiniCard key={donation.id} donation={donation} />
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
 
-function DonorsPanel() {
+function DonationsPanel({ donations }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<Users />} title="Donor Management" />
+      <PanelHeader icon={<Database />} title="Donation Records" />
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1100px] border-separate border-spacing-y-3">
+          <thead>
+            <tr className="text-left text-sm text-textSecondary">
+              <th className="px-4">Donor</th>
+              <th className="px-4">Amount</th>
+              <th className="px-4">Mission</th>
+              <th className="px-4">Location</th>
+              <th className="px-4">Payment</th>
+              <th className="px-4">Settlement</th>
+              <th className="px-4">Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {donations.map((donation) => (
+              <tr key={donation.id} className="bg-black/30">
+                <td className="rounded-l-2xl px-4 py-4">
+                  <p className="font-bold text-textPrimary">
+                    {donation.donorName}
+                  </p>
+                  <p className="text-sm text-textSecondary">
+                    {donation.email || "Hidden"}
+                  </p>
+                </td>
+
+                <td className="px-4 py-4 font-numbers font-bold text-goldLight">
+                  {formatMoney(donation.amountUSD)}
+                </td>
+
+                <td className="px-4 py-4">
+                  <p className="font-bold text-textPrimary">
+                    {donation.causeCategory}
+                  </p>
+                  <p className="text-sm text-textSecondary">
+                    {donation.causeImpact}
+                  </p>
+                </td>
+
+                <td className="px-4 py-4 text-textSecondary">
+                  {donation.location?.label || "Unknown"}
+                </td>
+
+                <td className="px-4 py-4">
+                  <StatusPill value={donation.paymentStatus} />
+                </td>
+
+                <td className="px-4 py-4">
+                  <StatusPill value={donation.settlementStatus} />
+                </td>
+
+                <td className="rounded-r-2xl px-4 py-4 text-sm text-textSecondary">
+                  {formatDate(donation.createdAt)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function DonorsPanel({ donors }) {
+  return (
+    <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+      <PanelHeader icon={<Users />} title="Top Donors" />
 
       <div className="space-y-4">
         {donors.map((donor) => (
           <div
             key={donor.id}
-            className="grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 md:grid-cols-[1fr_140px_140px_120px]"
+            className="grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 md:grid-cols-[1fr_160px_160px]"
           >
             <div>
-              <p className="font-bold text-textPrimary">{donor.name}</p>
-              <p className="text-sm text-textSecondary">{donor.email}</p>
+              <p className="font-bold text-textPrimary">
+                {donor.displayName}
+              </p>
+              <p className="text-sm text-textSecondary">
+                {donor.email}
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-sm text-textSecondary">
+                <MapPin className="h-4 w-4 text-gold" />
+                {donor.location?.label || "Unknown"}
+              </p>
             </div>
 
             <p className="font-bold text-goldLight">{donor.rank}</p>
-            <p className="font-numbers font-bold text-textPrimary">{donor.amount}</p>
-
-            <button className="rounded-full border border-crimson/40 px-4 py-2 text-sm font-bold text-crimsonLight hover:bg-crimson hover:text-white">
-              Review
-            </button>
+            <p className="font-numbers font-bold text-textPrimary">
+              {formatMoney(donor.totalDonated)}
+            </p>
           </div>
         ))}
       </div>
@@ -211,99 +364,40 @@ function DonorsPanel() {
   );
 }
 
-function FlagsPanel() {
+function MissionsPanel({ missionTotals }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<FileWarning />} title="Flag Queue" />
-
-      <div className="space-y-4">
-        {flags.map((flag) => (
-          <div
-            key={flag.id}
-            className="rounded-[1.5rem] border border-crimson/30 bg-crimson/10 p-5"
-          >
-            <div className="mb-3 flex flex-wrap items-center gap-3">
-              <span className="rounded-full border border-crimson/40 bg-crimson/20 px-3 py-1 text-sm font-bold text-crimsonLight">
-                {flag.severity}
-              </span>
-
-              <span className="rounded-full border border-borderRoyal bg-black/30 px-3 py-1 text-sm text-textSecondary">
-                {flag.type}
-              </span>
-            </div>
-
-            <p className="font-bold text-textPrimary">{flag.user}</p>
-            <p className="mt-2 text-textSecondary">{flag.detail}</p>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button className="rounded-full bg-gold px-5 py-2 font-bold text-black">
-                Approve
-              </button>
-              <button className="rounded-full border border-crimson/40 px-5 py-2 font-bold text-crimsonLight hover:bg-crimson hover:text-white">
-                Hide / Ban
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <PanelHeader icon={<Sparkles />} title="Mission Performance" />
+      <MissionTotals missionTotals={missionTotals} />
     </section>
   );
 }
 
-function SponsorsPanel() {
+function MissionTotals({ missionTotals }) {
+  const entries = Object.entries(missionTotals || {});
+
+  if (entries.length === 0) {
+    return (
+      <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+        No mission donations yet.
+      </p>
+    );
+  }
+
   return (
-    <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<Crown />} title="Sponsor Placements" />
-
-      <div className="space-y-4">
-        {sponsors.map((sponsor) => (
-          <div
-            key={sponsor.id}
-            className="grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 md:grid-cols-[1fr_180px_120px]"
-          >
-            <div>
-              <p className="font-bold text-textPrimary">{sponsor.placement}</p>
-              <p className="text-sm text-textSecondary">{sponsor.brand}</p>
-            </div>
-
-            <p className="font-numbers font-bold text-goldLight">{sponsor.amount}</p>
-
-            <span className="w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
-              {sponsor.status}
-            </span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function LotteryPanel() {
-  return (
-    <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
-      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<Ticket />} title="Lottery Draw Tool" />
-
-        <div className="rounded-[1.5rem] border border-gold/30 bg-gold/10 p-6">
-          <p className="font-display text-3xl font-bold text-textPrimary">
-            Current Prize Pool
+    <div className="space-y-4">
+      {entries.map(([mission, total]) => (
+        <div
+          key={mission}
+          className="flex items-center justify-between gap-4 rounded-2xl border border-borderRoyal bg-black/30 p-5"
+        >
+          <p className="font-bold text-textPrimary">{mission}</p>
+          <p className="font-numbers font-bold text-goldLight">
+            {formatMoney(total)}
           </p>
-          <p className="mt-3 font-numbers text-5xl font-bold text-goldLight">$6.00</p>
-          <p className="mt-4 text-textSecondary">
-            The real lottery draw must use verified donor records and be logged publicly in the audit log.
-          </p>
-
-          <button
-            onClick={() => alert("Lottery draw backend will be connected later.")}
-            className="mt-6 rounded-full bg-gold px-6 py-3 font-bold text-black shadow-gold hover:bg-goldLight"
-          >
-            Preview Draw Winner
-          </button>
         </div>
-      </div>
-
-      <AdminWarning />
-    </section>
+      ))}
+    </div>
   );
 }
 
@@ -311,28 +405,66 @@ function SecurityPanel() {
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<LockKeyhole />} title="Admin Security Rules" />
+        <PanelHeader icon={<ShieldCheck />} title="Admin Security" />
 
-        <SecurityLine text="Admin panel must run on admin.onearthlegacy.com." />
-        <SecurityLine text="Admin access requires JWT authentication." />
-        <SecurityLine text="Admin access requires IP whitelist." />
-        <SecurityLine text="Admin access requires hardware 2FA or TOTP." />
-        <SecurityLine text="Every admin action must be saved to SecurityLog." />
-        <SecurityLine text="Bank withdrawals require extra 2FA re-verification." />
-        <SecurityLine text="Admin routes must never be exposed publicly." />
+        <SecurityLine text="Frontend /admin is protected by admin role." />
+        <SecurityLine text="Backend /api/admin routes require JWT authentication." />
+        <SecurityLine text="Backend /api/admin routes require admin role." />
+        <SecurityLine text="Production should add IP whitelist and hardware 2FA." />
+        <SecurityLine text="Every future admin write action should create a SecurityLog record." />
       </div>
 
       <div className="rounded-[2rem] border border-crimson/40 bg-crimson/10 p-6">
         <AlertTriangle className="mb-4 h-10 w-10 text-crimsonLight" />
         <p className="font-display text-2xl font-bold text-textPrimary">
-          Production Warning
+          Read-only admin dashboard
         </p>
         <p className="mt-3 text-textSecondary">
-          This preview route is visible only for development. Before launch, the real admin panel
-          should be moved to a separate protected subdomain and locked down.
+          This dashboard only reads data. Do not add destructive admin actions until
+          2FA, IP whitelist, and security logging are fully implemented.
         </p>
       </div>
     </section>
+  );
+}
+
+function DonationMiniCard({ donation }) {
+  return (
+    <div className="rounded-2xl border border-borderRoyal bg-black/30 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-bold text-textPrimary">{donation.donorName}</p>
+          <p className="text-sm text-textSecondary">
+            {donation.location?.label || "Unknown"}
+          </p>
+        </div>
+
+        <p className="font-numbers font-bold text-goldLight">
+          {formatMoney(donation.amountUSD)}
+        </p>
+      </div>
+
+      <p className="mt-3 text-sm text-textSecondary">
+        {donation.causeCategory} — {donation.causeImpact}
+      </p>
+    </div>
+  );
+}
+
+function StatusPill({ value }) {
+  const text = value || "unknown";
+  const good = ["paid", "settled"].includes(text);
+
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-bold ${
+        good
+          ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+          : "border border-gold/30 bg-gold/10 text-goldLight"
+      }`}
+    >
+      {text}
+    </span>
   );
 }
 
@@ -344,7 +476,9 @@ function StatCard({ icon, label, value }) {
       </div>
 
       <p className="text-sm text-textSecondary">{label}</p>
-      <p className="mt-2 font-numbers text-2xl font-bold text-textPrimary">{value}</p>
+      <p className="mt-2 font-numbers text-2xl font-bold text-textPrimary">
+        {value}
+      </p>
     </div>
   );
 }
@@ -353,7 +487,9 @@ function PanelHeader({ icon, title }) {
   return (
     <div className="mb-6 flex items-center gap-3">
       <div className="text-gold">{icon}</div>
-      <h2 className="font-display text-2xl font-bold text-textPrimary">{title}</h2>
+      <h2 className="font-display text-2xl font-bold text-textPrimary">
+        {title}
+      </h2>
     </div>
   );
 }
@@ -361,7 +497,7 @@ function PanelHeader({ icon, title }) {
 function RevenueBar({ label, amount, width }) {
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between gap-4">
         <p className="text-textSecondary">{label}</p>
         <p className="font-numbers font-bold text-goldLight">{amount}</p>
       </div>
@@ -378,21 +514,6 @@ function SecurityLine({ text }) {
     <div className="mb-3 flex items-center gap-3 rounded-2xl border border-borderRoyal bg-black/30 p-4">
       <ShieldCheck className="h-5 w-5 text-gold" />
       <span className="text-textSecondary">{text}</span>
-    </div>
-  );
-}
-
-function AdminWarning() {
-  return (
-    <div className="rounded-[2rem] border border-crimson/40 bg-crimson/10 p-6">
-      <Ban className="mb-4 h-10 w-10 text-crimsonLight" />
-      <p className="font-display text-2xl font-bold text-textPrimary">
-        Not production admin
-      </p>
-      <p className="mt-3 text-textSecondary">
-        This page is a frontend preview only. Real admin actions must use protected backend routes,
-        IP whitelist checks, 2FA, and audit logging.
-      </p>
     </div>
   );
 }
