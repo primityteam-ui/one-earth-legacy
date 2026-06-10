@@ -17,6 +17,7 @@ import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
 import RankBadge from "../components/RankBadge.jsx";
+import SummaryRow from "../components/SummaryRow.jsx";
 import {
   addOns,
   getNextRankForAmount,
@@ -625,19 +626,6 @@ function BackendPreviewBox({ backendPreview }) {
       )}
 
       <p className="mt-4 text-sm text-textSecondary">{backendPreview.note}</p>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value, strong }) {
-  return (
-    <div className="mb-3 flex items-center justify-between gap-4">
-      <span className={strong ? "font-bold text-textPrimary" : "text-textSecondary"}>
-        {label}
-      </span>
-      <span className={strong ? "font-numbers text-2xl font-bold text-goldLight" : "font-numbers text-textPrimary"}>
-        {value}
-      </span>
     </div>
   );
 }
