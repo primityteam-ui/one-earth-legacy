@@ -269,6 +269,42 @@ function normalizeCountry(user = {}) {
   };
 }
 
+function normalizeDonorLocation(user = {}) {
+  const countryData = normalizeCountry(user);
+  const location = user.donorLocation || {};
+
+  const city = String(location.city || "").trim();
+  const region = String(location.region || "").trim();
+
+  const lat = Number(location.lat);
+  const lng = Number(location.lng);
+
+  const hasSafeCoordinates =
+    Number.isFinite(lat) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    Number.isFinite(lng) &&
+    lng >= -180 &&
+    lng <= 180;
+
+  const locationLabel = city
+    ? [city, region, countryData.country].filter(Boolean).join(", ")
+    : countryData.country;
+
+  return {
+    city,
+    region,
+    country: countryData.country,
+    countryCode: countryData.countryCode,
+    flag: countryData.flag,
+    lat: hasSafeCoordinates ? lat : countryData.lat,
+    lng: hasSafeCoordinates ? lng : countryData.lng,
+    locationLabel,
+    precision: location.precision || (city ? "city" : "country"),
+    source: location.source || "manual"
+  };
+}
+
 function getFlag(countryCode) {
   const code = String(countryCode || "").trim().toUpperCase();
   return countryDirectory[code]?.flag || "🌍";
@@ -648,7 +684,7 @@ export async function getCountryLeaderboard(req, res, next) {
     const donations = await Donation.find(donationFilter)
       .populate(
         "userId",
-        "displayName username email country countryCode totalDonated isAnonymous isBanned"
+        "displayName username email country countryCode donorLocation totalDonated isAnonymous isBanned"
       )
       .sort({ createdAt: -1 })
       .lean();
@@ -661,7 +697,7 @@ export async function getCountryLeaderboard(req, res, next) {
       validDonations.length > 0
         ? validDonations.map((donation) => {
             const user = donation.userId || {};
-            const countryData = normalizeCountry(user);
+            const locationData = normalizeDonorLocation(user);
             const causeData = normalizeCauseData(donation);
 
             return {
@@ -669,11 +705,15 @@ export async function getCountryLeaderboard(req, res, next) {
               name: user.isAnonymous
                 ? "Anonymous"
                 : user.displayName || user.username || user.email || "Unknown Donor",
-              country: countryData.country,
-              countryCode: countryData.countryCode,
-              flag: countryData.flag,
-              lat: countryData.lat,
-              lng: countryData.lng,
+              city: locationData.city,
+              region: locationData.region,
+              country: locationData.country,
+              countryCode: locationData.countryCode,
+              flag: locationData.flag,
+              lat: locationData.lat,
+              lng: locationData.lng,
+              locationLabel: locationData.locationLabel,
+              precision: locationData.precision,
               amountUSD: Number(donation.amountUSD || 0),
               causeCategory: causeData.causeCategory,
               causeImpact: causeData.causeImpact,
@@ -699,14 +739,20 @@ export async function getCountryLeaderboard(req, res, next) {
     const countryMap = new Map();
 
     for (const item of sourceItems) {
-      const key = item.countryCode || "US";
+      const key = item.lat && item.lng
+        ? `${item.countryCode || "US"}:${Number(item.lat).toFixed(2)}:${Number(item.lng).toFixed(2)}`
+        : item.countryCode || "US";
 
       const existing = countryMap.get(key) || {
+        city: item.city || "",
+        region: item.region || "",
         country: item.country,
         countryCode: item.countryCode,
         flag: item.flag,
         lat: item.lat,
         lng: item.lng,
+        locationLabel: item.locationLabel || item.country,
+        precision: item.precision || "country",
         totalDonated: 0,
         totalAmount: 0,
         donors: 0,
@@ -751,11 +797,15 @@ export async function getCountryLeaderboard(req, res, next) {
         const topMission = topMissionEntry?.[0] || item.topMission || defaultCauseCategory;
 
         return {
+          city: item.city || "",
+          region: item.region || "",
           country: item.country,
           countryCode: item.countryCode,
           flag: item.flag,
           lat: item.lat,
           lng: item.lng,
+          locationLabel: item.locationLabel || item.country,
+          precision: item.precision || "country",
           totalDonated: Number(item.totalDonated.toFixed(2)),
           totalAmount: Number(item.totalAmount.toFixed(2)),
           donors: item.donors,
