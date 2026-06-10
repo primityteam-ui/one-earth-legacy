@@ -11,6 +11,7 @@ import {
   Trophy
 } from "lucide-react";
 import api from "../api/client.js";
+import PageHero from "../components/PageHero.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
 import RankBadge from "../components/RankBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -85,23 +86,11 @@ export default function Profile() {
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
-      <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalCard p-8 shadow-gold">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gold">
-              Public Profile
-            </p>
-
-            <h1 className="font-display text-4xl font-bold md:text-6xl">
-              {profile.displayName}
-            </h1>
-
-            <p className="mt-4 max-w-3xl text-textSecondary">
-              @{profile.username} · {profile.flag} {profile.country} · Joined{" "}
-              {profile.joined}
-            </p>
-          </div>
-
+      <PageHero
+        eyebrow="Public Profile"
+        title={profile.displayName}
+        description={`@${profile.username} · ${profile.flag} ${profile.country} · Joined ${profile.joined}`}
+        rightContent={
           <button
             onClick={shareProfile}
             className="flex w-fit items-center gap-2 rounded-full bg-gold px-6 py-3 font-bold text-black shadow-gold hover:bg-goldLight"
@@ -109,8 +98,8 @@ export default function Profile() {
             <Share2 className="h-4 w-4" />
             Share Profile
           </button>
-        </div>
-      </section>
+        }
+      />
 
       <section className="grid gap-8 lg:grid-cols-[420px_1fr]">
         <aside className="space-y-6">
