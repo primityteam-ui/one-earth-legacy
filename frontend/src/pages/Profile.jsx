@@ -15,6 +15,7 @@ import PublicStateBox from "../components/PublicStateBox.jsx";
 import RankBadge from "../components/RankBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
 import StatLine from "../components/StatLine.jsx";
+import TimelineList from "../components/TimelineList.jsx";
 
 export default function Profile() {
   const { username } = useParams();
@@ -210,30 +211,10 @@ export default function Profile() {
               </h2>
             </div>
 
-            <div className="space-y-4">
-              {(profile.timeline || []).map((event, index) => (
-                <motion.div
-                  key={`${event.title}-${index}`}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="rounded-[1.25rem] border border-borderRoyal bg-black/30 p-5"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="font-bold text-textPrimary">
-                        {event.title}
-                      </p>
-                      <p className="mt-1 text-textSecondary">{event.text}</p>
-                    </div>
-
-                    <span className="w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
-                      {event.date}
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+            <TimelineList
+              items={profile.timeline || []}
+              emptyMessage="This donor does not have timeline events yet."
+            />
           </section>
 
           <section className="rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
