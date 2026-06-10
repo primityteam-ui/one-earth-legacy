@@ -489,7 +489,7 @@ async function getDatabaseTiles(req) {
   const tiles = await Tile.find(tileQuery)
     .populate(
       "userId",
-      "displayName username email country countryCode currentRank totalDonated isAnonymous role"
+      "displayName username email country countryCode donorLocation currentRank totalDonated isAnonymous role"
     )
     .populate(
       "donationId",
@@ -503,7 +503,7 @@ async function getDatabaseTiles(req) {
     const user = tile.userId || {};
     const donation = tile.donationId || {};
     const causeData = normalizeCauseData(donation);
-    const countryData = normalizeCountry(user);
+    const locationData = normalizeDonorLocation(user);
 
     return {
       id: tile._id.toString(),
@@ -512,11 +512,15 @@ async function getDatabaseTiles(req) {
           ? "Anonymous"
           : user.displayName || user.username || user.email || "Unknown Donor",
       username: user.username || "unknown",
-      country: countryData.country,
-      countryCode: countryData.countryCode,
-      flag: countryData.flag,
-      lat: countryData.lat,
-      lng: countryData.lng,
+      city: locationData.city,
+      region: locationData.region,
+      country: locationData.country,
+      countryCode: locationData.countryCode,
+      flag: locationData.flag,
+      lat: locationData.lat,
+      lng: locationData.lng,
+      locationLabel: locationData.locationLabel,
+      precision: locationData.precision,
       rank: donation.rankAtTime || user.currentRank || "Spark",
       amountUSD: Number(donation.amountUSD || user.totalDonated || 0),
       message: tile.message || donation.tileMessage || "Saved MongoDB legacy tile.",
