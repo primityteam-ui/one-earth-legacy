@@ -14,6 +14,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { adminLimiter, globalLimiter } from "./middleware/rateLimits.js";
 import { adminIpAllowlist } from "./middleware/adminIpAllowlist.js";
+import { requireAdminTwoFactor } from "./middleware/adminTwoFactor.js";
 
 const app = express();
 
@@ -93,7 +94,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/donate", donationRoutes);
-app.use("/api/admin", adminLimiter, adminIpAllowlist, adminRoutes);
+app.use("/api/admin", adminLimiter, adminIpAllowlist, requireAdminTwoFactor, adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
