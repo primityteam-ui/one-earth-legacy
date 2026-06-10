@@ -14,6 +14,7 @@ import {
 import api from "../api/client.js";
 import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
 import DonationSuccessBox from "../components/DonationSuccessBox.jsx";
+import ErrorMessageBox from "../components/ErrorMessageBox.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
@@ -457,23 +458,9 @@ export default function Donate() {
               </button>
             </div>
 
-            {previewError && (
-              <p className="mt-4 rounded-2xl border border-crimson/40 bg-crimson/10 p-4 text-sm text-crimsonLight">
-                {previewError}
-              </p>
-            )}
-
-            {saveError && (
-              <p className="mt-4 rounded-2xl border border-crimson/40 bg-crimson/10 p-4 text-sm text-crimsonLight">
-                {saveError}
-              </p>
-            )}
-
-            {stripeError && (
-              <p className="mt-4 rounded-2xl border border-crimson/40 bg-crimson/10 p-4 text-sm text-crimsonLight">
-                {stripeError}
-              </p>
-            )}
+            <ErrorMessageBox message={previewError} />
+            <ErrorMessageBox message={saveError} />
+            <ErrorMessageBox message={stripeError} />
 
             <BackendPreviewBox backendPreview={backendPreview} />
             <DonationSuccessBox savedDonation={savedDonation} />
