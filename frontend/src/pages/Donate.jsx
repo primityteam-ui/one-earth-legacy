@@ -10,13 +10,10 @@ import api from "../api/client.js";
 import AddOnSelector from "../components/AddOnSelector.jsx";
 import AmountSelector from "../components/AmountSelector.jsx";
 import DonationActionPanel from "../components/DonationActionPanel.jsx";
-import DonationTilePreview from "../components/DonationTilePreview.jsx";
+import DonationSidebar from "../components/DonationSidebar.jsx";
 import MissionSelector from "../components/MissionSelector.jsx";
-import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
-import PaymentSummaryCard from "../components/PaymentSummaryCard.jsx";
-import SelectedImpactCard from "../components/SelectedImpactCard.jsx";
 import TileCustomizer from "../components/TileCustomizer.jsx";
 import {
   addOns,
@@ -254,39 +251,21 @@ export default function Donate() {
           </Panel>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="space-y-5 rounded-[2rem] border border-gold/25 bg-royalCard p-6 shadow-gold">
-            <DonationTilePreview
-              rank={backendPreview?.rank || currentRank.name}
-              anonymous={anonymous}
-              displayName={displayName}
-              message={message}
-              theme={theme}
-              amount={amount}
-            />
-
-            <SelectedImpactCard
-              cause={cause}
-              description={selectedImpact.description}
-            />
-
-            <MoneySplitCard
-              title="Transparent money split"
-              causeLabel={`60% → ${cause}`}
-              causeAmount={backendPreview?.split?.causeAmount ?? causeAmount}
-              platformLabel="25% → Platform sustainability"
-              platformAmount={backendPreview?.split?.platformAmount ?? platformAmount}
-              lotteryLabel="15% → Monthly donor lottery"
-              lotteryAmount={backendPreview?.split?.lotteryAmount ?? lotteryAmount}
-            />
-
-            <PaymentSummaryCard
-              donationAmount={amount}
-              addOnTotal={backendPreview?.addOnTotal ?? addOnTotal}
-              totalToday={backendPreview?.totalToday ?? total}
-            />
-          </div>
-        </aside>
+        <DonationSidebar
+          rank={backendPreview?.rank || currentRank.name}
+          anonymous={anonymous}
+          displayName={displayName}
+          message={message}
+          theme={theme}
+          amount={amount}
+          cause={cause}
+          impactDescription={selectedImpact.description}
+          causeAmount={backendPreview?.split?.causeAmount ?? causeAmount}
+          platformAmount={backendPreview?.split?.platformAmount ?? platformAmount}
+          lotteryAmount={backendPreview?.split?.lotteryAmount ?? lotteryAmount}
+          addOnTotal={backendPreview?.addOnTotal ?? addOnTotal}
+          totalToday={backendPreview?.totalToday ?? total}
+        />
       </section>
     </main>
   );
