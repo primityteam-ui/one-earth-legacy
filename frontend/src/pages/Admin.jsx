@@ -51,6 +51,7 @@ export default function Admin() {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [auditSaving, setAuditSaving] = useState(false);
+  const [newestAuditId, setNewestAuditId] = useState("");
   const [auditForm, setAuditForm] = useState({
     type: "cause_allocation",
     amount: "1",
@@ -156,11 +157,14 @@ export default function Admin() {
     try {
       const cause = `${auditForm.causeCategory} — ${auditForm.causeImpact}`;
 
-      await api.post("/admin/audit", {
+      const response = await api.post("/admin/audit", {
         ...auditForm,
         cause,
         amount: Number(auditForm.amount || 0)
       });
+
+      const createdId = response.data?.entry?.id || "";
+      setNewestAuditId(createdId);
 
       await loadAdminData();
 
@@ -436,6 +440,7 @@ export default function Admin() {
           {activeTab === "Audit" && (
             <AuditPanel
               entries={recentAuditEntries}
+              newestAuditId={newestAuditId}
               form={auditForm}
               saving={auditSaving}
               onChange={updateAuditForm}
@@ -851,7 +856,7 @@ function MissionTotals({ missionTotals }) {
   );
 }
 
-function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault() }) {
+function AuditPanel({ entries = [], newestAuditId = "", form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault() }) {
   return (
     <section className="space-y-8">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -1003,9 +1008,23 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
 
               <tbody>
                 {entries.map((entry) => (
-                  <tr key={entry.id} className="bg-black/30">
+                  <tr
+                    key={entry.id}
+                    className={
+                      entry.id === newestAuditId
+                        ? "bg-emerald-400/10 ring-1 ring-emerald-400/40"
+                        : "bg-black/30"
+                    }
+                  >
                     <td className="rounded-l-2xl px-4 py-4">
-                      <StatusPill value={entry.type} />
+                      <div className="flex items-center gap-2">
+                        <StatusPill value={entry.type} />
+                        {entry.id === newestAuditId && (
+                          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
+                            New
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-4 py-4 font-numbers font-bold text-goldLight">
