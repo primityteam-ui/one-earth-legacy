@@ -17,8 +17,8 @@ import MissionIcon from "../components/MissionIcon.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
+import PaymentSummaryCard from "../components/PaymentSummaryCard.jsx";
 import SelectedImpactCard from "../components/SelectedImpactCard.jsx";
-import SummaryRow from "../components/SummaryRow.jsx";
 import {
   addOns,
   getNextRankForAmount,
@@ -480,20 +480,11 @@ export default function Donate() {
               lotteryAmount={backendPreview?.split?.lotteryAmount ?? lotteryAmount}
             />
 
-            <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
-              <SummaryRow label="Donation" value={`$${Number(amount || 0).toFixed(2)}`} />
-              <SummaryRow
-                label="Add-ons"
-                value={`$${(backendPreview?.addOnTotal ?? addOnTotal).toFixed(2)}`}
-              />
-              <div className="mt-4 border-t border-borderRoyal pt-4">
-                <SummaryRow
-                  label="Total today"
-                  value={`$${(backendPreview?.totalToday ?? total).toFixed(2)}`}
-                  strong
-                />
-              </div>
-            </div>
+            <PaymentSummaryCard
+              donationAmount={amount}
+              addOnTotal={backendPreview?.addOnTotal ?? addOnTotal}
+              totalToday={backendPreview?.totalToday ?? total}
+            />
           </div>
         </aside>
       </section>
