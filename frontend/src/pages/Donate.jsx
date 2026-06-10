@@ -1,20 +1,16 @@
 import { useMemo, useState } from "react";
 import {
   BadgeDollarSign,
-  CreditCard,
   Globe2,
   ImagePlus,
   ShieldCheck,
   Sparkles
 } from "lucide-react";
 import api from "../api/client.js";
-import ActionButton from "../components/ActionButton.jsx";
 import AddOnSelector from "../components/AddOnSelector.jsx";
 import AmountSelector from "../components/AmountSelector.jsx";
-import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
-import DonationSuccessBox from "../components/DonationSuccessBox.jsx";
+import DonationActionPanel from "../components/DonationActionPanel.jsx";
 import DonationTilePreview from "../components/DonationTilePreview.jsx";
-import ErrorMessageBox from "../components/ErrorMessageBox.jsx";
 import MissionSelector from "../components/MissionSelector.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
@@ -242,41 +238,19 @@ export default function Donate() {
             title="Step 5 — Complete donation"
             subtitle="Preview first, save mock donation locally, or open Stripe test checkout."
           >
-            <div className="grid gap-4 md:grid-cols-3">
-              <ActionButton
-                onClick={handleBackendPreview}
-                loading={previewLoading}
-                loadingText="Creating Preview..."
-              >
-                Create Preview
-              </ActionButton>
-
-              <ActionButton
-                onClick={handleSaveMockDonation}
-                loading={saveLoading}
-                loadingText="Saving..."
-                variant="gold"
-              >
-                Save Mock
-              </ActionButton>
-
-              <ActionButton
-                onClick={handleStripeCheckout}
-                loading={stripeLoading}
-                loadingText="Opening..."
-                variant="green"
-                icon={<CreditCard className="h-5 w-5" />}
-              >
-                Pay Stripe Test
-              </ActionButton>
-            </div>
-
-            <ErrorMessageBox message={previewError} />
-            <ErrorMessageBox message={saveError} />
-            <ErrorMessageBox message={stripeError} />
-
-            <BackendPreviewBox backendPreview={backendPreview} />
-            <DonationSuccessBox savedDonation={savedDonation} />
+            <DonationActionPanel
+              onPreview={handleBackendPreview}
+              onSaveMock={handleSaveMockDonation}
+              onStripeCheckout={handleStripeCheckout}
+              previewLoading={previewLoading}
+              saveLoading={saveLoading}
+              stripeLoading={stripeLoading}
+              previewError={previewError}
+              saveError={saveError}
+              stripeError={stripeError}
+              backendPreview={backendPreview}
+              savedDonation={savedDonation}
+            />
           </Panel>
         </div>
 
