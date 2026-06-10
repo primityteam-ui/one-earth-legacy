@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Crown, Search, Sparkles } from "lucide-react";
+import { Crown, Search } from "lucide-react";
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
+import RankBadge from "../components/RankBadge.jsx";
 import { buildPublicFilterParams } from "../constants/legacyOptions.js";
 
 const ranks = [
@@ -209,12 +210,18 @@ function DonorTile({ tile, index }) {
             <span className="text-2xl">{tile.flag}</span>
           </div>
 
-          <h2 className={`font-display font-bold ${isEmperor ? "text-4xl text-goldLight" : "text-2xl"}`}>
+          <h2
+            className={`font-display font-bold ${
+              isEmperor ? "text-4xl text-goldLight" : "text-2xl"
+            }`}
+          >
             {isEmperor && <Crown className="mb-3 h-9 w-9 text-gold" />}
             {tile.name}
           </h2>
 
-          <p className="mt-3 line-clamp-3 text-textSecondary">{tile.message}</p>
+          <p className="mt-3 line-clamp-3 text-textSecondary">
+            {tile.message}
+          </p>
         </div>
 
         <div className="mt-5 flex items-end justify-between gap-4">
@@ -241,14 +248,5 @@ function DonorTile({ tile, index }) {
         </div>
       </div>
     </motion.article>
-  );
-}
-
-function RankBadge({ rank }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-goldLight">
-      {rank === "Emperor" ? <Crown className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
-      {rank}
-    </div>
   );
 }
