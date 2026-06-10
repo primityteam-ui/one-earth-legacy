@@ -3,6 +3,7 @@ import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
 import SecurityLog from "../models/SecurityLog.js";
+import { logSecurityEvent } from "../utils/securityLog.js";
 
 function safeNumber(value) {
   return Number(value || 0);
@@ -30,6 +31,20 @@ function getLocation(user = {}) {
     precision: location.precision || (city ? "city" : "country"),
     label: [city, region, country].filter(Boolean).join(", ") || country
   };
+}
+
+function writeAdminAction(req, action, details = {}) {
+  return logSecurityEvent({
+    type: "admin_action",
+    userId: req.user?._id,
+    email: req.user?.email,
+    ipAddress: req.ip,
+    userAgent: req.get("user-agent"),
+    details: {
+      action,
+      ...details
+    }
+  });
 }
 
 function csvEscape(value) {
@@ -77,6 +92,8 @@ function buildDonationCsvRow(donation) {
 
 export async function exportAdminDonationsCsv(req, res, next) {
   try {
+    await writeAdminAction(req, "download_donations_csv");
+
     const donations = await Donation.find({})
       .populate(
         "userId",
@@ -130,6 +147,13 @@ export async function exportAdminDonationsCsv(req, res, next) {
 
 export async function getAdminOverview(req, res, next) {
   try {
+    await writeAdminAction(req, "view_admin_overview", {
+      search: req.query.search || "",
+      paymentStatus: req.query.paymentStatus || "all",
+      mission: req.query.mission || "all",
+      country: req.query.country || "all"
+    });
+
     const search = String(req.query.search || "").trim().toLowerCase();
     const paymentStatus = String(req.query.paymentStatus || "").trim();
     const mission = String(req.query.mission || "").trim();
