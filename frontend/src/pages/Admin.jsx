@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 
-const tabs = ["Overview", "Donations", "Donors", "Missions", "Security"];
+const tabs = ["Overview", "Donations", "Donors", "Missions", "Audit", "Security"];
 
 function formatMoney(value) {
   return `$${Number(value || 0).toLocaleString(undefined, {
@@ -113,6 +113,7 @@ export default function Admin() {
   const topDonors = data?.topDonors || [];
   const missionTotals = data?.missionTotals || {};
   const countryTotals = data?.countryTotals || [];
+  const recentAuditEntries = data?.recentAuditEntries || [];
 
   const revenueStats = useMemo(() => {
     return [
@@ -339,6 +340,10 @@ export default function Admin() {
               missionTotals={missionTotals}
               countryTotals={countryTotals}
             />
+          )}
+
+          {activeTab === "Audit" && (
+            <AuditPanel entries={recentAuditEntries} />
           )}
 
           {activeTab === "Security" && <SecurityPanel />}
@@ -678,6 +683,86 @@ function MissionTotals({ missionTotals }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function AuditPanel({ entries }) {
+  return (
+    <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+      <PanelHeader icon={<FileText />} title="Audit Log Viewer" />
+
+      {entries.length === 0 ? (
+        <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+          No audit entries yet.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1050px] border-separate border-spacing-y-3">
+            <thead>
+              <tr className="text-left text-sm text-textSecondary">
+                <th className="px-4">Type</th>
+                <th className="px-4">Amount</th>
+                <th className="px-4">Recipient</th>
+                <th className="px-4">Mission</th>
+                <th className="px-4">Description</th>
+                <th className="px-4">Proof</th>
+                <th className="px-4">Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.id} className="bg-black/30">
+                  <td className="rounded-l-2xl px-4 py-4">
+                    <StatusPill value={entry.type} />
+                  </td>
+
+                  <td className="px-4 py-4 font-numbers font-bold text-goldLight">
+                    {formatMoney(entry.amount)}
+                  </td>
+
+                  <td className="px-4 py-4 text-textPrimary">
+                    {entry.recipient || "One Earth Legacy"}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <p className="font-bold text-textPrimary">
+                      {entry.causeCategory}
+                    </p>
+                    <p className="text-sm text-textSecondary">
+                      {entry.causeImpact}
+                    </p>
+                  </td>
+
+                  <td className="px-4 py-4 text-sm text-textSecondary">
+                    {entry.description || "No description"}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    {entry.proofUrl ? (
+                      <a
+                        href={entry.proofUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-gold hover:text-goldLight"
+                      >
+                        View proof
+                      </a>
+                    ) : (
+                      <span className="text-sm text-textSecondary">Pending</span>
+                    )}
+                  </td>
+
+                  <td className="rounded-r-2xl px-4 py-4 text-sm text-textSecondary">
+                    {formatDate(entry.createdAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

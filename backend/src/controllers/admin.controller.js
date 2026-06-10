@@ -147,6 +147,7 @@ export async function getAdminOverview(req, res, next) {
     const [
       users,
       rawDonations,
+      recentAuditEntries,
       tilesCount,
       auditCount
     ] = await Promise.all([
@@ -162,6 +163,11 @@ export async function getAdminOverview(req, res, next) {
         )
         .sort({ createdAt: -1 })
         .limit(250)
+        .lean(),
+
+      AuditEntry.find({})
+        .sort({ createdAt: -1 })
+        .limit(100)
         .lean(),
 
       Tile.countDocuments({}),
@@ -313,6 +319,19 @@ export async function getAdminOverview(req, res, next) {
       ),
       recentDonations,
       topDonors,
+      recentAuditEntries: recentAuditEntries.map((entry) => ({
+        id: entry._id,
+        type: entry.type,
+        amount: money(entry.amount),
+        currency: entry.currency || "USD",
+        recipient: entry.recipient || "",
+        causeCategory: entry.causeCategory || "Unassigned",
+        causeImpact: entry.causeImpact || "",
+        cause: entry.cause || "",
+        description: entry.description || "",
+        proofUrl: entry.proofUrl || "",
+        createdAt: entry.createdAt
+      })),
       filters: {
         search,
         paymentStatus: paymentStatus || "all",
