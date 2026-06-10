@@ -47,6 +47,8 @@ export default function Admin() {
   const [paymentStatus, setPaymentStatus] = useState("all");
   const [mission, setMission] = useState("all");
   const [country, setCountry] = useState("all");
+  const [selectedDonation, setSelectedDonation] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   async function loadAdminData() {
     setLoading(true);
@@ -101,6 +103,25 @@ export default function Admin() {
         error.response?.data?.message ||
           "Could not download CSV. Make sure you are logged in as an admin."
       );
+    }
+  }
+
+  async function handleViewDonationDetail(donationId) {
+    if (!donationId) return;
+
+    setDetailLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = await api.get(`/admin/donations/${donationId}`);
+      setSelectedDonation(response.data);
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Could not load donation details."
+      );
+    } finally {
+      setDetailLoading(false);
     }
   }
 
@@ -332,7 +353,10 @@ export default function Admin() {
           )}
 
           {activeTab === "Donations" && (
-            <DonationsPanel donations={recentDonations} />
+            <DonationsPanel
+              donations={recentDonations}
+              onViewDonation={handleViewDonationDetail}
+            />
           )}
 
           {activeTab === "Donors" && (

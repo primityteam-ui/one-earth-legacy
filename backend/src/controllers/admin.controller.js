@@ -132,6 +132,65 @@ function getAdminHealthChecks() {
   };
 }
 
+export async function getAdminDonationDetail(req, res, next) {
+  try {
+    const { donationId } = req.params;
+
+    await writeAdminAction(req, "view_donation_detail", {
+      donationId
+    });
+
+    const donation = await Donation.findById(donationId)
+      .populate(
+        "userId",
+        "email username displayName country countryCode donorLocation currentRank totalDonated isAnonymous isBanned role createdAt"
+      )
+      .lean();
+
+    if (!donation) {
+      return res.status(404).json({
+        message: "Donation not found."
+      });
+    }
+
+    const user = donation.userId || {};
+    const location = getLocation(user);
+
+    return res.status(200).json({
+      id: donation._id,
+      amountUSD: money(donation.amountUSD),
+      currency: donation.currency || "USD",
+      paymentMethod: donation.paymentMethod || "",
+      paymentStatus: donation.paymentStatus || "",
+      settlementStatus: donation.settlementStatus || "",
+      stripeSessionId: donation.stripeSessionId || "",
+      stripePaymentIntentId: donation.stripePaymentIntentId || "",
+      causeCategory: donation.causeCategory || "Unassigned",
+      causeImpact: donation.causeImpact || "",
+      cause: donation.cause || "",
+      message: donation.message || "",
+      rankAtTime: donation.rankAtTime || user.currentRank || "Spark",
+      isAnonymous: Boolean(donation.isAnonymous || user.isAnonymous),
+      createdAt: donation.createdAt,
+      updatedAt: donation.updatedAt,
+      donor: {
+        id: user._id || "",
+        email: user.email || "",
+        username: user.username || "",
+        displayName: user.displayName || "",
+        role: user.role || "",
+        currentRank: user.currentRank || "",
+        totalDonated: money(user.totalDonated),
+        isBanned: Boolean(user.isBanned),
+        createdAt: user.createdAt || null
+      },
+      location
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function exportAdminDonationsCsv(req, res, next) {
   try {
     await writeAdminAction(req, "download_donations_csv");
