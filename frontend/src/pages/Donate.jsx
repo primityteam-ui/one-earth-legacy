@@ -17,6 +17,7 @@ import MissionIcon from "../components/MissionIcon.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
+import SelectedImpactCard from "../components/SelectedImpactCard.jsx";
 import SummaryRow from "../components/SummaryRow.jsx";
 import {
   addOns,
@@ -464,17 +465,10 @@ export default function Donate() {
               amount={amount}
             />
 
-            <div className="rounded-[1.5rem] border border-gold/30 bg-gold/10 p-5">
-              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-gold">
-                Your Selected Impact
-              </p>
-              <p className="font-display text-xl font-bold text-textPrimary">
-                {cause}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-textSecondary">
-                {selectedImpact.description}
-              </p>
-            </div>
+            <SelectedImpactCard
+              cause={cause}
+              description={selectedImpact.description}
+            />
 
             <MoneySplitCard
               title="Transparent money split"
