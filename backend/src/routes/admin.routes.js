@@ -1,6 +1,6 @@
 import express from "express";
 
-import { exportAdminDonationsCsv, getAdminDonationDetail, getAdminOverview } from "../controllers/admin.controller.js";
+import { createAdminAuditEntry, exportAdminDonationsCsv, getAdminDonationDetail, getAdminOverview } from "../controllers/admin.controller.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -26,6 +26,14 @@ router.get(
   requireAuth,
   requireRole("admin"),
   getAdminDonationDetail
+);
+
+
+router.post(
+  "/audit",
+  requireAuth,
+  requireRole("admin"),
+  createAdminAuditEntry
 );
 
 export default router;
