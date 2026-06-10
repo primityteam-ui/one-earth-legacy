@@ -16,6 +16,7 @@ import api from "../api/client.js";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
+import PreviewItem from "../components/PreviewItem.jsx";
 import RankBadge from "../components/RankBadge.jsx";
 import SummaryRow from "../components/SummaryRow.jsx";
 import {
@@ -626,15 +627,6 @@ function BackendPreviewBox({ backendPreview }) {
       )}
 
       <p className="mt-4 text-sm text-textSecondary">{backendPreview.note}</p>
-    </div>
-  );
-}
-
-function PreviewItem({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-borderRoyal bg-black/30 p-4">
-      <p className="text-sm text-textSecondary">{label}</p>
-      <p className="mt-1 break-words font-bold text-textPrimary">{value}</p>
     </div>
   );
 }
