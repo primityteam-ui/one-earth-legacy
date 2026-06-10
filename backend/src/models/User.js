@@ -9,6 +9,58 @@ const loginHistorySchema = new mongoose.Schema(
   { _id: false }
 );
 
+const donorLocationSchema = new mongoose.Schema(
+  {
+    city: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: ""
+    },
+    region: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: ""
+    },
+    country: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: "Unknown"
+    },
+    countryCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      maxlength: 2,
+      default: "UN"
+    },
+    lat: {
+      type: Number,
+      min: -90,
+      max: 90
+    },
+    lng: {
+      type: Number,
+      min: -180,
+      max: 180
+    },
+    precision: {
+      type: String,
+      enum: ["country", "city", "approximate"],
+      default: "country"
+    },
+    source: {
+      type: String,
+      enum: ["manual", "browser", "default"],
+      default: "manual"
+    },
+    updatedAt: Date
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     email: {
@@ -34,8 +86,22 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 80
     },
+
     country: { type: String, default: "Unknown" },
     countryCode: { type: String, default: "UN" },
+
+    donorLocation: {
+      type: donorLocationSchema,
+      default: () => ({
+        city: "",
+        region: "",
+        country: "Unknown",
+        countryCode: "UN",
+        precision: "country",
+        source: "manual"
+      })
+    },
+
     avatar: String,
 
     totalDonated: { type: Number, default: 0 },
