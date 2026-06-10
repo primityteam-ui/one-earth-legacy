@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Search } from "lucide-react";
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
+import PageHero from "../components/PageHero.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
 import RankBadge from "../components/RankBadge.jsx";
@@ -82,31 +83,13 @@ export default function Wall() {
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
-      <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalCard p-8 shadow-gold">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gold">
-              The Wall
-            </p>
-
-            <h1 className="font-display text-4xl font-bold md:text-6xl">
-              The Legacy Wall
-            </h1>
-
-            <p className="mt-4 max-w-3xl text-textSecondary">
-              Every donor receives a permanent tile. Mission and exact impact
-              filtering are now handled by the backend before tiles reach this page.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-borderRoyal bg-black/30 px-5 py-4">
-            <p className="text-sm text-textSecondary">Visible tiles</p>
-            <p className="font-numbers text-3xl font-bold text-goldLight">
-              {filteredTiles.length}
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="The Wall"
+        title="The Legacy Wall"
+        description="Every donor receives a permanent tile. Mission and exact impact filtering are now handled by the backend before tiles reach this page."
+        rightLabel="Visible tiles"
+        rightValue={filteredTiles.length}
+      />
 
       <section className="mb-8 grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5 lg:grid-cols-[1fr_180px_180px_570px]">
         <div className="relative">
