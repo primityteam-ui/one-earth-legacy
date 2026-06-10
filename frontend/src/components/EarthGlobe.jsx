@@ -114,6 +114,16 @@ function normalizeCountryData(data) {
       const countryName =
         item.country || item.name || item._id || `Country ${index + 1}`;
 
+      const city = String(item.city || "").trim();
+      const region = String(item.region || "").trim();
+
+      const locationLabel =
+        item.locationLabel ||
+        [city, region, countryName].filter(Boolean).join(", ") ||
+        countryName;
+
+      const displayLabel = city || countryName;
+
       const savedCoordinates = getCountryCoordinates(countryName);
 
       const lat = Number(item.lat || item.latitude || savedCoordinates?.lat);
@@ -121,6 +131,11 @@ function normalizeCountryData(data) {
 
       return {
         country: countryName,
+        city,
+        region,
+        locationLabel,
+        displayLabel,
+        precision: item.precision || (city ? "city" : "country"),
         lat,
         lng,
         totalAmount: Number(
@@ -352,7 +367,7 @@ export default function EarthGlobe() {
           distanceDisplayCondition: new DistanceDisplayCondition(0, 15000000),
         },
         label: {
-          text: country.country,
+          text: country.displayLabel || country.country,
           font: "15px sans-serif",
           fillColor: Color.WHITE,
           outlineColor: Color.BLACK,
@@ -453,7 +468,7 @@ export default function EarthGlobe() {
 
             <div>
               <h3 className="text-xl font-bold">
-                {selectedCountry?.country || "Earth"}
+                {selectedCountry?.locationLabel || selectedCountry?.country || "Earth"}
               </h3>
               <p className="mt-1 text-xs text-white/60">
                 Lat {Number(selectedCountry?.lat || 0).toFixed(2)}, Lng{" "}
@@ -471,6 +486,16 @@ export default function EarthGlobe() {
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-white/50">Donated</p>
               <p className="mt-1 font-bold">{formatMoney(selectedCountry?.totalAmount)}</p>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="text-white/50">Precision</p>
+              <p className="mt-1 font-bold capitalize">{selectedCountry?.precision || "country"}</p>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="text-white/50">Country</p>
+              <p className="mt-1 font-bold">{selectedCountry?.country || "Earth"}</p>
             </div>
           </div>
         </div>
