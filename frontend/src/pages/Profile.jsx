@@ -14,6 +14,7 @@ import api from "../api/client.js";
 import PublicStateBox from "../components/PublicStateBox.jsx";
 import RankBadge from "../components/RankBadge.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatLine from "../components/StatLine.jsx";
 
 export default function Profile() {
   const { username } = useParams();
@@ -262,18 +263,5 @@ export default function Profile() {
         </div>
       </section>
     </main>
-  );
-}
-
-function StatLine({ icon, label, value }) {
-  return (
-    <div className="mb-3 flex items-center justify-between gap-4 rounded-2xl border border-borderRoyal bg-black/30 p-4">
-      <div className="flex items-center gap-3">
-        <span className="text-gold">{icon}</span>
-        <span className="text-textSecondary">{label}</span>
-      </div>
-
-      <span className="font-bold text-textPrimary">{value}</span>
-    </div>
   );
 }
