@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  BadgeDollarSign,
-  Crown,
-  Database,
-  FileText,
-  Globe2,
-  Landmark,
-  Loader2,
-  MapPin,
-  ShieldCheck,
-  Sparkles,
-  Ticket,
-  Users
-} from "lucide-react";
+
 import api from "../api/client.js";
+
+const AlertTriangle = ({ className = "" }) => <span className={className}>⚠️</span>;
+const BadgeDollarSign = ({ className = "" }) => <span className={className}>💰</span>;
+const Crown = ({ className = "" }) => <span className={className}>👑</span>;
+const Globe2 = ({ className = "" }) => <span className={className}>🌍</span>;
+const Loader2 = ({ className = "" }) => <span className={className}>⏳</span>;
+const ShieldCheck = ({ className = "" }) => <span className={className}>🛡️</span>;
+const Sparkles = ({ className = "" }) => <span className={className}>✨</span>;
+const Users = ({ className = "" }) => <span className={className}>👥</span>;
+const Landmark = ({ className = "" }) => <span className={className}>🏛️</span>;
+const Ticket = ({ className = "" }) => <span className={className}>🎟️</span>;
+const Database = ({ className = "" }) => <span className={className}>🗄️</span>;
+const FileText = ({ className = "" }) => <span className={className}>📄</span>;
+const MapPin = ({ className = "" }) => <span className={className}>📍</span>;
 
 const tabs = ["Overview", "Donations", "Donors", "Missions", "Audit", "Security", "Health"];
 
@@ -49,6 +49,17 @@ export default function Admin() {
   const [country, setCountry] = useState("all");
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [auditSaving, setAuditSaving] = useState(false);
+  const [auditForm, setAuditForm] = useState({
+    type: "manual_note",
+    amount: "1",
+    currency: "USD",
+    recipient: "One Earth Legacy",
+    causeCategory: "Human Survival",
+    causeImpact: "Clean Water for Life",
+    description: "Manual admin audit note.",
+    proofUrl: ""
+  });
 
   async function loadAdminData() {
     setLoading(true);
@@ -122,6 +133,46 @@ export default function Admin() {
       );
     } finally {
       setDetailLoading(false);
+    }
+  }
+
+  function updateAuditForm(field, value) {
+    setAuditForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  async function handleCreateAuditEntry(event) {
+    event.preventDefault();
+
+    setAuditSaving(true);
+    setErrorMessage("");
+
+    try {
+      const cause = `${auditForm.causeCategory} — ${auditForm.causeImpact}`;
+
+      await api.post("/admin/audit", {
+        ...auditForm,
+        cause,
+        amount: Number(auditForm.amount || 0)
+      });
+
+      await loadAdminData();
+
+      setAuditForm((current) => ({
+        ...current,
+        amount: "1",
+        description: "Manual admin audit note.",
+        proofUrl: ""
+      }));
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Could not create audit entry."
+      );
+    } finally {
+      setAuditSaving(false);
     }
   }
 
@@ -371,7 +422,13 @@ export default function Admin() {
           )}
 
           {activeTab === "Audit" && (
-            <AuditPanel entries={recentAuditEntries} />
+            <AuditPanel
+              entries={recentAuditEntries}
+              form={auditForm}
+              saving={auditSaving}
+              onChange={updateAuditForm}
+              onSubmit={handleCreateAuditEntry}
+            />
           )}
 
           {activeTab === "Security" && (
@@ -508,7 +565,7 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
   );
 }
 
-function DonationsPanel({ donations }) {
+function DonationsPanel({ donations, onViewDonation }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
       <PanelHeader icon={<Database />} title="Donation Records" />
@@ -524,6 +581,7 @@ function DonationsPanel({ donations }) {
               <th className="px-4">Payment</th>
               <th className="px-4">Settlement</th>
               <th className="px-4">Date</th>
+              <th className="px-4">Action</th>
             </tr>
           </thead>
 
@@ -564,8 +622,18 @@ function DonationsPanel({ donations }) {
                   <StatusPill value={donation.settlementStatus} />
                 </td>
 
-                <td className="rounded-r-2xl px-4 py-4 text-sm text-textSecondary">
+                <td className="px-4 py-4 text-sm text-textSecondary">
                   {formatDate(donation.createdAt)}
+                </td>
+
+                <td className="rounded-r-2xl px-4 py-4">
+                  <button
+                    type="button"
+                    onClick={() => onViewDonation?.(donation.id)}
+                    className="rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
+                  >
+                    View details
+                  </button>
                 </td>
               </tr>
             ))}
@@ -771,82 +839,203 @@ function MissionTotals({ missionTotals }) {
   );
 }
 
-function AuditPanel({ entries }) {
+function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault() }) {
   return (
-    <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<FileText />} title="Audit Log Viewer" />
+    <section className="space-y-8">
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<ShieldCheck />} title="Create Audit Entry" />
 
-      {entries.length === 0 ? (
-        <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-          No audit entries yet.
-        </p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] border-separate border-spacing-y-3">
-            <thead>
-              <tr className="text-left text-sm text-textSecondary">
-                <th className="px-4">Type</th>
-                <th className="px-4">Amount</th>
-                <th className="px-4">Recipient</th>
-                <th className="px-4">Mission</th>
-                <th className="px-4">Description</th>
-                <th className="px-4">Proof</th>
-                <th className="px-4">Date</th>
-              </tr>
-            </thead>
+        <form onSubmit={onSubmit} className="grid gap-4 lg:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Type
+            </span>
+            <select
+              value={form.type || "manual_note"}
+              onChange={(event) => onChange("type", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            >
+              <option value="manual_note">Manual note</option>
+              <option value="donation_received">Donation received</option>
+              <option value="cause_allocation">Cause allocation</option>
+              <option value="platform_allocation">Platform allocation</option>
+              <option value="lottery_allocation">Lottery allocation</option>
+            </select>
+          </label>
 
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id} className="bg-black/30">
-                  <td className="rounded-l-2xl px-4 py-4">
-                    <StatusPill value={entry.type} />
-                  </td>
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Amount
+            </span>
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={form.amount || "1"}
+              onChange={(event) => onChange("amount", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            />
+          </label>
 
-                  <td className="px-4 py-4 font-numbers font-bold text-goldLight">
-                    {formatMoney(entry.amount)}
-                  </td>
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Recipient
+            </span>
+            <input
+              value={form.recipient || ""}
+              onChange={(event) => onChange("recipient", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            />
+          </label>
 
-                  <td className="px-4 py-4 text-textPrimary">
-                    {entry.recipient || "One Earth Legacy"}
-                  </td>
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Currency
+            </span>
+            <input
+              value={form.currency || "USD"}
+              onChange={(event) => onChange("currency", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            />
+          </label>
 
-                  <td className="px-4 py-4">
-                    <p className="font-bold text-textPrimary">
-                      {entry.causeCategory}
-                    </p>
-                    <p className="text-sm text-textSecondary">
-                      {entry.causeImpact}
-                    </p>
-                  </td>
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Mission
+            </span>
+            <select
+              value={form.causeCategory || "Human Survival"}
+              onChange={(event) => onChange("causeCategory", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            >
+              <option value="Human Survival">Human Survival</option>
+              <option value="Planet Protection">Planet Protection</option>
+              <option value="Children & Education">Children & Education</option>
+            </select>
+          </label>
 
-                  <td className="px-4 py-4 text-sm text-textSecondary">
-                    {entry.description || "No description"}
-                  </td>
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Impact
+            </span>
+            <input
+              value={form.causeImpact || ""}
+              onChange={(event) => onChange("causeImpact", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            />
+          </label>
 
-                  <td className="px-4 py-4">
-                    {entry.proofUrl ? (
-                      <a
-                        href={entry.proofUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-bold text-gold hover:text-goldLight"
-                      >
-                        View proof
-                      </a>
-                    ) : (
-                      <span className="text-sm text-textSecondary">Pending</span>
-                    )}
-                  </td>
+          <label className="block lg:col-span-2">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Description
+            </span>
+            <textarea
+              rows="3"
+              value={form.description || ""}
+              onChange={(event) => onChange("description", event.target.value)}
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            />
+          </label>
 
-                  <td className="rounded-r-2xl px-4 py-4 text-sm text-textSecondary">
-                    {formatDate(entry.createdAt)}
-                  </td>
+          <label className="block lg:col-span-2">
+            <span className="mb-2 block text-sm font-bold text-textSecondary">
+              Proof URL optional
+            </span>
+            <input
+              value={form.proofUrl || ""}
+              onChange={(event) => onChange("proofUrl", event.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+            />
+          </label>
+
+          <div className="lg:col-span-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-xl bg-gold px-6 py-3 font-bold text-black transition hover:bg-goldLight disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving audit entry..." : "Create audit entry"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<ShieldCheck />} title="Audit Log Viewer" />
+
+        {entries.length === 0 ? (
+          <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+            No audit entries yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1050px] border-separate border-spacing-y-3">
+              <thead>
+                <tr className="text-left text-sm text-textSecondary">
+                  <th className="px-4">Type</th>
+                  <th className="px-4">Amount</th>
+                  <th className="px-4">Recipient</th>
+                  <th className="px-4">Mission</th>
+                  <th className="px-4">Description</th>
+                  <th className="px-4">Proof</th>
+                  <th className="px-4">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="bg-black/30">
+                    <td className="rounded-l-2xl px-4 py-4">
+                      <StatusPill value={entry.type} />
+                    </td>
+
+                    <td className="px-4 py-4 font-numbers font-bold text-goldLight">
+                      {formatMoney(entry.amount)}
+                    </td>
+
+                    <td className="px-4 py-4 text-textPrimary">
+                      {entry.recipient || "One Earth Legacy"}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <p className="font-bold text-textPrimary">
+                        {entry.causeCategory}
+                      </p>
+                      <p className="text-sm text-textSecondary">
+                        {entry.causeImpact}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-textSecondary">
+                      {entry.description || "No description"}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {entry.proofUrl ? (
+                        <a
+                          href={entry.proofUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-bold text-gold hover:text-goldLight"
+                        >
+                          View proof
+                        </a>
+                      ) : (
+                        <span className="text-sm text-textSecondary">Pending</span>
+                      )}
+                    </td>
+
+                    <td className="rounded-r-2xl px-4 py-4 text-sm text-textSecondary">
+                      {formatDate(entry.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -1033,7 +1222,7 @@ function SecurityPanel({ logs }) {
       </div>
 
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<FileText />} title="Security Log Viewer" />
+        <PanelHeader icon={<ShieldCheck />} title="Security Log Viewer" />
 
         {!logs || logs.length === 0 ? (
           <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
