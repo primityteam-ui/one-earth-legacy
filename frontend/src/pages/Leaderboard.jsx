@@ -5,6 +5,7 @@ import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
+import RankBadge from "../components/RankBadge.jsx";
 import { buildPublicFilterParams } from "../constants/legacyOptions.js";
 
 const tabs = ["Global", "By Country", "This Month", "All Time"];
@@ -187,10 +188,10 @@ export default function Leaderboard() {
                 <p className="text-sm uppercase tracking-[0.3em] text-goldLight">
                   Your current rank
                 </p>
-                <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
-                  Spark — Not ranked yet
-                </h2>
-                <p className="mt-2 text-textSecondary">
+                <div className="mt-3">
+                  <RankBadge rank="Spark" size="lg" />
+                </div>
+                <p className="mt-3 text-textSecondary">
                   After your first confirmed donation, your real rank will appear here permanently.
                 </p>
               </div>
@@ -247,8 +248,12 @@ function PodiumCard({ donor, position, activeTab }) {
       </h2>
 
       <p className="mt-2 text-textSecondary">
-        {donor.country} · {donor.rank}
+        {donor.country}
       </p>
+
+      <div className="mt-4">
+        <RankBadge rank={donor.rank} size="md" />
+      </div>
 
       <p className="mt-5 font-numbers text-4xl font-bold text-goldLight">
         ${value.toLocaleString()}
@@ -297,9 +302,7 @@ function RankRow({ donor, position }) {
       </div>
 
       <div className="flex items-center">
-        <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
-          {donor.rank}
-        </span>
+        <RankBadge rank={donor.rank} />
       </div>
 
       <div className="flex items-center">

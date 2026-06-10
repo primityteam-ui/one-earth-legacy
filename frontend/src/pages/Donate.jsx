@@ -1,3 +1,4 @@
+import RankBadge from "../components/RankBadge.jsx";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -542,9 +543,7 @@ export default function Donate() {
           <div className="space-y-5 rounded-[2rem] border border-gold/25 bg-royalCard p-6 shadow-gold">
             <div className="rounded-[1.5rem] border border-borderRoyal bg-black/40 p-6">
               <div className="mb-4 flex items-center justify-between">
-                <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
-                  {backendPreview?.rank || currentRank.name}
-                </span>
+                <RankBadge rank={backendPreview?.rank || currentRank.name} size="md" />
                 <Crown className="h-8 w-8 text-gold" />
               </div>
 
