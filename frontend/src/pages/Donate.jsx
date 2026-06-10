@@ -433,6 +433,17 @@ export default function Donate() {
                   {selectedDonorCountry.flag} {selectedDonorCountry.country}
                 </span>
               </p>
+
+              <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                <p className="text-sm font-semibold text-emerald-200">
+                  Privacy promise
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                  One Earth Legacy never asks for your street address. If you use
+                  current location, we round coordinates before saving, so your
+                  public legacy point appears near your city area, not your home.
+                </p>
+              </div>
             </div>
           </Panel>
 
