@@ -3,6 +3,7 @@ import {
   GraduationCap,
   HeartPulse,
   Leaf,
+  Clock,
   MapPin,
   ShieldCheck,
   Sparkles,
@@ -93,13 +94,14 @@ const fallbackCountries = [
 export default function Globe() {
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadCountries() {
       try {
         const response = await api.get("/public/leaderboard/countries");
-        const backendCountries = response.data.countries || [];
+        const backendCountries = response.data.countries || response.data.data || [];
 
         const mappedCountries = backendCountries.map((country, index) => {
           const code = String(country.countryCode || "").toUpperCase();
@@ -110,6 +112,9 @@ export default function Globe() {
             countryCode: code || country.countryCode || "GLOBAL",
             lat: Number(country.lat ?? country.latitude ?? coordinates.lat),
             lng: Number(country.lng ?? country.longitude ?? coordinates.lng),
+            donors: Number(country.donors || country.donorCount || 0),
+            totalDonated: Number(country.totalDonated || country.totalAmount || 0),
+            locationLabel: country.locationLabel || country.country,
             mission: normalizeMission(
               country.mission ||
                 country.topMission ||
@@ -133,7 +138,44 @@ export default function Globe() {
       }
     }
 
+    async function loadRecentActivity() {
+      try {
+        const response = await api.get("/public/tiles");
+        const backendTiles = response.data.tiles || [];
+
+        const activities = backendTiles
+          .filter((tile) => !tile.isEmperor)
+          .slice(0, 8)
+          .map((tile) => ({
+            id: tile.id || tile._id,
+            name: tile.name || "Anonymous Donor",
+            username: tile.username,
+            city: tile.city || "",
+            region: tile.region || "",
+            country: tile.country || "Earth",
+            countryCode: tile.countryCode || "GLOBAL",
+            locationLabel:
+              tile.locationLabel ||
+              [tile.city, tile.region, tile.country].filter(Boolean).join(", ") ||
+              tile.country ||
+              "Earth",
+            amountUSD: Number(tile.amountUSD || tile.amount || 0),
+            rank: tile.rank || "Spark",
+            mission: normalizeMission(tile.causeCategory || tile.mission || tile.cause),
+            cause: tile.cause || tile.causeCategory || "Legacy Mission",
+            message: tile.message || "A new legacy tile was created.",
+            createdAt: tile.createdAt
+          }));
+
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error("Could not load donor activity", error);
+        setRecentActivities([]);
+      }
+    }
+
     loadCountries();
+    loadRecentActivity();
   }, []);
 
   const totalDonors = useMemo(() => {
@@ -251,7 +293,125 @@ export default function Globe() {
           </div>
         </aside>
       </section>
+
+      <DonorActivityFeed activities={recentActivities} />
     </main>
+  );
+}
+
+function DonorActivityFeed({ activities }) {
+  return (
+    <section className="mt-8 rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="mb-2 text-sm uppercase tracking-[0.3em] text-gold">
+            Live Donor Activity
+          </p>
+
+          <h2 className="font-display text-3xl font-bold text-textPrimary">
+            Recent Legacy Tiles
+          </h2>
+
+          <p className="mt-2 max-w-2xl text-textSecondary">
+            New donations appear here with safe city-level location, selected mission,
+            rank, and legacy message.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-gold/25 bg-gold/10 px-5 py-3">
+          <p className="text-sm text-goldLight">Recent records</p>
+          <p className="font-numbers text-2xl font-bold text-textPrimary">
+            {activities.length}
+          </p>
+        </div>
+      </div>
+
+      {activities.length === 0 ? (
+        <div className="rounded-2xl border border-borderRoyal bg-black/30 p-6 text-textSecondary">
+          No live donor activity yet. Save a mock donation from the Donate page,
+          then refresh this globe page.
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {activities.map((activity) => {
+            const style = missionStyles[activity.mission] || {
+              color: "#facc15",
+              icon: Sparkles
+            };
+
+            const Icon = style.icon;
+            const profileUrl =
+              activity.username && activity.username !== "unknown"
+                ? `/profiles/${activity.username}`
+                : null;
+
+            return (
+              <article
+                key={activity.id}
+                className="rounded-2xl border border-borderRoyal bg-black/30 p-5 transition hover:border-gold/40 hover:bg-black/40"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-textSecondary">
+                      {profileUrl ? (
+                        <a
+                          href={profileUrl}
+                          className="font-semibold text-gold transition hover:text-goldLight"
+                        >
+                          {activity.name}
+                        </a>
+                      ) : (
+                        <span className="font-semibold text-gold">
+                          {activity.name}
+                        </span>
+                      )}
+                    </p>
+
+                    <h3 className="mt-1 font-display text-2xl font-bold text-textPrimary">
+                      ${Number(activity.amountUSD || 0).toLocaleString()}
+                    </h3>
+                  </div>
+
+                  <div className="rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-sm font-semibold text-goldLight">
+                    {activity.rank}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-3 rounded-2xl border border-borderRoyal bg-royalDeep/50 p-4">
+                  <Icon
+                    className="h-5 w-5"
+                    style={{ color: style.color }}
+                  />
+
+                  <div>
+                    <p className="text-xs text-textSecondary">Mission</p>
+                    <p className="font-bold" style={{ color: style.color }}>
+                      {activity.mission}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-4 line-clamp-2 text-sm text-textSecondary">
+                  “{activity.message}”
+                </p>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="flex items-center gap-2 rounded-xl border border-borderRoyal bg-black/30 px-3 py-2 text-sm text-textSecondary">
+                    <MapPin className="h-4 w-4 text-gold" />
+                    <span>{activity.locationLabel}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-xl border border-borderRoyal bg-black/30 px-3 py-2 text-sm text-textSecondary">
+                    <Clock className="h-4 w-4 text-gold" />
+                    <span>{formatActivityDate(activity.createdAt)}</span>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -354,6 +514,24 @@ function StatLine({ icon, label, value }) {
       </span>
     </div>
   );
+}
+
+function formatActivityDate(value) {
+  if (!value) {
+    return "Just now";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
 }
 
 function normalizeMission(value) {
