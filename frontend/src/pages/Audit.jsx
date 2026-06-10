@@ -15,6 +15,7 @@ import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
+import StatCard from "../components/StatCard.jsx";
 import { buildPublicFilterParams } from "../constants/legacyOptions.js";
 
 export default function Audit() {
@@ -234,21 +235,6 @@ export default function Audit() {
         </aside>
       </section>
     </main>
-  );
-}
-
-function StatCard({ icon, label, value }) {
-  return (
-    <div className="rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-6">
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
-        {icon}
-      </div>
-
-      <p className="text-sm text-textSecondary">{label}</p>
-      <p className="mt-2 font-numbers text-2xl font-bold text-textPrimary">
-        {value}
-      </p>
-    </div>
   );
 }
 
