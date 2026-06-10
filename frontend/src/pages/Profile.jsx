@@ -8,10 +8,12 @@ import {
   HeartHandshake,
   Share2,
   ShieldCheck,
-  Target,
   Trophy
 } from "lucide-react";
 import api from "../api/client.js";
+import PublicStateBox from "../components/PublicStateBox.jsx";
+import RankBadge from "../components/RankBadge.jsx";
+import StatCard from "../components/StatCard.jsx";
 
 export default function Profile() {
   const { username } = useParams();
@@ -47,9 +49,7 @@ export default function Profile() {
   if (loading) {
     return (
       <main className="mx-auto max-w-7xl px-5 py-10">
-        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
-          Loading public profile from backend...
-        </div>
+        <PublicStateBox message="Loading public profile from backend..." />
       </main>
     );
   }
@@ -61,9 +61,11 @@ export default function Profile() {
           <p className="font-display text-3xl font-bold text-textPrimary">
             Profile not found
           </p>
+
           <p className="mt-3 text-textSecondary">
-            This username does not exist in the backend profile API yet.
+            This username does not exist in the backend public profile API yet.
           </p>
+
           <Link
             to="/wall"
             className="mt-6 inline-block rounded-full bg-gold px-6 py-3 font-bold text-black shadow-gold hover:bg-goldLight"
@@ -75,9 +77,9 @@ export default function Profile() {
     );
   }
 
-  const mission = profile.causeCategory || "Mission Pending";
-  const exactImpact = profile.causeImpact || "Impact Pending";
-  const fullCause = profile.cause || `${mission} — ${exactImpact}`;
+  const causeAmount = Number(profile.impact?.causeAmount || 0);
+  const platformAmount = Number(profile.impact?.platformAmount || 0);
+  const lotteryAmount = Number(profile.impact?.lotteryAmount || 0);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
@@ -93,7 +95,8 @@ export default function Profile() {
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              @{profile.username} · {profile.flag} {profile.country} · Joined {profile.joined}
+              @{profile.username} · {profile.flag} {profile.country} · Joined{" "}
+              {profile.joined}
             </p>
           </div>
 
@@ -120,9 +123,7 @@ export default function Profile() {
 
             <div className="rounded-[1.5rem] border border-gold/30 bg-black/40 p-6">
               <div className="mb-5 flex items-center justify-between">
-                <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-sm font-bold text-goldLight">
-                  {profile.rank}
-                </span>
+                <RankBadge rank={profile.rank} size="md" />
                 <Crown className="h-8 w-8 text-gold" />
               </div>
 
@@ -133,14 +134,6 @@ export default function Profile() {
               <p className="mt-3 min-h-[90px] text-textSecondary">
                 {profile.message}
               </p>
-
-              <div className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-gold">
-                  Mission
-                </p>
-                <p className="mt-2 font-bold text-textPrimary">{mission}</p>
-                <p className="mt-1 text-sm text-textSecondary">{exactImpact}</p>
-              </div>
 
               <div className="mt-5 flex items-end justify-between border-t border-borderRoyal pt-5">
                 <div>
@@ -161,59 +154,59 @@ export default function Profile() {
           </motion.div>
 
           <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-            <p className="mb-4 font-display text-2xl font-bold">Profile Stats</p>
+            <p className="mb-4 font-display text-2xl font-bold">
+              Profile Stats
+            </p>
 
             <StatLine icon={<Crown />} label="Rank" value={profile.rank} />
-            <StatLine icon={<Globe2 />} label="Country" value={`${profile.flag} ${profile.country}`} />
-            <StatLine icon={<HeartHandshake />} label="Mission" value={mission} />
-            <StatLine icon={<Target />} label="Exact Impact" value={exactImpact} />
-            <StatLine icon={<ShieldCheck />} label="Profile status" value="Backend connected" />
+            <StatLine
+              icon={<Globe2 />}
+              label="Country"
+              value={`${profile.flag} ${profile.country}`}
+            />
+            <StatLine
+              icon={<HeartHandshake />}
+              label="Chosen cause"
+              value={profile.cause}
+            />
+            <StatLine
+              icon={<ShieldCheck />}
+              label="Profile status"
+              value="Backend connected"
+            />
           </div>
         </aside>
 
         <div className="space-y-8">
-          <section className="rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
-            <p className="mb-2 text-sm uppercase tracking-[0.3em] text-goldLight">
-              Selected Legacy Path
-            </p>
-
-            <h2 className="font-display text-3xl font-bold text-textPrimary">
-              {fullCause}
-            </h2>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <MissionBox label="Mission Category" value={mission} />
-              <MissionBox label="Exact Impact" value={exactImpact} />
-            </div>
-          </section>
-
           <section className="grid gap-5 md:grid-cols-3">
-            <ImpactCard
+            <StatCard
               icon={<HeartHandshake />}
               label="Cause contribution"
-              value={`$${Number(profile.impact?.causeAmount || 0).toFixed(2)}`}
-              text={`60% toward ${exactImpact}`}
+              value={`$${causeAmount.toFixed(2)}`}
+              subtext="60% of donation amount"
             />
 
-            <ImpactCard
+            <StatCard
               icon={<ShieldCheck />}
               label="Platform sustainability"
-              value={`$${Number(profile.impact?.platformAmount || 0).toFixed(2)}`}
-              text="25% platform allocation"
+              value={`$${platformAmount.toFixed(2)}`}
+              subtext="25% platform allocation"
             />
 
-            <ImpactCard
+            <StatCard
               icon={<Trophy />}
               label="Lottery pool"
-              value={`$${Number(profile.impact?.lotteryAmount || 0).toFixed(2)}`}
-              text="15% monthly donor pool"
+              value={`$${lotteryAmount.toFixed(2)}`}
+              subtext="15% monthly donor pool"
             />
           </section>
 
           <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
             <div className="mb-6 flex items-center gap-3">
               <CalendarDays className="h-6 w-6 text-gold" />
-              <h2 className="font-display text-2xl font-bold">Legacy Timeline</h2>
+              <h2 className="font-display text-2xl font-bold">
+                Legacy Timeline
+              </h2>
             </div>
 
             <div className="space-y-4">
@@ -227,7 +220,9 @@ export default function Profile() {
                 >
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="font-bold text-textPrimary">{event.title}</p>
+                      <p className="font-bold text-textPrimary">
+                        {event.title}
+                      </p>
                       <p className="mt-1 text-textSecondary">{event.text}</p>
                     </div>
 
@@ -278,34 +273,7 @@ function StatLine({ icon, label, value }) {
         <span className="text-textSecondary">{label}</span>
       </div>
 
-      <span className="text-right font-bold text-textPrimary">{value}</span>
-    </div>
-  );
-}
-
-function MissionBox({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-borderRoyal bg-black/30 p-5">
-      <p className="text-sm text-textSecondary">{label}</p>
-      <p className="mt-2 font-display text-2xl font-bold text-textPrimary">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function ImpactCard({ icon, label, value, text }) {
-  return (
-    <div className="rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-6">
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
-        {icon}
-      </div>
-
-      <p className="text-sm text-textSecondary">{label}</p>
-      <p className="mt-2 font-numbers text-3xl font-bold text-goldLight">
-        {value}
-      </p>
-      <p className="mt-2 text-sm text-textSecondary">{text}</p>
+      <span className="font-bold text-textPrimary">{value}</span>
     </div>
   );
 }
