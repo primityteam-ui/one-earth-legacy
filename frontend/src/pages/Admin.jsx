@@ -73,6 +73,37 @@ export default function Admin() {
     }
   }
 
+  async function handleDownloadCsv() {
+    try {
+      const response = await api.get("/admin/donations.csv", {
+        responseType: "blob"
+      });
+
+      const blob = new Blob([response.data], {
+        type: "text/csv;charset=utf-8"
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `one-earth-legacy-donations-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Could not download CSV. Make sure you are logged in as an admin."
+      );
+    }
+  }
+
   useEffect(() => {
     loadAdminData();
   }, []);
@@ -126,13 +157,23 @@ export default function Admin() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={loadAdminData}
-            className="rounded-full border border-gold/30 bg-gold/10 px-5 py-3 font-bold text-goldLight transition hover:bg-gold hover:text-black"
-          >
-            Refresh dashboard
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleDownloadCsv}
+              className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
+            >
+              Download CSV
+            </button>
+
+            <button
+              type="button"
+              onClick={loadAdminData}
+              className="rounded-full border border-gold/30 bg-gold/10 px-5 py-3 font-bold text-goldLight transition hover:bg-gold hover:text-black"
+            >
+              Refresh dashboard
+            </button>
+          </div>
         </div>
       </section>
 

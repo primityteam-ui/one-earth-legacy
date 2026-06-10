@@ -31,6 +31,102 @@ function getLocation(user = {}) {
   };
 }
 
+function csvEscape(value) {
+  const text = String(value ?? "");
+
+  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  return text;
+}
+
+function buildDonationCsvRow(donation) {
+  const user = donation.userId || {};
+  const location = getLocation(user);
+
+  const donorName = donation.isAnonymous || user.isAnonymous
+    ? "Anonymous"
+    : user.displayName || user.username || user.email || "Unknown donor";
+
+  return [
+    donation._id,
+    donorName,
+    user.email || "",
+    user.username || "",
+    money(donation.amountUSD),
+    donation.currency || "USD",
+    donation.causeCategory || "Unassigned",
+    donation.causeImpact || "",
+    donation.cause || "",
+    donation.paymentMethod || "",
+    donation.paymentStatus || "",
+    donation.settlementStatus || "",
+    location.city,
+    location.region,
+    location.country,
+    location.countryCode,
+    location.lat ?? "",
+    location.lng ?? "",
+    location.precision,
+    donation.rankAtTime || user.currentRank || "Spark",
+    donation.createdAt ? new Date(donation.createdAt).toISOString() : ""
+  ].map(csvEscape).join(",");
+}
+
+export async function exportAdminDonationsCsv(req, res, next) {
+  try {
+    const donations = await Donation.find({})
+      .populate(
+        "userId",
+        "email username displayName country countryCode donorLocation currentRank totalDonated isAnonymous isBanned role"
+      )
+      .sort({ createdAt: -1 })
+      .limit(5000)
+      .lean();
+
+    const headers = [
+      "Donation ID",
+      "Donor Name",
+      "Email",
+      "Username",
+      "Amount USD",
+      "Currency",
+      "Mission",
+      "Impact",
+      "Cause",
+      "Payment Method",
+      "Payment Status",
+      "Settlement Status",
+      "City",
+      "Region",
+      "Country",
+      "Country Code",
+      "Latitude",
+      "Longitude",
+      "Location Precision",
+      "Rank At Time",
+      "Created At"
+    ];
+
+    const csv = [
+      headers.map(csvEscape).join(","),
+      ...donations.map(buildDonationCsvRow)
+    ].join("\n");
+
+    const fileName = `one-earth-legacy-donations-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+
+    return res.status(200).send(csv);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getAdminOverview(req, res, next) {
   try {
     const search = String(req.query.search || "").trim().toLowerCase();
