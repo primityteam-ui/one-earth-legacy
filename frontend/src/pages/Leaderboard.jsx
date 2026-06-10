@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
+import PageHero from "../components/PageHero.jsx";
 import PublicErrorBox from "../components/PublicErrorBox.jsx";
 import PublicStateBox from "../components/PublicStateBox.jsx";
 import RankBadge from "../components/RankBadge.jsx";
@@ -75,36 +76,19 @@ export default function Leaderboard() {
       });
   }, [activeTab, search, leaderboard]);
 
+  const currentLeaderName = visibleDonors[0]?.name || leaderboard[0]?.name || "Loading...";
   const podium = visibleDonors.slice(0, 3);
   const rest = visibleDonors.slice(3);
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
-      <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalCard p-8 shadow-gold">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gold">
-              Leaderboard
-            </p>
-
-            <h1 className="font-display text-4xl font-bold md:text-6xl">
-              The Earth Rankings
-            </h1>
-
-            <p className="mt-4 max-w-3xl text-textSecondary">
-              Track the highest donors, strongest countries, monthly leaders, all-time legends,
-              and mission-based support across One Earth Legacy.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gold/30 bg-gold/10 px-5 py-4">
-            <p className="text-sm text-goldLight">Current leader</p>
-            <p className="font-display text-3xl font-bold text-textPrimary">
-              {visibleDonors[0]?.name || leaderboard[0]?.name || "Loading..."}
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Leaderboard"
+        title="The Earth Rankings"
+        description="Track the highest donors, strongest countries, monthly leaders, all-time legends, and mission-based support across One Earth Legacy."
+        rightLabel="Current leader"
+        rightValue={currentLeaderName}
+      />
 
       <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -188,9 +172,11 @@ export default function Leaderboard() {
                 <p className="text-sm uppercase tracking-[0.3em] text-goldLight">
                   Your current rank
                 </p>
+
                 <div className="mt-3">
                   <RankBadge rank="Spark" size="lg" />
                 </div>
+
                 <p className="mt-3 text-textSecondary">
                   After your first confirmed donation, your real rank will appear here permanently.
                 </p>
@@ -267,9 +253,11 @@ function PodiumCard({ donor, position, activeTab }) {
         <p className="text-xs uppercase tracking-[0.25em] text-gold">
           Mission
         </p>
+
         <p className="mt-2 font-bold text-textPrimary">
           {donor.causeCategory || "Mission Pending"}
         </p>
+
         <p className="mt-1 text-sm text-textSecondary">
           {donor.causeImpact || donor.cause || "Impact Pending"}
         </p>
@@ -362,7 +350,9 @@ function CountryLeaderboard({ countryStats, errorMessage }) {
                   <span className="font-numbers text-xl font-bold text-goldLight">
                     #{index + 1}
                   </span>
+
                   <span className="text-3xl">{item.flag}</span>
+
                   <div>
                     <p className="font-bold text-textPrimary">{item.country}</p>
                     <p className="text-sm text-textSecondary">
