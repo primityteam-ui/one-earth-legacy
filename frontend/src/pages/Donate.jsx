@@ -13,6 +13,7 @@ import {
   Sparkles
 } from "lucide-react";
 import api from "../api/client.js";
+import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
@@ -597,36 +598,5 @@ export default function Donate() {
         </aside>
       </section>
     </main>
-  );
-}
-
-function BackendPreviewBox({ backendPreview }) {
-  return (
-    <div className="mt-5 rounded-[1.5rem] border border-gold/30 bg-gold/10 p-5">
-      <p className="font-display text-2xl font-bold text-textPrimary">
-        Backend Preview Created
-      </p>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <PreviewItem label="Rank" value={backendPreview.rank} />
-        <PreviewItem label="Total today" value={`$${backendPreview.totalToday.toFixed(2)}`} />
-        <PreviewItem label="Cause amount" value={`$${backendPreview.split.causeAmount.toFixed(2)}`} />
-        <PreviewItem label="Platform amount" value={`$${backendPreview.split.platformAmount.toFixed(2)}`} />
-        <PreviewItem label="Lottery amount" value={`$${backendPreview.split.lotteryAmount.toFixed(2)}`} />
-        <PreviewItem label="Status" value={backendPreview.paymentStatus} />
-      </div>
-
-      {backendPreview.nextRank && (
-        <p className="mt-4 text-textSecondary">
-          Backend says you are{" "}
-          <span className="font-bold text-goldLight">
-            ${backendPreview.nextRank.amountNeeded}
-          </span>{" "}
-          away from {backendPreview.nextRank.name}.
-        </p>
-      )}
-
-      <p className="mt-4 text-sm text-textSecondary">{backendPreview.note}</p>
-    </div>
   );
 }
