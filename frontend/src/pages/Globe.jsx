@@ -1,15 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import {
-  Globe2,
+  GraduationCap,
+  HeartPulse,
+  Leaf,
   MapPin,
-  Radio,
   ShieldCheck,
   Sparkles,
   Trophy,
   Users
 } from "lucide-react";
 import api from "../api/client.js";
+import EarthGlobe from "../components/EarthGlobe.jsx";
+
+const missionStyles = {
+  "Human Survival": {
+    color: "#fb7185",
+    icon: HeartPulse
+  },
+  "Planet Protection": {
+    color: "#34d399",
+    icon: Leaf
+  },
+  "Children & Education": {
+    color: "#60a5fa",
+    icon: GraduationCap
+  }
+};
+
+const countryCoordinates = {
+  US: { lat: 37.0902, lng: -95.7129 },
+  USA: { lat: 37.0902, lng: -95.7129 },
+  IN: { lat: 20.5937, lng: 78.9629 },
+  IND: { lat: 20.5937, lng: 78.9629 },
+  BR: { lat: -14.235, lng: -51.9253 },
+  BRA: { lat: -14.235, lng: -51.9253 },
+  GB: { lat: 55.3781, lng: -3.436 },
+  UK: { lat: 55.3781, lng: -3.436 },
+  AU: { lat: -25.2744, lng: 133.7751 },
+  AUS: { lat: -25.2744, lng: 133.7751 },
+  CA: { lat: 56.1304, lng: -106.3468 },
+  CAN: { lat: 56.1304, lng: -106.3468 },
+  MX: { lat: 23.6345, lng: -102.5528 },
+  MEX: { lat: 23.6345, lng: -102.5528 },
+  DE: { lat: 51.1657, lng: 10.4515 },
+  GER: { lat: 51.1657, lng: 10.4515 },
+  FR: { lat: 46.2276, lng: 2.2137 },
+  FRA: { lat: 46.2276, lng: 2.2137 },
+  JP: { lat: 36.2048, lng: 138.2529 },
+  JPN: { lat: 36.2048, lng: 138.2529 },
+  CN: { lat: 35.8617, lng: 104.1954 },
+  CHN: { lat: 35.8617, lng: 104.1954 },
+  ZA: { lat: -30.5595, lng: 22.9375 },
+  ZAF: { lat: -30.5595, lng: 22.9375 }
+};
 
 const fallbackCountries = [
   {
@@ -19,8 +62,9 @@ const fallbackCountries = [
     donors: 12,
     totalDonated: 2500,
     topDonor: "Vamshi",
-    x: 27,
-    y: 43
+    mission: "Human Survival",
+    lat: 37.0902,
+    lng: -95.7129
   },
   {
     country: "India",
@@ -29,8 +73,9 @@ const fallbackCountries = [
     donors: 18,
     totalDonated: 4200,
     topDonor: "Legacy Founder",
-    x: 67,
-    y: 51
+    mission: "Children & Education",
+    lat: 20.5937,
+    lng: 78.9629
   },
   {
     country: "Brazil",
@@ -39,55 +84,11 @@ const fallbackCountries = [
     donors: 8,
     totalDonated: 1350,
     topDonor: "Earth Guardian",
-    x: 38,
-    y: 68
-  },
-  {
-    country: "United Kingdom",
-    countryCode: "GB",
-    flag: "🇬🇧",
-    donors: 5,
-    totalDonated: 950,
-    topDonor: "Global Citizen",
-    x: 49,
-    y: 34
-  },
-  {
-    country: "Australia",
-    countryCode: "AU",
-    flag: "🇦🇺",
-    donors: 4,
-    totalDonated: 700,
-    topDonor: "Ocean Protector",
-    x: 78,
-    y: 72
+    mission: "Planet Protection",
+    lat: -14.235,
+    lng: -51.9253
   }
 ];
-
-const globePoints = {
-  US: { x: 27, y: 43 },
-  USA: { x: 27, y: 43 },
-  IN: { x: 67, y: 51 },
-  IND: { x: 67, y: 51 },
-  BR: { x: 38, y: 68 },
-  BRA: { x: 38, y: 68 },
-  GB: { x: 49, y: 34 },
-  UK: { x: 49, y: 34 },
-  AU: { x: 78, y: 72 },
-  AUS: { x: 78, y: 72 },
-  CA: { x: 25, y: 32 },
-  CAN: { x: 25, y: 32 },
-  DE: { x: 52, y: 36 },
-  GER: { x: 52, y: 36 },
-  FR: { x: 49, y: 39 },
-  FRA: { x: 49, y: 39 },
-  JP: { x: 82, y: 45 },
-  JPN: { x: 82, y: 45 },
-  CN: { x: 73, y: 43 },
-  CHN: { x: 73, y: 43 },
-  ZA: { x: 55, y: 77 },
-  ZAF: { x: 55, y: 77 }
-};
 
 export default function Globe() {
   const [countries, setCountries] = useState([]);
@@ -102,17 +103,27 @@ export default function Globe() {
 
         const mappedCountries = backendCountries.map((country, index) => {
           const code = String(country.countryCode || "").toUpperCase();
-          const position = globePoints[code] || createFallbackPosition(index);
+          const coordinates = countryCoordinates[code] || createFallbackCoordinates(index);
 
           return {
             ...country,
-            x: position.x,
-            y: position.y
+            countryCode: code || country.countryCode || "GLOBAL",
+            lat: Number(country.lat ?? country.latitude ?? coordinates.lat),
+            lng: Number(country.lng ?? country.longitude ?? coordinates.lng),
+            mission: normalizeMission(
+              country.mission ||
+                country.topMission ||
+                country.causeCategory ||
+                country.primaryMission ||
+                index
+            )
           };
         });
 
-        setCountries(mappedCountries.length ? mappedCountries : fallbackCountries);
-        setSelectedCountry(mappedCountries[0] || fallbackCountries[0]);
+        const finalCountries = mappedCountries.length ? mappedCountries : fallbackCountries;
+
+        setCountries(finalCountries);
+        setSelectedCountry(finalCountries[0]);
       } catch (error) {
         console.error("Could not load globe countries", error);
         setCountries(fallbackCountries);
@@ -149,12 +160,12 @@ export default function Globe() {
             </p>
 
             <h1 className="font-display text-4xl font-bold md:text-6xl">
-              The Living Earth Globe
+              Google-Earth-Style Legacy Globe
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              A rotating 3D-style donor globe showing country-level support across One Earth Legacy.
-              The data is connected to your backend country leaderboard API.
+              A real interactive 3D Earth globe with exact latitude and longitude donor points,
+              mission-based colors, and country-level backend leaderboard data.
             </p>
           </div>
 
@@ -167,103 +178,26 @@ export default function Globe() {
         </div>
       </section>
 
-      <section className="grid gap-8 lg:grid-cols-[1fr_380px]">
+      <section className="grid gap-8 lg:grid-cols-[1fr_390px]">
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
           {loading ? (
-            <div className="flex min-h-[560px] items-center justify-center text-textSecondary">
-              Loading globe data from backend...
+            <div className="flex h-[620px] items-center justify-center text-textSecondary">
+              Loading interactive Earth...
             </div>
           ) : (
-            <div className="relative flex min-h-[560px] items-center justify-center overflow-hidden rounded-[1.75rem] border border-borderRoyal bg-black/40">
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute left-10 top-10 h-40 w-40 rounded-full bg-gold/20 blur-3xl" />
-                <div className="absolute bottom-10 right-10 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
-              </div>
-
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 48,
-                  ease: "linear"
-                }}
-                className="relative h-[340px] w-[340px] rounded-full border border-gold/40 bg-[radial-gradient(circle_at_30%_30%,rgba(250,204,21,0.35),rgba(30,64,175,0.35),rgba(2,6,23,0.95)_70%)] shadow-[0_0_80px_rgba(212,175,55,0.28)] md:h-[460px] md:w-[460px]"
-              >
-                <div className="absolute inset-4 rounded-full border border-white/10" />
-                <div className="absolute inset-10 rounded-full border border-white/10" />
-                <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/10" />
-                <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/10" />
-
-                <div className="absolute inset-0 overflow-hidden rounded-full">
-                  <div className="absolute left-[12%] top-[28%] h-[18%] w-[24%] rounded-full bg-emerald-500/30 blur-sm" />
-                  <div className="absolute left-[50%] top-[26%] h-[18%] w-[30%] rounded-full bg-emerald-500/25 blur-sm" />
-                  <div className="absolute left-[58%] top-[45%] h-[20%] w-[18%] rounded-full bg-emerald-500/25 blur-sm" />
-                  <div className="absolute left-[30%] top-[60%] h-[22%] w-[16%] rounded-full bg-emerald-500/25 blur-sm" />
-                  <div className="absolute left-[69%] top-[67%] h-[13%] w-[18%] rounded-full bg-emerald-500/25 blur-sm" />
-                </div>
-
-                {countries.map((country, index) => (
-                  <button
-                    key={`${country.countryCode || country.country}-${index}`}
-                    type="button"
-                    onClick={() => setSelectedCountry(country)}
-                    className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
-                    style={{
-                      left: `${country.x}%`,
-                      top: `${country.y}%`
-                    }}
-                  >
-                    <motion.span
-                      animate={{
-                        scale:
-                          selectedCountry?.country === country.country
-                            ? [1, 1.35, 1]
-                            : [1, 1.18, 1]
-                      }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: selectedCountry?.country === country.country ? 1.2 : 2
-                      }}
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-                        selectedCountry?.country === country.country
-                          ? "border-gold bg-gold"
-                          : "border-gold/70 bg-gold/60"
-                      } shadow-[0_0_24px_rgba(212,175,55,0.85)]`}
-                    >
-                      <span className="h-2 w-2 rounded-full bg-black" />
-                    </motion.span>
-                  </button>
-                ))}
-
-                <div className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.18),transparent_35%,rgba(0,0,0,0.35)_75%)]" />
-              </motion.div>
-
-              <div className="absolute bottom-6 left-6 right-6 rounded-[1.25rem] border border-borderRoyal bg-black/50 p-4 backdrop-blur">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-3">
-                    <Radio className="h-5 w-5 text-gold" />
-                    <p className="font-bold text-textPrimary">
-                      Live country donor signal
-                    </p>
-                  </div>
-
-                  <p className="text-sm text-textSecondary">
-                    Click any gold point on the globe.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <EarthGlobe
+              countries={countries}
+              selectedCountry={selectedCountry}
+              onSelectCountry={setSelectedCountry}
+            />
           )}
         </div>
 
         <aside className="space-y-5">
           <div className="rounded-[2rem] border border-gold/25 bg-gold/10 p-6 shadow-gold">
-            <div className="mb-4 flex items-center gap-3">
-              <Globe2 className="h-6 w-6 text-gold" />
-              <h2 className="font-display text-2xl font-bold text-textPrimary">
-                Global Impact
-              </h2>
-            </div>
+            <h2 className="mb-4 font-display text-2xl font-bold text-textPrimary">
+              Global Impact
+            </h2>
 
             <div className="space-y-3">
               <StatLine
@@ -286,97 +220,124 @@ export default function Globe() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <MapPin className="h-6 w-6 text-gold" />
-              <h2 className="font-display text-2xl font-bold text-textPrimary">
-                Selected Country
-              </h2>
-            </div>
-
-            {selectedCountry ? (
-              <div>
-                <div className="mb-4 flex items-center gap-4">
-                  <span className="text-5xl">{selectedCountry.flag || "🌍"}</span>
-
-                  <div>
-                    <p className="font-display text-3xl font-bold text-textPrimary">
-                      {selectedCountry.country}
-                    </p>
-                    <p className="text-sm text-textSecondary">
-                      {selectedCountry.countryCode || "GLOBAL"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <StatLine
-                    icon={<Users className="h-5 w-5" />}
-                    label="Donors"
-                    value={Number(selectedCountry.donors || 0).toLocaleString()}
-                  />
-
-                  <StatLine
-                    icon={<Sparkles className="h-5 w-5" />}
-                    label="Donated"
-                    value={`$${Number(selectedCountry.totalDonated || 0).toLocaleString()}`}
-                  />
-
-                  <StatLine
-                    icon={<ShieldCheck className="h-5 w-5" />}
-                    label="Top donor"
-                    value={selectedCountry.topDonor || "Pending"}
-                  />
-                </div>
-              </div>
-            ) : (
-              <p className="text-textSecondary">
-                Select a country point on the globe.
-              </p>
-            )}
-          </div>
+          <CountryDetailCard selectedCountry={selectedCountry} />
 
           <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
             <p className="mb-4 text-sm uppercase tracking-[0.3em] text-gold">
-              Country Rankings
+              Mission Colors
             </p>
 
             <div className="space-y-3">
-              {[...countries]
-                .sort((a, b) => Number(b.totalDonated || 0) - Number(a.totalDonated || 0))
-                .slice(0, 6)
-                .map((country, index) => (
-                  <button
-                    key={`${country.countryCode || country.country}-rank-${index}`}
-                    type="button"
-                    onClick={() => setSelectedCountry(country)}
-                    className="flex w-full items-center justify-between rounded-2xl border border-borderRoyal bg-black/30 p-4 text-left hover:border-gold"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-numbers text-lg font-bold text-goldLight">
-                        #{index + 1}
-                      </span>
-                      <span className="text-2xl">{country.flag || "🌍"}</span>
-                      <div>
-                        <p className="font-bold text-textPrimary">
-                          {country.country}
-                        </p>
-                        <p className="text-xs text-textSecondary">
-                          {Number(country.donors || 0).toLocaleString()} donors
-                        </p>
-                      </div>
-                    </div>
+              {Object.entries(missionStyles).map(([mission, style]) => {
+                const Icon = style.icon;
 
-                    <p className="font-numbers font-bold text-goldLight">
-                      ${Number(country.totalDonated || 0).toLocaleString()}
+                return (
+                  <div
+                    key={mission}
+                    className="flex items-center gap-3 rounded-2xl border border-borderRoyal bg-black/30 p-4"
+                  >
+                    <Icon
+                      className="h-5 w-5"
+                      style={{ color: style.color }}
+                    />
+
+                    <p className="font-bold text-textPrimary">
+                      {mission}
                     </p>
-                  </button>
-                ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </aside>
       </section>
     </main>
+  );
+}
+
+function CountryDetailCard({ selectedCountry }) {
+  if (!selectedCountry) {
+    return (
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <p className="text-textSecondary">
+          Select a country point on the globe.
+        </p>
+      </div>
+    );
+  }
+
+  const style = missionStyles[selectedCountry.mission] || {
+    color: "#facc15",
+    icon: Sparkles
+  };
+
+  const Icon = style.icon;
+
+  return (
+    <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+      <div className="mb-4 flex items-center gap-3">
+        <MapPin className="h-6 w-6 text-gold" />
+
+        <h2 className="font-display text-2xl font-bold text-textPrimary">
+          Selected Country
+        </h2>
+      </div>
+
+      <div className="mb-4 flex items-center gap-4">
+        <span className="text-5xl">
+          {selectedCountry.flag || "🌍"}
+        </span>
+
+        <div>
+          <p className="font-display text-3xl font-bold text-textPrimary">
+            {selectedCountry.country}
+          </p>
+
+          <p className="text-sm text-textSecondary">
+            {selectedCountry.countryCode || "GLOBAL"} · Lat{" "}
+            {Number(selectedCountry.lat).toFixed(2)}, Lng{" "}
+            {Number(selectedCountry.lng).toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="mb-4 flex items-center gap-3 rounded-2xl border bg-black/30 p-4"
+        style={{ borderColor: style.color }}
+      >
+        <Icon
+          className="h-5 w-5"
+          style={{ color: style.color }}
+        />
+
+        <div>
+          <p className="text-sm text-textSecondary">Primary mission</p>
+          <p className="font-bold" style={{ color: style.color }}>
+            {selectedCountry.mission || "Legacy Mission"}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <StatLine
+          icon={<Users className="h-5 w-5" />}
+          label="Donors"
+          value={Number(selectedCountry.donors || 0).toLocaleString()}
+        />
+
+        <StatLine
+          icon={<Sparkles className="h-5 w-5" />}
+          label="Donated"
+          value={`$${Number(selectedCountry.totalDonated || 0).toLocaleString()}`}
+        />
+
+        <StatLine
+          icon={<ShieldCheck className="h-5 w-5" />}
+          label="Top donor"
+          value={selectedCountry.topDonor || "Pending"}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -395,15 +356,32 @@ function StatLine({ icon, label, value }) {
   );
 }
 
-function createFallbackPosition(index) {
-  const positions = [
-    { x: 30, y: 38 },
-    { x: 62, y: 45 },
-    { x: 48, y: 62 },
-    { x: 70, y: 58 },
-    { x: 38, y: 72 },
-    { x: 55, y: 34 }
+function normalizeMission(value) {
+  if (typeof value === "number") {
+    const missions = Object.keys(missionStyles);
+    return missions[value % missions.length];
+  }
+
+  const mission = String(value || "").trim();
+
+  if (mission.includes("Human")) return "Human Survival";
+  if (mission.includes("Planet")) return "Planet Protection";
+  if (mission.includes("Children") || mission.includes("Education")) {
+    return "Children & Education";
+  }
+
+  return "Human Survival";
+}
+
+function createFallbackCoordinates(index) {
+  const coordinates = [
+    { lat: 37.0902, lng: -95.7129 },
+    { lat: 20.5937, lng: 78.9629 },
+    { lat: -14.235, lng: -51.9253 },
+    { lat: 55.3781, lng: -3.436 },
+    { lat: -25.2744, lng: 133.7751 },
+    { lat: 56.1304, lng: -106.3468 }
   ];
 
-  return positions[index % positions.length];
+  return coordinates[index % coordinates.length];
 }
