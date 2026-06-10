@@ -224,12 +224,31 @@ export async function getAdminOverview(req, res, next) {
     );
 
     const missionTotals = {};
+    const countryTotals = {};
 
     for (const donation of paidDonations) {
+      const user = donation.userId || {};
+      const location = getLocation(user);
+
       const mission = donation.causeCategory || "Unassigned";
       missionTotals[mission] = money(
         safeNumber(missionTotals[mission]) + safeNumber(donation.amountUSD)
       );
+
+      const countryKey = location.country || "Unknown";
+      const existingCountry = countryTotals[countryKey] || {
+        country: countryKey,
+        countryCode: location.countryCode || "UN",
+        totalDonated: 0,
+        donors: 0
+      };
+
+      existingCountry.totalDonated = money(
+        safeNumber(existingCountry.totalDonated) + safeNumber(donation.amountUSD)
+      );
+      existingCountry.donors += 1;
+
+      countryTotals[countryKey] = existingCountry;
     }
 
     const recentDonations = donations.map((donation) => {
@@ -289,6 +308,9 @@ export async function getAdminOverview(req, res, next) {
         auditCount
       },
       missionTotals,
+      countryTotals: Object.values(countryTotals).sort(
+        (a, b) => Number(b.totalDonated || 0) - Number(a.totalDonated || 0)
+      ),
       recentDonations,
       topDonors,
       filters: {

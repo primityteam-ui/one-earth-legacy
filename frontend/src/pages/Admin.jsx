@@ -112,6 +112,7 @@ export default function Admin() {
   const recentDonations = data?.recentDonations || [];
   const topDonors = data?.topDonors || [];
   const missionTotals = data?.missionTotals || {};
+  const countryTotals = data?.countryTotals || [];
 
   const revenueStats = useMemo(() => {
     return [
@@ -321,6 +322,7 @@ export default function Admin() {
               stats={stats}
               recentDonations={recentDonations}
               missionTotals={missionTotals}
+              countryTotals={countryTotals}
             />
           )}
 
@@ -333,7 +335,10 @@ export default function Admin() {
           )}
 
           {activeTab === "Missions" && (
-            <MissionsPanel missionTotals={missionTotals} />
+            <MissionsPanel
+              missionTotals={missionTotals}
+              countryTotals={countryTotals}
+            />
           )}
 
           {activeTab === "Security" && <SecurityPanel />}
@@ -343,43 +348,70 @@ export default function Admin() {
   );
 }
 
-function OverviewPanel({ stats, recentDonations, missionTotals }) {
+function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals }) {
   return (
-    <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
-      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<BadgeDollarSign />} title="Revenue Split" />
+    <section className="space-y-8">
+      <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+          <PanelHeader icon={<BadgeDollarSign />} title="Revenue Split" />
 
-        <div className="space-y-5">
-          <RevenueBar
-            label="60% Cause allocation"
-            amount={formatMoney(stats.causeReserve)}
-            width="60%"
-          />
-          <RevenueBar
-            label="25% Platform sustainability"
-            amount={formatMoney(stats.platformReserve)}
-            width="25%"
-          />
-          <RevenueBar
-            label="15% Lottery pool"
-            amount={formatMoney(stats.lotteryReserve)}
-            width="15%"
-          />
+          <div className="grid gap-5 md:grid-cols-3">
+            <ChartCard
+              label="Cause allocation"
+              value={formatMoney(stats.causeReserve)}
+              percent={60}
+            />
+            <ChartCard
+              label="Platform reserve"
+              value={formatMoney(stats.platformReserve)}
+              percent={25}
+            />
+            <ChartCard
+              label="Lottery reserve"
+              value={formatMoney(stats.lotteryReserve)}
+              percent={15}
+            />
+          </div>
+
+          <div className="mt-8 space-y-5">
+            <RevenueBar
+              label="60% Cause allocation"
+              amount={formatMoney(stats.causeReserve)}
+              width="60%"
+            />
+            <RevenueBar
+              label="25% Platform sustainability"
+              amount={formatMoney(stats.platformReserve)}
+              width="25%"
+            />
+            <RevenueBar
+              label="15% Lottery pool"
+              amount={formatMoney(stats.lotteryReserve)}
+              width="15%"
+            />
+          </div>
         </div>
 
-        <div className="mt-8">
-          <PanelHeader icon={<Sparkles />} title="Mission Totals" />
-          <MissionTotals missionTotals={missionTotals} />
+        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+          <PanelHeader icon={<Crown />} title="Latest Donations" />
+
+          <div className="space-y-4">
+            {recentDonations.slice(0, 5).map((donation) => (
+              <DonationMiniCard key={donation.id} donation={donation} />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<Crown />} title="Latest Donations" />
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+          <PanelHeader icon={<Sparkles />} title="Mission Chart" />
+          <BarChartFromObject data={missionTotals} emptyText="No mission donations yet." />
+        </div>
 
-        <div className="space-y-4">
-          {recentDonations.slice(0, 5).map((donation) => (
-            <DonationMiniCard key={donation.id} donation={donation} />
-          ))}
+        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+          <PanelHeader icon={<Globe2 />} title="Country Chart" />
+          <CountryChart countries={countryTotals} />
         </div>
       </div>
     </section>
@@ -489,12 +521,135 @@ function DonorsPanel({ donors }) {
   );
 }
 
-function MissionsPanel({ missionTotals }) {
+function MissionsPanel({ missionTotals, countryTotals }) {
   return (
-    <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<Sparkles />} title="Mission Performance" />
-      <MissionTotals missionTotals={missionTotals} />
+    <section className="grid gap-8 lg:grid-cols-2">
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<Sparkles />} title="Mission Performance" />
+        <BarChartFromObject data={missionTotals} emptyText="No mission donations yet." />
+
+        <div className="mt-8">
+          <MissionTotals missionTotals={missionTotals} />
+        </div>
+      </div>
+
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<Globe2 />} title="Country Performance" />
+        <CountryChart countries={countryTotals} />
+      </div>
     </section>
+  );
+}
+
+function ChartCard({ label, value, percent }) {
+  return (
+    <div className="rounded-2xl border border-borderRoyal bg-black/30 p-5">
+      <p className="text-sm text-textSecondary">{label}</p>
+      <p className="mt-2 font-numbers text-2xl font-bold text-textPrimary">
+        {value}
+      </p>
+
+      <div className="mt-4 h-3 overflow-hidden rounded-full bg-royalBlack">
+        <div
+          className="h-full rounded-full bg-gold"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+
+      <p className="mt-2 text-sm font-bold text-goldLight">{percent}%</p>
+    </div>
+  );
+}
+
+function BarChartFromObject({ data, emptyText }) {
+  const entries = Object.entries(data || {});
+  const maxValue = Math.max(...entries.map(([, value]) => Number(value || 0)), 1);
+
+  if (entries.length === 0) {
+    return (
+      <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+        {emptyText}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {entries.map(([label, value]) => {
+        const percent = Math.max(4, (Number(value || 0) / maxValue) * 100);
+
+        return (
+          <div key={label}>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <p className="font-bold text-textPrimary">{label}</p>
+              <p className="font-numbers font-bold text-goldLight">
+                {formatMoney(value)}
+              </p>
+            </div>
+
+            <div className="h-4 overflow-hidden rounded-full bg-royalBlack">
+              <div
+                className="h-full rounded-full bg-gold"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CountryChart({ countries }) {
+  const list = Array.isArray(countries) ? countries.slice(0, 8) : [];
+  const maxValue = Math.max(
+    ...list.map((country) => Number(country.totalDonated || 0)),
+    1
+  );
+
+  if (list.length === 0) {
+    return (
+      <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+        No country donation data yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {list.map((country) => {
+        const percent = Math.max(
+          4,
+          (Number(country.totalDonated || 0) / maxValue) * 100
+        );
+
+        return (
+          <div key={`${country.countryCode}-${country.country}`}>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-bold text-textPrimary">
+                  {country.country}
+                </p>
+                <p className="text-sm text-textSecondary">
+                  {country.countryCode} · {country.donors} donor records
+                </p>
+              </div>
+
+              <p className="font-numbers font-bold text-goldLight">
+                {formatMoney(country.totalDonated)}
+              </p>
+            </div>
+
+            <div className="h-4 overflow-hidden rounded-full bg-royalBlack">
+              <div
+                className="h-full rounded-full bg-gold"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
