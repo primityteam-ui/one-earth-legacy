@@ -33,29 +33,75 @@ function getLocation(user = {}) {
 
 export async function getAdminOverview(req, res, next) {
   try {
+    const search = String(req.query.search || "").trim().toLowerCase();
+    const paymentStatus = String(req.query.paymentStatus || "").trim();
+    const mission = String(req.query.mission || "").trim();
+    const country = String(req.query.country || "").trim().toLowerCase();
+
+    const donationQuery = {};
+
+    if (paymentStatus && paymentStatus !== "all") {
+      donationQuery.paymentStatus = paymentStatus;
+    }
+
+    if (mission && mission !== "all") {
+      donationQuery.causeCategory = mission;
+    }
+
     const [
       users,
-      donations,
+      rawDonations,
       tilesCount,
       auditCount
     ] = await Promise.all([
       User.find({ isBanned: false })
         .sort({ totalDonated: -1 })
-        .limit(100)
+        .limit(250)
         .lean(),
 
-      Donation.find({})
+      Donation.find(donationQuery)
         .populate(
           "userId",
           "email username displayName country countryCode donorLocation currentRank totalDonated isAnonymous isBanned role"
         )
         .sort({ createdAt: -1 })
-        .limit(100)
+        .limit(250)
         .lean(),
 
       Tile.countDocuments({}),
       AuditEntry.countDocuments({})
     ]);
+
+    const donations = rawDonations.filter((donation) => {
+      const user = donation.userId || {};
+      const location = getLocation(user);
+
+      const donorText = [
+        user.email,
+        user.username,
+        user.displayName,
+        donation.causeCategory,
+        donation.causeImpact,
+        donation.cause,
+        location.label,
+        location.country,
+        location.countryCode
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = search ? donorText.includes(search) : true;
+
+      const matchesCountry =
+        country && country !== "all"
+          ? location.country.toLowerCase().includes(country) ||
+            location.countryCode.toLowerCase() === country ||
+            location.label.toLowerCase().includes(country)
+          : true;
+
+      return matchesSearch && matchesCountry;
+    });
 
     const paidDonations = donations.filter((donation) => {
       return donation.paymentStatus === "paid";
@@ -148,7 +194,13 @@ export async function getAdminOverview(req, res, next) {
       },
       missionTotals,
       recentDonations,
-      topDonors
+      topDonors,
+      filters: {
+        search,
+        paymentStatus: paymentStatus || "all",
+        mission: mission || "all",
+        country: country || "all"
+      }
     });
   } catch (error) {
     next(error);

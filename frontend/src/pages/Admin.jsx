@@ -43,12 +43,25 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [search, setSearch] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("all");
+  const [mission, setMission] = useState("all");
+  const [country, setCountry] = useState("all");
+
   async function loadAdminData() {
     setLoading(true);
     setErrorMessage("");
 
     try {
-      const response = await api.get("/admin/overview");
+      const response = await api.get("/admin/overview", {
+        params: {
+          search,
+          paymentStatus,
+          mission,
+          country
+        }
+      });
+
       setData(response.data);
     } catch (error) {
       setErrorMessage(
@@ -189,6 +202,77 @@ export default function Admin() {
                 </button>
               ))}
             </div>
+          </section>
+
+          <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+            <div className="mb-5 flex flex-col gap-2">
+              <p className="text-sm uppercase tracking-[0.3em] text-gold">
+                Admin Filters
+              </p>
+              <h2 className="font-display text-2xl font-bold text-textPrimary">
+                Search donations and donors
+              </h2>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search name, email, mission, location..."
+                className="rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none transition focus:border-gold"
+              />
+
+              <select
+                value={paymentStatus}
+                onChange={(event) => setPaymentStatus(event.target.value)}
+                className="rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none transition focus:border-gold"
+              >
+                <option value="all">All payment statuses</option>
+                <option value="paid">Paid</option>
+                <option value="created">Created</option>
+                <option value="failed">Failed</option>
+                <option value="refunded">Refunded</option>
+              </select>
+
+              <select
+                value={mission}
+                onChange={(event) => setMission(event.target.value)}
+                className="rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none transition focus:border-gold"
+              >
+                <option value="all">All missions</option>
+                <option value="Human Survival">Human Survival</option>
+                <option value="Planet Protection">Planet Protection</option>
+                <option value="Children & Education">Children & Education</option>
+              </select>
+
+              <input
+                value={country}
+                onChange={(event) => setCountry(event.target.value)}
+                placeholder="Country or city"
+                className="rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none transition focus:border-gold"
+              />
+
+              <button
+                type="button"
+                onClick={loadAdminData}
+                className="rounded-xl bg-gold px-5 py-3 font-bold text-black transition hover:bg-goldLight"
+              >
+                Apply
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setPaymentStatus("all");
+                setMission("all");
+                setCountry("all");
+              }}
+              className="mt-4 rounded-full border border-borderRoyal px-4 py-2 text-sm font-bold text-textSecondary transition hover:border-gold hover:text-gold"
+            >
+              Clear filters
+            </button>
           </section>
 
           {activeTab === "Overview" && (
