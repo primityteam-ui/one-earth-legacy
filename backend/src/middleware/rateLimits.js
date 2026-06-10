@@ -1,7 +1,7 @@
 import rateLimit from "express-rate-limit";
 import { logSecurityEvent } from "../utils/securityLog.js";
 
-const isDevelopment = process.env.NODE_ENV === "development";
+const isDevelopment = process.env.NODE_ENV !== "production";
 
 function devBypassLimiter(req, res, next) {
   return next();
