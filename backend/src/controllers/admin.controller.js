@@ -184,12 +184,12 @@ function normalizeAuditType(value) {
     "cause_allocation",
     "platform_allocation",
     "lottery_allocation",
-    "manual_note"
+    "cause_allocation"
   ];
 
-  const safeType = cleanAuditText(value, "manual_note");
+  const safeType = cleanAuditText(value, "cause_allocation");
 
-  return allowedTypes.includes(safeType) ? safeType : "manual_note";
+  return allowedTypes.includes(safeType) ? safeType : "cause_allocation";
 }
 
 export async function createAdminAuditEntry(req, res, next) {

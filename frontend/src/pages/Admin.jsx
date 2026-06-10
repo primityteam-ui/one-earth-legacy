@@ -42,6 +42,7 @@ export default function Admin() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [search, setSearch] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("all");
@@ -51,7 +52,7 @@ export default function Admin() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [auditSaving, setAuditSaving] = useState(false);
   const [auditForm, setAuditForm] = useState({
-    type: "manual_note",
+    type: "cause_allocation",
     amount: "1",
     currency: "USD",
     recipient: "One Earth Legacy",
@@ -64,6 +65,7 @@ export default function Admin() {
   async function loadAdminData() {
     setLoading(true);
     setErrorMessage("");
+    setSuccessMessage("");
 
     try {
       const response = await api.get("/admin/overview", {
@@ -122,6 +124,7 @@ export default function Admin() {
 
     setDetailLoading(true);
     setErrorMessage("");
+    setSuccessMessage("");
 
     try {
       const response = await api.get(`/admin/donations/${donationId}`);
@@ -148,6 +151,7 @@ export default function Admin() {
 
     setAuditSaving(true);
     setErrorMessage("");
+    setSuccessMessage("");
 
     try {
       const cause = `${auditForm.causeCategory} — ${auditForm.causeImpact}`;
@@ -166,6 +170,8 @@ export default function Admin() {
         description: "Manual admin audit note.",
         proofUrl: ""
       }));
+
+      setSuccessMessage("Audit entry created successfully.");
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ||
@@ -254,6 +260,12 @@ export default function Admin() {
       </section>
 
       <AdminSecurityBanner />
+
+      {successMessage && (
+        <div className="mb-8 rounded-[1.5rem] border border-emerald-400/30 bg-emerald-400/10 p-5 text-emerald-200">
+          <p className="font-bold">{successMessage}</p>
+        </div>
+      )}
 
       {loading ? (
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-10 text-center text-textSecondary">
@@ -851,11 +863,11 @@ function AuditPanel({ entries = [], form = {}, saving = false, onChange = () => 
               Type
             </span>
             <select
-              value={form.type || "manual_note"}
+              value={form.type || "cause_allocation"}
               onChange={(event) => onChange("type", event.target.value)}
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
             >
-              <option value="manual_note">Manual note</option>
+              <option value="cause_allocation">Cause allocation</option>
               <option value="donation_received">Donation received</option>
               <option value="cause_allocation">Cause allocation</option>
               <option value="platform_allocation">Platform allocation</option>
