@@ -1,4 +1,3 @@
-import RankBadge from "../components/RankBadge.jsx";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -16,6 +15,8 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
+import PageHero from "../components/PageHero.jsx";
+import RankBadge from "../components/RankBadge.jsx";
 import {
   addOns,
   getNextRankForAmount,
@@ -171,31 +172,13 @@ export default function Donate() {
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
-      <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalCard p-8 shadow-gold">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.35em] text-gold">
-              Donate
-            </p>
-
-            <h1 className="font-display text-4xl font-bold md:text-6xl">
-              Claim Your Legacy Tile
-            </h1>
-
-            <p className="mt-4 max-w-3xl text-textSecondary">
-              Choose your mission, select the exact impact, create your legacy tile, and send your
-              donation through Stripe test checkout.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gold/30 bg-gold/10 px-5 py-4">
-            <p className="text-sm text-goldLight">Live rank preview</p>
-            <p className="font-display text-3xl font-bold text-textPrimary">
-              {backendPreview?.rank || currentRank.name}
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Donate"
+        title="Claim Your Legacy Tile"
+        description="Choose your mission, select the exact impact, create your legacy tile, and send your donation through Stripe test checkout."
+        rightLabel="Live rank preview"
+        rightValue={backendPreview?.rank || currentRank.name}
+      />
 
       <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
         <div className="space-y-8">
