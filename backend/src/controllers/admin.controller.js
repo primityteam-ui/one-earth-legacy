@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Donation from "../models/Donation.js";
 import Tile from "../models/Tile.js";
 import AuditEntry from "../models/AuditEntry.js";
+import SecurityLog from "../models/SecurityLog.js";
 
 function safeNumber(value) {
   return Number(value || 0);
@@ -148,6 +149,7 @@ export async function getAdminOverview(req, res, next) {
       users,
       rawDonations,
       recentAuditEntries,
+      recentSecurityLogs,
       tilesCount,
       auditCount
     ] = await Promise.all([
@@ -166,6 +168,12 @@ export async function getAdminOverview(req, res, next) {
         .lean(),
 
       AuditEntry.find({})
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .lean(),
+
+      SecurityLog.find({})
+        .populate("userId", "email username displayName role")
         .sort({ createdAt: -1 })
         .limit(100)
         .lean(),
@@ -331,6 +339,18 @@ export async function getAdminOverview(req, res, next) {
         description: entry.description || "",
         proofUrl: entry.proofUrl || "",
         createdAt: entry.createdAt
+      })),
+      recentSecurityLogs: recentSecurityLogs.map((log) => ({
+        id: log._id,
+        type: log.type,
+        email: log.email || log.userId?.email || "",
+        username: log.userId?.username || "",
+        displayName: log.userId?.displayName || "",
+        role: log.userId?.role || "",
+        ipAddress: log.ipAddress || "",
+        userAgent: log.userAgent || "",
+        details: log.details || {},
+        createdAt: log.createdAt
       })),
       filters: {
         search,

@@ -114,6 +114,7 @@ export default function Admin() {
   const missionTotals = data?.missionTotals || {};
   const countryTotals = data?.countryTotals || [];
   const recentAuditEntries = data?.recentAuditEntries || [];
+  const recentSecurityLogs = data?.recentSecurityLogs || [];
 
   const revenueStats = useMemo(() => {
     return [
@@ -346,7 +347,9 @@ export default function Admin() {
             <AuditPanel entries={recentAuditEntries} />
           )}
 
-          {activeTab === "Security" && <SecurityPanel />}
+          {activeTab === "Security" && (
+            <SecurityPanel logs={recentSecurityLogs} />
+          )}
         </>
       )}
     </main>
@@ -766,28 +769,99 @@ function AuditPanel({ entries }) {
   );
 }
 
-function SecurityPanel() {
+function SecurityPanel({ logs }) {
   return (
-    <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
-      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<ShieldCheck />} title="Admin Security" />
+    <section className="space-y-8">
+      <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+        <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+          <PanelHeader icon={<ShieldCheck />} title="Admin Security Rules" />
 
-        <SecurityLine text="Frontend /admin is protected by admin role." />
-        <SecurityLine text="Backend /api/admin routes require JWT authentication." />
-        <SecurityLine text="Backend /api/admin routes require admin role." />
-        <SecurityLine text="Production should add IP whitelist and hardware 2FA." />
-        <SecurityLine text="Every future admin write action should create a SecurityLog record." />
+          <SecurityLine text="Frontend /admin is protected by admin role." />
+          <SecurityLine text="Backend /api/admin routes require JWT authentication." />
+          <SecurityLine text="Backend /api/admin routes require admin role." />
+          <SecurityLine text="Production should add IP whitelist and hardware 2FA." />
+          <SecurityLine text="Every future admin write action should create a SecurityLog record." />
+        </div>
+
+        <div className="rounded-[2rem] border border-crimson/40 bg-crimson/10 p-6">
+          <AlertTriangle className="mb-4 h-10 w-10 text-crimsonLight" />
+          <p className="font-display text-2xl font-bold text-textPrimary">
+            Read-only admin dashboard
+          </p>
+          <p className="mt-3 text-textSecondary">
+            This dashboard only reads data. Do not add destructive admin actions until
+            2FA, IP whitelist, and security logging are fully implemented.
+          </p>
+        </div>
       </div>
 
-      <div className="rounded-[2rem] border border-crimson/40 bg-crimson/10 p-6">
-        <AlertTriangle className="mb-4 h-10 w-10 text-crimsonLight" />
-        <p className="font-display text-2xl font-bold text-textPrimary">
-          Read-only admin dashboard
-        </p>
-        <p className="mt-3 text-textSecondary">
-          This dashboard only reads data. Do not add destructive admin actions until
-          2FA, IP whitelist, and security logging are fully implemented.
-        </p>
+      <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+        <PanelHeader icon={<FileText />} title="Security Log Viewer" />
+
+        {!logs || logs.length === 0 ? (
+          <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
+            No security logs yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1100px] border-separate border-spacing-y-3">
+              <thead>
+                <tr className="text-left text-sm text-textSecondary">
+                  <th className="px-4">Event</th>
+                  <th className="px-4">User</th>
+                  <th className="px-4">IP Address</th>
+                  <th className="px-4">User Agent</th>
+                  <th className="px-4">Details</th>
+                  <th className="px-4">Date</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id} className="bg-black/30">
+                    <td className="rounded-l-2xl px-4 py-4">
+                      <SecurityEventPill type={log.type} />
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <p className="font-bold text-textPrimary">
+                        {log.displayName || log.username || log.email || "Unknown"}
+                      </p>
+                      <p className="text-sm text-textSecondary">
+                        {log.email || "No email"}
+                      </p>
+                      {log.role && (
+                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-gold">
+                          {log.role}
+                        </p>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4 font-mono text-sm text-textSecondary">
+                      {log.ipAddress || "Unknown"}
+                    </td>
+
+                    <td className="max-w-[260px] px-4 py-4 text-sm text-textSecondary">
+                      <p className="line-clamp-2">
+                        {log.userAgent || "Unknown"}
+                      </p>
+                    </td>
+
+                    <td className="max-w-[300px] px-4 py-4 text-sm text-textSecondary">
+                      <pre className="max-h-24 overflow-auto whitespace-pre-wrap rounded-xl border border-borderRoyal bg-black/40 p-3 text-xs">
+                        {JSON.stringify(log.details || {}, null, 2)}
+                      </pre>
+                    </td>
+
+                    <td className="rounded-r-2xl px-4 py-4 text-sm text-textSecondary">
+                      {formatDate(log.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -813,6 +887,33 @@ function DonationMiniCard({ donation }) {
         {donation.causeCategory} — {donation.causeImpact}
       </p>
     </div>
+  );
+}
+
+function SecurityEventPill({ type }) {
+  const riskyEvents = [
+    "failed_login",
+    "otp_failed",
+    "rate_limit_hit",
+    "suspicious_payment",
+    "ban",
+    "chargeback",
+    "admin_action",
+    "emperor_action"
+  ];
+
+  const isRisky = riskyEvents.includes(type);
+
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-bold ${
+        isRisky
+          ? "border border-crimson/40 bg-crimson/10 text-crimsonLight"
+          : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+      }`}
+    >
+      {type || "unknown"}
+    </span>
   );
 }
 
