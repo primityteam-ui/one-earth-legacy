@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import {
   BadgeDollarSign,
-  CheckCircle2,
   Crown,
   CreditCard,
   Globe2,
@@ -14,10 +13,10 @@ import {
 } from "lucide-react";
 import api from "../api/client.js";
 import BackendPreviewBox from "../components/BackendPreviewBox.jsx";
+import DonationSuccessBox from "../components/DonationSuccessBox.jsx";
 import MoneySplitCard from "../components/MoneySplitCard.jsx";
 import PageHero from "../components/PageHero.jsx";
 import Panel from "../components/Panel.jsx";
-import PreviewItem from "../components/PreviewItem.jsx";
 import RankBadge from "../components/RankBadge.jsx";
 import SummaryRow from "../components/SummaryRow.jsx";
 import {
@@ -476,52 +475,8 @@ export default function Donate() {
               </p>
             )}
 
-            {backendPreview && <BackendPreviewBox backendPreview={backendPreview} />}
-
-            {savedDonation && (
-              <div className="mt-5 rounded-[1.5rem] border border-green-500/30 bg-green-500/10 p-5">
-                <div className="mb-3 flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-green-400" />
-                  <p className="font-display text-2xl font-bold text-textPrimary">
-                    Mock Donation Saved
-                  </p>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <PreviewItem label="User" value={savedDonation.user.displayName} />
-                  <PreviewItem label="Username" value={savedDonation.user.username} />
-                  <PreviewItem label="Total donated" value={`$${savedDonation.user.totalDonated}`} />
-                  <PreviewItem label="Current rank" value={savedDonation.user.currentRank} />
-                  <PreviewItem label="Donation status" value={savedDonation.donation.paymentStatus} />
-                  <PreviewItem label="Settlement" value={savedDonation.donation.settlementStatus} />
-                </div>
-
-                <p className="mt-4 text-sm text-textSecondary">
-                  Now refresh Home, Wall, Leaderboard, Audit, and Profile pages to see this MongoDB data.
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <a
-                    href="/wall"
-                    className="rounded-full border border-borderRoyal px-5 py-2 text-sm font-bold text-textPrimary hover:border-gold hover:text-gold"
-                  >
-                    View Wall
-                  </a>
-                  <a
-                    href={`/u/${savedDonation.user.username}`}
-                    className="rounded-full bg-gold px-5 py-2 text-sm font-bold text-black hover:bg-goldLight"
-                  >
-                    View Profile
-                  </a>
-                  <a
-                    href="/audit"
-                    className="rounded-full border border-borderRoyal px-5 py-2 text-sm font-bold text-textPrimary hover:border-gold hover:text-gold"
-                  >
-                    View Audit
-                  </a>
-                </div>
-              </div>
-            )}
+            <BackendPreviewBox backendPreview={backendPreview} />
+            <DonationSuccessBox savedDonation={savedDonation} />
           </Panel>
         </div>
 
