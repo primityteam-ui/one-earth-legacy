@@ -630,6 +630,45 @@ export default function Donate() {
           totalToday={backendPreview?.totalToday ?? total}
         />
       </section>
+
+      <section className="mt-10 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
+            <ShieldCheck className="h-5 w-5 text-gold" />
+          </div>
+
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-gold">
+              Donate QA Checklist
+            </p>
+
+            <h2 className="mt-1 font-display text-3xl font-bold text-textPrimary">
+              Before production launch
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            "Create Preview returns backend split and rank",
+            "Save Mock Donation creates User, Donation, Tile, and AuditEntry",
+            "Stripe checkout opens with test key before live launch",
+            "Stripe webhook saves paid donations after checkout.session.completed",
+            "Success page loads after Stripe payment",
+            "Cancel page returns user safely to Donate",
+            "No street address is collected or shown publicly",
+            "Admin dashboard can review donation and audit records"
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-2xl border border-borderRoyal bg-black/25 p-4 text-sm text-textSecondary"
+            >
+              <span className="mr-2 text-gold">✓</span>
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
