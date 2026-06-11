@@ -285,6 +285,26 @@ export default function Admin() {
     Health: health?.warnings?.length || 0
   };
 
+  function getTabBadgeClass(tab, isActive) {
+    if (isActive) {
+      return "bg-black/20 text-black";
+    }
+
+    if (tab === "Audit") {
+      return "bg-emerald-400/10 text-emerald-300";
+    }
+
+    if (tab === "Security") {
+      return "bg-crimson/10 text-crimsonLight";
+    }
+
+    if (tab === "Health") {
+      return "bg-amber-400/10 text-amber-200";
+    }
+
+    return "bg-gold/10 text-goldLight";
+  }
+
   const revenueStats = useMemo(() => {
     return [
       {
@@ -423,11 +443,10 @@ export default function Admin() {
                   <span>{tab}</span>
                   {Number(tabCounts[tab] || 0) > 0 && (
                     <span
-                      className={`ml-2 rounded-full px-2 py-0.5 text-xs font-black ${
+                      className={`ml-2 rounded-full px-2 py-0.5 text-xs font-black ${getTabBadgeClass(
+                        tab,
                         activeTab === tab
-                          ? "bg-black/20 text-black"
-                          : "bg-gold/10 text-goldLight"
-                      }`}
+                      )}`}
                     >
                       {tabCounts[tab]}
                     </span>
