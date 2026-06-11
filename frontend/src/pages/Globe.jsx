@@ -342,7 +342,7 @@ function DonorActivityFeed({ activities }) {
             const Icon = style.icon;
             const profileUrl =
               activity.username && activity.username !== "unknown"
-                ? `/profiles/${activity.username}`
+                ? `/u/${activity.username}`
                 : null;
 
             return (
