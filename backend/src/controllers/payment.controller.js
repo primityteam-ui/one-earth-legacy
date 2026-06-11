@@ -119,6 +119,35 @@ function assertStripeSessionIsSafe(session) {
   }
 }
 
+export async function getStripeConfigStatus(req, res) {
+  const stripeMode = getStripeMode();
+  const hasSecretKey = Boolean(process.env.STRIPE_SECRET_KEY);
+  const hasWebhookSecret = Boolean(
+    process.env.STRIPE_WEBHOOK_SECRET &&
+      process.env.STRIPE_WEBHOOK_SECRET !== "temporary_later"
+  );
+  const hasSuccessUrl = Boolean(process.env.STRIPE_SUCCESS_URL);
+  const hasCancelUrl = Boolean(process.env.STRIPE_CANCEL_URL);
+
+  return res.status(200).json({
+    stripeMode,
+    configured: stripeMode !== "unknown" && hasSecretKey && hasWebhookSecret,
+    hasSecretKey,
+    hasWebhookSecret,
+    hasSuccessUrl,
+    hasCancelUrl,
+    nodeEnv: process.env.NODE_ENV || "development",
+    safety: {
+      livePaymentsAllowed:
+        process.env.NODE_ENV === "production" && stripeMode === "live",
+      liveKeyBlockedInDevelopment:
+        stripeMode === "live" &&
+        process.env.NODE_ENV !== "production" &&
+        process.env.ALLOW_LIVE_STRIPE_IN_DEVELOPMENT !== "true"
+    }
+  });
+}
+
 export async function createStripeCheckoutSession(req, res, next) {
   try {
     const stripe = getStripeClient();
