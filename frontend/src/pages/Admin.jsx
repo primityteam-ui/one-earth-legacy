@@ -552,6 +552,14 @@ export default function Admin() {
           )}
         </>
       )}
+
+      {selectedDonation && (
+        <DonationDetailDrawer
+          donation={selectedDonation}
+          loading={detailLoading}
+          onClose={() => setSelectedDonation(null)}
+        />
+      )}
     </main>
   );
 }
@@ -947,6 +955,102 @@ function MissionTotals({ missionTotals }) {
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function DonationDetailDrawer({ donation, loading, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
+      <div className="ml-auto h-full w-full max-w-2xl overflow-y-auto border-l border-borderRoyal bg-royalBlack p-6 shadow-2xl">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-gold">
+              Donation Detail
+            </p>
+            <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
+              {formatMoney(donation.amountUSD)}
+            </h2>
+            <p className="mt-1 text-textSecondary">
+              {donation.causeCategory || "Unassigned"} · {formatDate(donation.createdAt)}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-borderRoyal px-4 py-2 font-bold text-textSecondary transition hover:border-gold hover:text-gold"
+          >
+            Close
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="rounded-2xl border border-borderRoyal bg-royalCard p-6 text-center text-textSecondary">
+            Loading donation details...
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <DetailSection title="Donor">
+              <DetailLine label="Name" value={donation.isAnonymous ? "Anonymous" : donation.donor?.displayName || donation.donor?.username || "Unknown"} />
+              <DetailLine label="Email" value={donation.donor?.email || "Hidden"} />
+              <DetailLine label="Username" value={donation.donor?.username || "None"} />
+              <DetailLine label="Role" value={donation.donor?.role || "donor"} />
+              <DetailLine label="Current Rank" value={donation.donor?.currentRank || "Spark"} />
+              <DetailLine label="Total Donated" value={formatMoney(donation.donor?.totalDonated)} />
+            </DetailSection>
+
+            <DetailSection title="Payment">
+              <DetailLine label="Amount" value={formatMoney(donation.amountUSD)} />
+              <DetailLine label="Currency" value={donation.currency || "USD"} />
+              <DetailLine label="Payment Method" value={donation.paymentMethod || "Unknown"} />
+              <DetailLine label="Payment Status" value={donation.paymentStatus || "Unknown"} />
+              <DetailLine label="Settlement Status" value={donation.settlementStatus || "Unknown"} />
+              <DetailLine label="Stripe Session" value={donation.stripeSessionId || "Not available"} />
+              <DetailLine label="Stripe Payment Intent" value={donation.stripePaymentIntentId || "Not available"} />
+            </DetailSection>
+
+            <DetailSection title="Mission">
+              <DetailLine label="Mission" value={donation.causeCategory || "Unassigned"} />
+              <DetailLine label="Impact" value={donation.causeImpact || "None"} />
+              <DetailLine label="Cause" value={donation.cause || "None"} />
+              <DetailLine label="Rank at Time" value={donation.rankAtTime || "Spark"} />
+              <DetailLine label="Message" value={donation.message || "No donor message"} />
+            </DetailSection>
+
+            <DetailSection title="Location">
+              <DetailLine label="Location" value={donation.location?.label || "Unknown"} />
+              <DetailLine label="City" value={donation.location?.city || "Unknown"} />
+              <DetailLine label="Region" value={donation.location?.region || "Unknown"} />
+              <DetailLine label="Country" value={donation.location?.country || "Unknown"} />
+              <DetailLine label="Country Code" value={donation.location?.countryCode || "UN"} />
+              <DetailLine label="Precision" value={donation.location?.precision || "country"} />
+            </DetailSection>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DetailSection({ title, children }) {
+  return (
+    <section className="rounded-[1.5rem] border border-borderRoyal bg-royalCard p-5">
+      <h3 className="mb-4 font-display text-xl font-bold text-textPrimary">
+        {title}
+      </h3>
+      <div className="space-y-3">{children}</div>
+    </section>
+  );
+}
+
+function DetailLine({ label, value }) {
+  return (
+    <div className="grid gap-2 rounded-xl border border-borderRoyal bg-black/30 p-4 md:grid-cols-[170px_1fr]">
+      <p className="text-sm font-bold uppercase tracking-[0.2em] text-textSecondary">
+        {label}
+      </p>
+      <p className="break-words text-textPrimary">{value}</p>
     </div>
   );
 }
