@@ -2200,13 +2200,13 @@ function AdminSmokeTestChecklist() {
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.3em] text-blue-200">
-            Developer Smoke Test
+            Temporary Developer QA
           </p>
           <h3 className="mt-2 font-display text-2xl font-bold text-textPrimary">
-            Final admin QA before next section
+            Remove before public production launch
           </h3>
           <p className="mt-2 text-sm text-textSecondary">
-            Use this temporary checklist after each admin change to confirm the dashboard is stable.
+            This checklist is useful while building locally, but it should not remain visible in the final production admin dashboard.
           </p>
         </div>
 
@@ -2245,7 +2245,7 @@ function AdminSmokeTestChecklist() {
 
       <div className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
         <p className="font-bold text-amber-200">
-          Remove this panel before final public production launch.
+          Important: remove or hide this panel before final public production launch.
         </p>
         <p className="mt-1 text-sm text-textSecondary">
           This checklist is helpful while building, but it should not be visible in a real admin production dashboard forever.
