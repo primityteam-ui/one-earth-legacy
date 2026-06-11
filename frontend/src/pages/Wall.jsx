@@ -183,6 +183,36 @@ export default function Wall() {
     )[0];
   }, [filteredTiles]);
 
+  const topMissions = useMemo(() => {
+    const missionMap = new Map();
+
+    for (const tile of filteredTiles) {
+      const missionName = tile.causeCategory || "Mission Pending";
+      const impactName = tile.causeImpact || tile.cause || "Impact Pending";
+
+      const existing = missionMap.get(missionName) || {
+        missionName,
+        topImpact: impactName,
+        totalDonated: 0,
+        tiles: 0
+      };
+
+      existing.totalDonated += Number(tile.amountUSD || 0);
+      existing.tiles += 1;
+
+      if (Number(tile.amountUSD || 0) > Number(existing.topAmount || 0)) {
+        existing.topAmount = Number(tile.amountUSD || 0);
+        existing.topImpact = impactName;
+      }
+
+      missionMap.set(missionName, existing);
+    }
+
+    return Array.from(missionMap.values())
+      .sort((a, b) => b.totalDonated - a.totalDonated)
+      .slice(0, 4);
+  }, [filteredTiles]);
+
   const topPlaces = useMemo(() => {
     const placeMap = new Map();
 
@@ -451,6 +481,57 @@ export default function Wall() {
       </section>
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
+
+      {!loading && topMissions.length > 0 && (
+        <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-gold">
+                Top Missions
+              </p>
+
+              <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
+                Where visible donations are going
+              </h2>
+            </div>
+
+            <p className="text-sm text-textSecondary">
+              Based on current Wall filters.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {topMissions.map((mission) => (
+              <div
+                key={mission.missionName}
+                className="rounded-2xl border border-gold/20 bg-gold/10 p-5"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-black/25">
+                  <HeartHandshake className="h-6 w-6 text-gold" />
+                </div>
+
+                <p className="font-display text-xl font-bold text-textPrimary">
+                  {mission.missionName}
+                </p>
+
+                <p className="mt-2 line-clamp-2 text-sm text-textSecondary">
+                  Top impact: {mission.topImpact}
+                </p>
+
+                <div className="mt-4 flex items-end justify-between gap-3 border-t border-gold/20 pt-4">
+                  <p className="text-sm text-textSecondary">
+                    {mission.tiles} tile{mission.tiles === 1 ? "" : "s"}
+                  </p>
+
+                  <p className="font-numbers text-2xl font-bold text-goldLight">
+                    {money(mission.totalDonated)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {!loading && topPlaces.length > 0 && (
         <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
