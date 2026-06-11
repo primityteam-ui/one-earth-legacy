@@ -28,6 +28,19 @@ function getStripeClient() {
   return new Stripe(secretKey);
 }
 
+function buildLocationPayloadFromMetadata(metadata = {}) {
+  return {
+    country: metadata.country || "United States",
+    countryCode: metadata.countryCode || "US",
+    donorCity: metadata.donorCity || "",
+    donorRegion: metadata.donorRegion || "",
+    donorLat: metadata.donorLat ? Number(metadata.donorLat) : undefined,
+    donorLng: metadata.donorLng ? Number(metadata.donorLng) : undefined,
+    donorLocationPrecision: metadata.donorLocationPrecision || "country",
+    donorLocationSource: metadata.donorLocationSource || "manual"
+  };
+}
+
 function assertStripeSessionIsSafe(session) {
   if (!session) {
     throw new Error("Stripe session is missing");
@@ -98,6 +111,20 @@ export async function createStripeCheckoutSession(req, res, next) {
         causeCategory: causeSelection.causeCategory,
         causeImpact: causeSelection.causeImpact,
         cause: causeSelection.cause,
+        country: req.body.country || "United States",
+        countryCode: req.body.countryCode || "US",
+        donorCity: req.body.donorCity || "",
+        donorRegion: req.body.donorRegion || "",
+        donorLat:
+          req.body.donorLat === undefined || req.body.donorLat === null
+            ? ""
+            : String(req.body.donorLat),
+        donorLng:
+          req.body.donorLng === undefined || req.body.donorLng === null
+            ? ""
+            : String(req.body.donorLng),
+        donorLocationPrecision: req.body.donorLocationPrecision || "country",
+        donorLocationSource: req.body.donorLocationSource || "manual",
         anonymous: String(Boolean(req.body.anonymous)),
         addOns: JSON.stringify(req.body.addOns || [])
       }
@@ -199,6 +226,7 @@ async function saveStripeDonation(session) {
   const causeSelection = normalizeCauseSelection(metadata);
   const anonymous = metadata.anonymous === "true";
   const addOns = parseAddOnsFromMetadata(metadata);
+  const location = buildLocationPayloadFromMetadata(metadata);
 
   if (!amountUSD || amountUSD <= 0) {
     throw new Error("Donation amount is missing or invalid");
@@ -210,6 +238,7 @@ async function saveStripeDonation(session) {
     currency,
     amountUSD,
     displayName,
+    ...location,
     message,
     theme,
     causeCategory: causeSelection.causeCategory,
