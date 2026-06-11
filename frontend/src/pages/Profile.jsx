@@ -86,6 +86,8 @@ export default function Profile() {
   const platformAmount = Number(impact.platformAmount || 0);
   const lotteryAmount = Number(impact.lotteryAmount || 0);
   const totalDonated = Number(profile?.totalDonated || 0);
+  const rankPosition = Number(profile?.rankPosition || 0);
+  const donationCount = Number(profile?.donationCount || 0);
 
   const locationLabel = useMemo(() => {
     if (!profile) {
@@ -311,12 +313,15 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-2xl border border-borderRoyal bg-black/25 p-4">
+                <div className="flex items-start gap-3 rounded-2xl border border-borderRoyal bg-black/25 p-4">
                 <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-gold" />
                 <div>
                   <p className="font-bold text-textPrimary">Privacy status</p>
                   <p className="text-sm text-textSecondary">
                     Public profile uses donor-safe display fields only.
+                  </p>
+                  <p className="mt-1 text-xs text-textSecondary">
+                    Location precision: {safeText(profile.precision, "city/country")}
                   </p>
                 </div>
               </div>
@@ -381,6 +386,9 @@ export default function Profile() {
               <p className="mt-2 font-display text-3xl font-bold text-textPrimary">
                 {safeText(profile.rank, "Spark")}
               </p>
+              <p className="mt-2 text-sm text-textSecondary">
+                {rankPosition > 0 ? `#${rankPosition} on the public donor wall` : "Public donor wall rank"}
+              </p>
             </div>
 
             <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -396,10 +404,13 @@ export default function Profile() {
             <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
               <Users className="mb-4 h-7 w-7 text-gold" />
               <p className="text-sm uppercase tracking-[0.25em] text-textSecondary">
-                Missions
+                Donations
               </p>
               <p className="mt-2 font-display text-3xl font-bold text-textPrimary">
-                {missionsSupported.length}
+                {donationCount || missionsSupported.length}
+              </p>
+              <p className="mt-2 text-sm text-textSecondary">
+                Across {missionsSupported.length} mission{missionsSupported.length === 1 ? "" : "s"}
               </p>
             </div>
           </section>
