@@ -28,6 +28,9 @@ import {
   presetAmounts
 } from "../constants/legacyOptions.js";
 
+const showTemporaryQaPanels =
+  import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
+
 const donorCountries = [
   { country: "United States", countryCode: "US", flag: "🇺🇸" },
   { country: "India", countryCode: "IN", flag: "🇮🇳" },
@@ -631,6 +634,7 @@ export default function Donate() {
         />
       </section>
 
+      {showTemporaryQaPanels && (
       <section className="mt-10 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
@@ -669,6 +673,7 @@ export default function Donate() {
           ))}
         </div>
       </section>
+      )}
     </main>
   );
 }

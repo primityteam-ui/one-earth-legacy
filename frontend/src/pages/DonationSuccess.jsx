@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client.js";
+const showTemporaryQaPanels =
+  import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
+
 import {
   CheckCircle2,
   Crown,
@@ -266,6 +269,7 @@ export default function DonationSuccess() {
         </aside>
       </section>
 
+      {showTemporaryQaPanels && (
       <section className="mt-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
@@ -304,6 +308,7 @@ export default function DonationSuccess() {
           ))}
         </div>
       </section>
+      )}
 
       <section className="mt-8 rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
