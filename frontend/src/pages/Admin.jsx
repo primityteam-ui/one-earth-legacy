@@ -52,6 +52,7 @@ export default function Admin() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [auditSaving, setAuditSaving] = useState(false);
   const [newestAuditId, setNewestAuditId] = useState("");
+  const [auditTypeFilter, setAuditTypeFilter] = useState("all");
   const [auditForm, setAuditForm] = useState({
     type: "cause_allocation",
     amount: "1",
@@ -474,6 +475,8 @@ export default function Admin() {
               entries={recentAuditEntries}
               auditTotalsByType={auditTotalsByType}
               newestAuditId={newestAuditId}
+              auditTypeFilter={auditTypeFilter}
+              onAuditTypeFilterChange={setAuditTypeFilter}
               form={auditForm}
               saving={auditSaving}
               onChange={updateAuditForm}
@@ -890,7 +893,18 @@ function MissionTotals({ missionTotals }) {
   );
 }
 
-function AuditPanel({ entries = [], auditTotalsByType = {}, newestAuditId = "", form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault(), onDownloadAuditCsv = () => {} }) {
+function AuditPanel({
+  entries = [],
+  auditTotalsByType = {},
+  newestAuditId = "",
+  auditTypeFilter = "all",
+  onAuditTypeFilterChange = () => {},
+  form = {},
+  saving = false,
+  onChange = () => {},
+  onSubmit = (event) => event.preventDefault(),
+  onDownloadAuditCsv = () => {}
+}) {
   const auditSummaryCards = [
     {
       label: "Donations received",
@@ -913,6 +927,11 @@ function AuditPanel({ entries = [], auditTotalsByType = {}, newestAuditId = "", 
       icon: <Ticket />
     }
   ];
+
+  const filteredEntries =
+    auditTypeFilter === "all"
+      ? entries
+      : entries.filter((entry) => entry.type === auditTypeFilter);
 
   return (
     <section className="space-y-8">
@@ -1055,18 +1074,32 @@ function AuditPanel({ entries = [], auditTotalsByType = {}, newestAuditId = "", 
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <PanelHeader icon={<ShieldCheck />} title="Audit Log Viewer" />
 
-          <button
-            type="button"
-            onClick={onDownloadAuditCsv}
-            className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
-          >
-            Download Audit CSV
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={auditTypeFilter}
+              onChange={(event) => onAuditTypeFilterChange(event.target.value)}
+              className="rounded-full border border-borderRoyal bg-black/30 px-5 py-3 text-sm font-bold text-textPrimary outline-none transition focus:border-gold"
+            >
+              <option value="all">All audit types</option>
+              <option value="donation_received">Donation received</option>
+              <option value="cause_allocation">Cause allocation</option>
+              <option value="platform_allocation">Platform allocation</option>
+              <option value="lottery_allocation">Lottery allocation</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={onDownloadAuditCsv}
+              className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
+            >
+              Download Audit CSV
+            </button>
+          </div>
         </div>
 
-        {entries.length === 0 ? (
+        {filteredEntries.length === 0 ? (
           <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-            No audit entries yet.
+            No audit entries found for this filter.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -1084,7 +1117,7 @@ function AuditPanel({ entries = [], auditTotalsByType = {}, newestAuditId = "", 
               </thead>
 
               <tbody>
-                {entries.map((entry) => (
+                {filteredEntries.map((entry) => (
                   <tr
                     key={entry.id}
                     className={
