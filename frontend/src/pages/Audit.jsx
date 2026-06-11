@@ -165,6 +165,36 @@ export default function Audit() {
     );
   }, [visibleEntries]);
 
+  const topAuditMissions = useMemo(() => {
+    const missionMap = new Map();
+
+    for (const entry of visibleEntries) {
+      const missionName = entry.causeCategory || "Mission Pending";
+      const impactName = entry.causeImpact || entry.cause || "Impact Pending";
+
+      const existing = missionMap.get(missionName) || {
+        missionName,
+        topImpact: impactName,
+        totalAmount: 0,
+        records: 0
+      };
+
+      existing.totalAmount += Number(entry.amount || 0);
+      existing.records += 1;
+
+      if (Number(entry.amount || 0) > Number(existing.topAmount || 0)) {
+        existing.topAmount = Number(entry.amount || 0);
+        existing.topImpact = impactName;
+      }
+
+      missionMap.set(missionName, existing);
+    }
+
+    return Array.from(missionMap.values())
+      .sort((a, b) => b.totalAmount - a.totalAmount)
+      .slice(0, 4);
+  }, [visibleEntries]);
+
   const auditStats = [
     {
       label: "Visible entries",
@@ -366,6 +396,57 @@ export default function Audit() {
           />
         ))}
       </section>
+
+      {!loading && topAuditMissions.length > 0 && (
+        <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-gold">
+                Top Audit Missions
+              </p>
+
+              <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
+                Where visible audit activity is recorded
+              </h2>
+            </div>
+
+            <p className="text-sm text-textSecondary">
+              Based on current public audit filters.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {topAuditMissions.map((mission) => (
+              <div
+                key={mission.missionName}
+                className="rounded-2xl border border-gold/20 bg-gold/10 p-5"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-black/25">
+                  <HeartHandshake className="h-6 w-6 text-gold" />
+                </div>
+
+                <p className="font-display text-xl font-bold text-textPrimary">
+                  {mission.missionName}
+                </p>
+
+                <p className="mt-2 line-clamp-2 text-sm text-textSecondary">
+                  Top impact: {mission.topImpact}
+                </p>
+
+                <div className="mt-4 flex items-end justify-between gap-3 border-t border-gold/20 pt-4">
+                  <p className="text-sm text-textSecondary">
+                    {mission.records} record{mission.records === 1 ? "" : "s"}
+                  </p>
+
+                  <p className="font-numbers text-2xl font-bold text-goldLight">
+                    {money(mission.totalAmount)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {!loading && (
         <section className="mb-5 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-4">
