@@ -427,11 +427,75 @@ export async function getAdminDonationDetail(req, res, next) {
   }
 }
 
+function buildDonationAdminFilters(query = {}) {
+  const search = String(query.search || "").trim().toLowerCase();
+  const paymentStatus = String(query.paymentStatus || "").trim();
+  const mission = String(query.mission || "").trim();
+  const country = String(query.country || "").trim().toLowerCase();
+
+  const donationQuery = {};
+
+  if (paymentStatus && paymentStatus !== "all") {
+    donationQuery.paymentStatus = paymentStatus;
+  }
+
+  if (mission && mission !== "all") {
+    donationQuery.causeCategory = mission;
+  }
+
+  return {
+    search,
+    country,
+    donationQuery,
+    filters: {
+      search,
+      paymentStatus: paymentStatus || "all",
+      mission: mission || "all",
+      country: country || "all"
+    }
+  };
+}
+
+function filterAdminDonationRows(donations, search, country) {
+  return donations.filter((donation) => {
+    const user = donation.userId || {};
+    const location = getLocation(user);
+
+    const donorText = [
+      user.email,
+      user.username,
+      user.displayName,
+      donation.causeCategory,
+      donation.causeImpact,
+      donation.cause,
+      location.label,
+      location.country,
+      location.countryCode
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch = search ? donorText.includes(search) : true;
+
+    const matchesCountry =
+      country && country !== "all"
+        ? location.country.toLowerCase().includes(country) ||
+          location.countryCode.toLowerCase() === country ||
+          location.label.toLowerCase().includes(country)
+        : true;
+
+    return matchesSearch && matchesCountry;
+  });
+}
+
 export async function exportAdminDonationsCsv(req, res, next) {
   try {
-    await writeAdminAction(req, "download_donations_csv");
+    const { search, country, donationQuery, filters } = buildDonationAdminFilters(req.query);
 
-    const donations = await Donation.find({})
+    await writeAdminAction(req, "download_donations_csv", filters);
+
+    const rawDonations = await Donation.find(donationQuery)
       .populate(
         "userId",
         "email username displayName country countryCode donorLocation currentRank totalDonated isAnonymous isBanned role"
@@ -439,6 +503,8 @@ export async function exportAdminDonationsCsv(req, res, next) {
       .sort({ createdAt: -1 })
       .limit(5000)
       .lean();
+
+    const donations = filterAdminDonationRows(rawDonations, search, country);
 
     const headers = [
       "Donation ID",

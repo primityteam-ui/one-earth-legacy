@@ -98,7 +98,13 @@ export default function Admin() {
   async function handleDownloadCsv() {
     try {
       const response = await api.get("/admin/donations.csv", {
-        responseType: "blob"
+        responseType: "blob",
+        params: {
+          search,
+          paymentStatus,
+          mission,
+          country
+        }
       });
 
       const blob = new Blob([response.data], {
@@ -298,7 +304,8 @@ export default function Admin() {
 
             <p className="mt-4 max-w-3xl text-textSecondary">
               View real MongoDB donations, donors, locations, missions, payment status,
-              reserve split, and public legacy activity.
+              reserve split, and public legacy activity. Donation CSV downloads use the selected
+              search, payment, mission, and country filters.
             </p>
           </div>
 
