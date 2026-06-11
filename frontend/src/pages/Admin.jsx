@@ -933,6 +933,10 @@ function AuditPanel({
       ? entries
       : entries.filter((entry) => entry.type === auditTypeFilter);
 
+  const proofUrl = String(form.proofUrl || "").trim();
+  const proofUrlLooksInvalid =
+    proofUrl.length > 0 && !proofUrl.startsWith("https://");
+
   return (
     <section className="space-y-8">
       <div className="grid gap-5 md:grid-cols-4">
@@ -1054,14 +1058,32 @@ function AuditPanel({
               maxLength={500}
               onChange={(event) => onChange("proofUrl", event.target.value)}
               placeholder="https://..."
-              className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
+              className={`w-full rounded-xl border bg-black/30 px-4 py-3 text-textPrimary outline-none ${
+                proofUrlLooksInvalid
+                  ? "border-crimson focus:border-crimsonLight"
+                  : "border-borderRoyal focus:border-gold"
+              }`}
             />
+
+            {proofUrlLooksInvalid ? (
+              <p className="mt-2 rounded-xl border border-crimson/40 bg-crimson/10 px-4 py-3 text-sm font-bold text-crimsonLight">
+                Proof URL must start with https://
+              </p>
+            ) : proofUrl ? (
+              <p className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-300">
+                Proof URL looks valid.
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-textSecondary">
+                Leave empty if proof is not ready yet.
+              </p>
+            )}
           </label>
 
           <div className="lg:col-span-2">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || proofUrlLooksInvalid}
               className="rounded-xl bg-gold px-6 py-3 font-bold text-black transition hover:bg-goldLight disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving audit entry..." : "Create audit entry"}
