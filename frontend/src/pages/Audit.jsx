@@ -165,6 +165,31 @@ export default function Audit() {
     );
   }, [visibleEntries]);
 
+  const allocationHealth = useMemo(() => {
+    const expectedCause = Number((totals.totalDonations * 0.6).toFixed(2));
+    const expectedPlatform = Number((totals.totalDonations * 0.25).toFixed(2));
+    const expectedLottery = Number((totals.totalDonations * 0.15).toFixed(2));
+
+    const causeDifference = Number((totals.cause - expectedCause).toFixed(2));
+    const platformDifference = Number((totals.platform - expectedPlatform).toFixed(2));
+    const lotteryDifference = Number((totals.lottery - expectedLottery).toFixed(2));
+
+    const isBalanced =
+      Math.abs(causeDifference) <= 0.02 &&
+      Math.abs(platformDifference) <= 0.02 &&
+      Math.abs(lotteryDifference) <= 0.02;
+
+    return {
+      expectedCause,
+      expectedPlatform,
+      expectedLottery,
+      causeDifference,
+      platformDifference,
+      lotteryDifference,
+      isBalanced
+    };
+  }, [totals]);
+
   const topAuditMissions = useMemo(() => {
     const missionMap = new Map();
 
@@ -532,6 +557,57 @@ export default function Audit() {
           <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
             <p className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
               <ShieldCheck className="h-5 w-5 text-gold" />
+              Allocation Health
+            </p>
+
+            <div
+              className={`mb-4 rounded-2xl border p-4 ${
+                allocationHealth.isBalanced
+                  ? "border-green-500/30 bg-green-500/10"
+                  : "border-crimson/40 bg-crimson/10"
+              }`}
+            >
+              <p
+                className={`font-bold ${
+                  allocationHealth.isBalanced ? "text-green-400" : "text-crimson"
+                }`}
+              >
+                {allocationHealth.isBalanced
+                  ? "Visible records look balanced"
+                  : "Visible records need review"}
+              </p>
+
+              <p className="mt-2 text-sm text-textSecondary">
+                This checks whether visible allocation records match 60% cause,
+                25% platform, and 15% lottery based on visible donation received records.
+              </p>
+            </div>
+
+            <AllocationLine
+              label="Cause expected"
+              expected={allocationHealth.expectedCause}
+              actual={totals.cause}
+              difference={allocationHealth.causeDifference}
+            />
+
+            <AllocationLine
+              label="Platform expected"
+              expected={allocationHealth.expectedPlatform}
+              actual={totals.platform}
+              difference={allocationHealth.platformDifference}
+            />
+
+            <AllocationLine
+              label="Lottery expected"
+              expected={allocationHealth.expectedLottery}
+              actual={totals.lottery}
+              difference={allocationHealth.lotteryDifference}
+            />
+          </div>
+
+          <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+            <p className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
+              <ShieldCheck className="h-5 w-5 text-gold" />
               Trust Rules
             </p>
 
@@ -643,6 +719,34 @@ function AuditEntry({ entry, index }) {
         </p>
       </div>
     </motion.article>
+  );
+}
+
+function AllocationLine({ label, expected, actual, difference }) {
+  const isOk = Math.abs(Number(difference || 0)) <= 0.02;
+
+  return (
+    <div className="mb-3 rounded-2xl border border-borderRoyal bg-black/30 p-4">
+      <div className="flex items-center justify-between gap-4">
+        <p className="font-bold text-textPrimary">{label}</p>
+
+        <span
+          className={`rounded-full border px-3 py-1 text-xs font-bold ${
+            isOk
+              ? "border-green-500/30 bg-green-500/10 text-green-400"
+              : "border-crimson/40 bg-crimson/10 text-crimson"
+          }`}
+        >
+          {isOk ? "OK" : "Review"}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-2 text-sm text-textSecondary">
+        <p>Expected: {money(expected)}</p>
+        <p>Actual: {money(actual)}</p>
+        <p>Difference: {money(difference)}</p>
+      </div>
+    </div>
   );
 }
 
