@@ -733,6 +733,11 @@ function DonationsPanel({ donations = [], onViewDonation }) {
                     <p className="text-sm text-textSecondary">
                       {donation.email || "Hidden"}
                     </p>
+
+                    <PublicProfileLink
+                      username={donation.username || donation.donorUsername}
+                      label="Profile"
+                    />
                   </td>
 
                   <td className="px-4 py-4 font-numbers font-bold text-goldLight">
@@ -808,6 +813,9 @@ function DonorsPanel({ donors = [] }) {
                 <p className="text-sm text-textSecondary">
                   {donor.email || "Hidden"}
                 </p>
+
+                <PublicProfileLink username={donor.username} label="Profile" />
+
                 <p className="mt-1 flex items-center gap-2 text-sm text-textSecondary">
                   <MapPin className="h-4 w-4 text-gold" />
                   {donor.location?.label || "Unknown"}
@@ -1066,7 +1074,24 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
                 copiedField={copiedField}
                 onCopy={handleCopy}
               />
-              <DetailLine label="Username" value={donation.donor?.username || "None"} />
+              <DetailLine
+                label="Username"
+                value={donation.donor?.username || "None"}
+                copyable={Boolean(donation.donor?.username)}
+                copiedField={copiedField}
+                onCopy={handleCopy}
+              />
+              <DetailLine
+                label="Public Profile"
+                value={
+                  donation.donor?.username
+                    ? `${window.location.origin}/u/${donation.donor.username}`
+                    : "Not available"
+                }
+                copyable={Boolean(donation.donor?.username)}
+                copiedField={copiedField}
+                onCopy={handleCopy}
+              />
               <DetailLine label="Role" value={donation.donor?.role || "donor"} />
               <DetailLine label="Current Rank" value={donation.donor?.currentRank || "Spark"} />
               <DetailLine label="Total Donated" value={formatMoney(donation.donor?.totalDonated)} />
@@ -1953,6 +1978,35 @@ function SecurityPanel({ logs }) {
         )}
       </div>
     </section>
+  );
+}
+
+function getPublicProfilePath(username) {
+  const safeUsername = String(username || "").trim();
+
+  if (!safeUsername) {
+    return "";
+  }
+
+  return `/u/${encodeURIComponent(safeUsername)}`;
+}
+
+function PublicProfileLink({ username, label = "Open public profile" }) {
+  const profilePath = getPublicProfilePath(username);
+
+  if (!profilePath) {
+    return null;
+  }
+
+  return (
+    <a
+      href={profilePath}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 inline-flex w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-goldLight transition hover:bg-gold hover:text-black"
+    >
+      {label}
+    </a>
   );
 }
 
