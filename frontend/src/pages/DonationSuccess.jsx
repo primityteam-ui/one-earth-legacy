@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import api from "../api/client.js";
 import {
   CheckCircle2,
   Crown,
@@ -14,6 +16,56 @@ import {
 export default function DonationSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
+
+  const [sessionStatus, setSessionStatus] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(false);
+  const [sessionError, setSessionError] = useState("");
+
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadSessionStatus() {
+      setSessionLoading(true);
+      setSessionError("");
+
+      try {
+        const response = await api.get(
+          `/payments/stripe/session-status?session_id=${encodeURIComponent(sessionId)}`
+        );
+
+        if (!cancelled) {
+          setSessionStatus(response.data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSessionError(
+            error.response?.data?.message || "Could not verify Stripe session status"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setSessionLoading(false);
+        }
+      }
+    }
+
+    loadSessionStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
+  const paymentStatusLabel =
+    sessionStatus?.paymentStatus === "paid"
+      ? "Paid"
+      : sessionStatus?.paymentStatus
+        ? sessionStatus.paymentStatus
+        : "Waiting for session verification";
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
@@ -42,17 +94,53 @@ export default function DonationSuccess() {
           </div>
 
           {sessionId && (
-            <div className="mx-auto mt-5 max-w-2xl rounded-2xl border border-borderRoyal bg-black/30 p-4 text-left">
-              <p className="text-sm font-bold text-textPrimary">
-                Stripe checkout session
-              </p>
+            <div className="mx-auto mt-5 max-w-3xl rounded-2xl border border-borderRoyal bg-black/30 p-4 text-left">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-textPrimary">
+                    Stripe checkout session
+                  </p>
 
-              <p className="mt-2 break-all font-mono text-xs text-textSecondary">
-                {sessionId}
-              </p>
+                  <p className="mt-2 break-all font-mono text-xs text-textSecondary">
+                    {sessionId}
+                  </p>
+                </div>
 
-              <p className="mt-2 text-xs text-textSecondary">
-                This ID helps confirm which Stripe checkout session returned to the success page.
+                <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-200">
+                  {sessionLoading ? "Checking..." : paymentStatusLabel}
+                </div>
+              </div>
+
+              {sessionStatus && (
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  <SessionStatusItem
+                    label="Stripe mode"
+                    value={sessionStatus.stripeMode || "unknown"}
+                  />
+                  <SessionStatusItem
+                    label="Checkout"
+                    value={sessionStatus.status || "unknown"}
+                  />
+                  <SessionStatusItem
+                    label="Payment"
+                    value={sessionStatus.paymentStatus || "unknown"}
+                  />
+                  <SessionStatusItem
+                    label="Amount"
+                    value={`$${Number(sessionStatus.amountTotal || 0).toLocaleString()} ${sessionStatus.currency || "USD"}`}
+                  />
+                </div>
+              )}
+
+              {sessionError && (
+                <p className="mt-4 rounded-xl border border-crimson/40 bg-crimson/10 p-3 text-sm text-textSecondary">
+                  {sessionError}
+                </p>
+              )}
+
+              <p className="mt-3 text-xs text-textSecondary">
+                This verification confirms what Stripe reports for the checkout session.
+                The webhook still performs the actual database save.
               </p>
             </div>
           )}
@@ -300,6 +388,15 @@ function NextStep({ title, text, to, label }) {
       >
         {label}
       </Link>
+    </div>
+  );
+}
+
+function SessionStatusItem({ label, value }) {
+  return (
+    <div className="rounded-xl border border-borderRoyal bg-black/25 p-3">
+      <p className="text-xs uppercase tracking-[0.2em] text-textMuted">{label}</p>
+      <p className="mt-1 break-words text-sm font-bold text-textPrimary">{value}</p>
     </div>
   );
 }
