@@ -712,6 +712,45 @@ export default function Wall() {
         </div>
       )}
 
+      <section className="mt-10 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
+            <ShieldCheck className="h-5 w-5 text-gold" />
+          </div>
+
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-gold">
+              Wall QA Checklist
+            </p>
+
+            <h2 className="mt-1 font-display text-3xl font-bold text-textPrimary">
+              Before production launch
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            "Search works for donor, city, country, mission, and message",
+            "Profile links open /u/:username",
+            "Copy Link creates a shareable /u/:username URL",
+            "No street address or private coordinates are shown",
+            "Mission and impact filters update backend data",
+            "Featured Only resets when Clear Filters is clicked",
+            "Top Missions and Top Places change with filters",
+            "Mobile layout remains clean and readable"
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-2xl border border-borderRoyal bg-black/25 p-4 text-sm text-textSecondary"
+            >
+              <span className="mr-2 text-gold">✓</span>
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="mt-10 rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
