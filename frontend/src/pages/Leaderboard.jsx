@@ -534,6 +534,45 @@ export default function Leaderboard() {
             )}
           </section>
 
+          <section className="mt-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
+                <ShieldCheck className="h-5 w-5 text-gold" />
+              </div>
+
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-gold">
+                  Leaderboard QA Checklist
+                </p>
+
+                <h2 className="mt-1 font-display text-3xl font-bold text-textPrimary">
+                  Before production launch
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                "Global, This Month, and All Time donor views load correctly",
+                "By Country tab loads country leaderboard data",
+                "Search works for donor, username, country, rank, and mission",
+                "Mission and impact filters update backend results",
+                "Quick mission shortcuts reset impact to All Impacts",
+                "Profile links open /u/:username",
+                "Copy Link creates a shareable /u/:username URL",
+                "No private address or exact private coordinates are shown"
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-borderRoyal bg-black/25 p-4 text-sm text-textSecondary"
+                >
+                  <span className="mr-2 text-gold">✓</span>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section className="mt-8 rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
