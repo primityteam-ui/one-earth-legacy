@@ -1573,6 +1573,7 @@ function HealthPanel({ health, onRefresh = () => {} }) {
   }
 
   const warnings = Array.isArray(health.warnings) ? health.warnings : [];
+  const adminRoutes = Array.isArray(health.adminRoutes) ? health.adminRoutes : [];
 
   const checks = [
     {
@@ -1727,6 +1728,55 @@ function HealthPanel({ health, onRefresh = () => {} }) {
           {checks.map((check) => (
             <HealthCard key={check.title} check={check} />
           ))}
+        </div>
+
+        <div className="mt-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <ShieldCheck className="h-6 w-6 text-gold" />
+            <p className="font-display text-2xl font-bold text-textPrimary">
+              Protected Admin Routes
+            </p>
+          </div>
+
+          {adminRoutes.length === 0 ? (
+            <p className="text-sm text-textSecondary">
+              No admin route metadata was returned by the backend.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {adminRoutes.map((route) => (
+                <div
+                  key={`${route.method}-${route.path}`}
+                  className="rounded-2xl border border-borderRoyal bg-royalBlack/70 p-4"
+                >
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <p className="font-mono text-sm font-bold text-goldLight">
+                      {route.method} {route.path}
+                    </p>
+
+                    <span className="w-fit rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
+                      Admin protected
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-textSecondary">
+                    {route.purpose}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(route.protectedBy || []).map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-borderRoyal bg-black/30 px-3 py-1 text-xs font-bold text-textSecondary"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-6 rounded-2xl border border-borderRoyal bg-black/30 p-4">

@@ -224,6 +224,38 @@ function getAdminHealthChecks() {
       adminTwoFactorRequired,
       adminRateLimiterEnabled: nodeEnv !== "development"
     },
+    adminRoutes: [
+      {
+        method: "GET",
+        path: "/api/admin/overview",
+        purpose: "Admin dashboard overview, stats, donations, audit, security logs, and health checks",
+        protectedBy: ["JWT", "admin role", "admin rate limiter", "IP allowlist prepared", "2FA prepared"]
+      },
+      {
+        method: "GET",
+        path: "/api/admin/donations.csv",
+        purpose: "Download filtered donation records as CSV",
+        protectedBy: ["JWT", "admin role", "admin rate limiter", "IP allowlist prepared", "2FA prepared"]
+      },
+      {
+        method: "GET",
+        path: "/api/admin/audit.csv",
+        purpose: "Download filtered audit records as CSV",
+        protectedBy: ["JWT", "admin role", "admin rate limiter", "IP allowlist prepared", "2FA prepared"]
+      },
+      {
+        method: "GET",
+        path: "/api/admin/donations/:donationId",
+        purpose: "View one donation detail record",
+        protectedBy: ["JWT", "admin role", "admin rate limiter", "IP allowlist prepared", "2FA prepared"]
+      },
+      {
+        method: "POST",
+        path: "/api/admin/audit",
+        purpose: "Create manual admin audit entry",
+        protectedBy: ["JWT", "admin role", "admin rate limiter", "IP allowlist prepared", "2FA prepared", "SecurityLog admin_action"]
+      }
+    ],
     warnings,
     generatedAt: new Date().toISOString()
   };
