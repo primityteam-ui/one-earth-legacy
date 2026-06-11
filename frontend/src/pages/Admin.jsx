@@ -18,6 +18,9 @@ const MapPin = ({ className = "" }) => <span className={className}>📍</span>;
 
 const tabs = ["Overview", "Donations", "Donors", "Missions", "Audit", "Security", "Health"];
 
+const showTemporaryQaPanels =
+  import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
+
 function formatMoney(value) {
   return `$${Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -1849,7 +1852,7 @@ function HealthPanel({
 
         <AdminQaChecklist health={health} />
 
-        <AdminSmokeTestChecklist />
+        {showTemporaryQaPanels && <AdminSmokeTestChecklist />}
 
         <div className="mt-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
           <div className="mb-4 flex items-center gap-3">
