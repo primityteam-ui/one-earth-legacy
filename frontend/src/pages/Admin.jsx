@@ -869,9 +869,11 @@ function BarChartFromObject({ data, emptyText }) {
 
   if (entries.length === 0) {
     return (
-      <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-        {emptyText}
-      </p>
+      <EmptyState
+        icon={<Sparkles />}
+        title="No mission totals yet"
+        message={emptyText || "Mission totals will appear after successful paid donations."}
+      />
     );
   }
 
@@ -911,9 +913,11 @@ function CountryChart({ countries }) {
 
   if (list.length === 0) {
     return (
-      <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-        No country donation data yet.
-      </p>
+      <EmptyState
+        icon={<Globe2 />}
+        title="No country totals yet"
+        message="Country totals will appear after donors choose a country or city location."
+      />
     );
   }
 
@@ -960,9 +964,11 @@ function MissionTotals({ missionTotals }) {
 
   if (entries.length === 0) {
     return (
-      <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-        No mission donations yet.
-      </p>
+      <EmptyState
+        icon={<Sparkles />}
+        title="No mission breakdown yet"
+        message="Mission breakdown totals will appear once paid donations are recorded."
+      />
     );
   }
 
