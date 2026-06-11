@@ -1604,10 +1604,14 @@ function HealthPanel({ health }) {
       status: Boolean(health.security?.adminIpAllowlistEnabled),
       goodText: "Enabled",
       badText: "Disabled",
+      safetyLabel: health.security?.adminIpAllowlistEnabled
+        ? "Production Ready"
+        : "Pending Security",
       warningWhenFalse: true,
       details: [
         `Enabled: ${health.security?.adminIpAllowlistEnabled ? "yes" : "no"}`,
-        `Allowed IPs configured: ${health.security?.adminAllowedIpsConfigured ? "yes" : "no"}`
+        `Allowed IPs configured: ${health.security?.adminAllowedIpsConfigured ? "yes" : "no"}`,
+        "Enable only after adding your real trusted IPs in production."
       ]
     },
     {
@@ -1615,10 +1619,13 @@ function HealthPanel({ health }) {
       status: Boolean(health.security?.adminTwoFactorRequired),
       goodText: "Required",
       badText: "Not required",
+      safetyLabel: health.security?.adminTwoFactorRequired
+        ? "Production Ready"
+        : "Pending Security",
       warningWhenFalse: true,
       details: [
         `Required: ${health.security?.adminTwoFactorRequired ? "yes" : "no"}`,
-        "Keep disabled until 2FA setup routes are completed."
+        "Keep disabled until 2FA setup and verification routes are completed."
       ]
     },
     {
@@ -1626,6 +1633,9 @@ function HealthPanel({ health }) {
       status: Boolean(health.security?.adminRateLimiterEnabled),
       goodText: "Enabled",
       badText: "Bypassed in development",
+      safetyLabel: health.security?.adminRateLimiterEnabled
+        ? "Production Ready"
+        : "Development Only",
       warningWhenFalse: false,
       details: [
         `Enabled: ${health.security?.adminRateLimiterEnabled ? "yes" : "no"}`,
@@ -1677,17 +1687,33 @@ function HealthCard({ check }) {
           </p>
         </div>
 
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-bold ${
-            isGood
-              ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
-              : isWarning
-                ? "border border-amber-400/30 bg-amber-400/10 text-amber-200"
-                : "border border-crimson/40 bg-crimson/10 text-crimsonLight"
-          }`}
-        >
-          {isGood ? "OK" : isWarning ? "WARN" : "FIX"}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              isGood
+                ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                : isWarning
+                  ? "border border-amber-400/30 bg-amber-400/10 text-amber-200"
+                  : "border border-crimson/40 bg-crimson/10 text-crimsonLight"
+            }`}
+          >
+            {isGood ? "OK" : isWarning ? "WARN" : "FIX"}
+          </span>
+
+          {check.safetyLabel && (
+            <span
+              className={`rounded-full px-3 py-1 text-[11px] font-bold ${
+                check.safetyLabel === "Production Ready"
+                  ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                  : check.safetyLabel === "Development Only"
+                    ? "border border-blue-400/30 bg-blue-400/10 text-blue-200"
+                    : "border border-amber-400/30 bg-amber-400/10 text-amber-200"
+              }`}
+            >
+              {check.safetyLabel}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mt-5 space-y-2">
