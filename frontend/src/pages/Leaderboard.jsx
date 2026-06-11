@@ -38,6 +38,13 @@ const rankPower = {
   Emperor: 10
 };
 
+const quickMissions = [
+  "All Missions",
+  "Human Survival",
+  "Planet Protection",
+  "Children & Education"
+];
+
 function money(value) {
   return `$${Number(value || 0).toLocaleString()}`;
 }
@@ -273,6 +280,36 @@ export default function Leaderboard() {
                 className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
               />
             </div>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-borderRoyal bg-black/25 p-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-textSecondary">
+            Quick Mission Shortcuts
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {quickMissions.map((mission) => {
+              const active = missionFilter === mission;
+
+              return (
+                <button
+                  key={mission}
+                  type="button"
+                  onClick={() => {
+                    setMissionFilter(mission);
+                    setImpactFilter("All Impacts");
+                  }}
+                  className={`rounded-full border px-4 py-2 text-sm font-bold transition ${
+                    active
+                      ? "border-gold bg-gold text-black"
+                      : "border-gold/30 bg-gold/10 text-gold hover:bg-gold/20"
+                  }`}
+                >
+                  {mission}
+                </button>
+              );
+            })}
           </div>
         </div>
 
