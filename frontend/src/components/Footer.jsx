@@ -47,10 +47,10 @@ export default function Footer() {
           title="Trust"
           links={[
             ["Audit Log", "/audit"],
-            ["Security", "/security"],
-            ["FAQ", "/faq"],
-            ["Terms", "/terms"],
-            ["Privacy", "/privacy"]
+            ["Security", "/legal/security"],
+            ["FAQ", "/legal/faq"],
+            ["Terms", "/legal/terms"],
+            ["Privacy", "/legal/privacy"]
           ]}
         />
 
