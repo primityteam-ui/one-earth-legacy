@@ -1819,6 +1819,8 @@ function HealthPanel({ health, onRefresh = () => {} }) {
           ))}
         </div>
 
+        <AdminQaChecklist health={health} />
+
         <div className="mt-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
           <div className="mb-4 flex items-center gap-3">
             <ShieldCheck className="h-6 w-6 text-gold" />
@@ -1878,6 +1880,125 @@ function HealthPanel({ health, onRefresh = () => {} }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function AdminQaChecklist({ health }) {
+  const isProduction = Boolean(health?.backend?.isProduction);
+  const databaseConnected = Boolean(health?.database?.connected);
+  const stripeCheckoutReady = Boolean(health?.stripe?.readyForCheckout);
+  const stripeWebhookReady = Boolean(health?.stripe?.readyForWebhooks);
+  const ipAllowlistEnabled = Boolean(health?.security?.adminIpAllowlistEnabled);
+  const twoFactorRequired = Boolean(health?.security?.adminTwoFactorRequired);
+  const rateLimiterEnabled = Boolean(health?.security?.adminRateLimiterEnabled);
+
+  const checklist = [
+    {
+      label: "MongoDB connected",
+      done: databaseConnected,
+      note: "Required for donations, audit logs, users, and admin dashboard data."
+    },
+    {
+      label: "Stripe checkout configured",
+      done: stripeCheckoutReady,
+      note: "Required before accepting real donations."
+    },
+    {
+      label: "Stripe webhook configured",
+      done: stripeWebhookReady,
+      note: "Required before trusting payment settlement status."
+    },
+    {
+      label: "Admin rate limiter active",
+      done: rateLimiterEnabled,
+      note: isProduction
+        ? "Should be active in production."
+        : "Bypassed in local development by design."
+    },
+    {
+      label: "Admin IP allowlist enabled",
+      done: ipAllowlistEnabled,
+      note: "Enable only after adding trusted production IP addresses."
+    },
+    {
+      label: "Admin 2FA required",
+      done: twoFactorRequired,
+      note: "Enable after 2FA setup and verification routes are implemented."
+    }
+  ];
+
+  const productionReady =
+    databaseConnected &&
+    stripeCheckoutReady &&
+    stripeWebhookReady &&
+    rateLimiterEnabled &&
+    (!isProduction || (ipAllowlistEnabled && twoFactorRequired));
+
+  return (
+    <div className="mt-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-gold">
+            Final QA Checklist
+          </p>
+          <h3 className="mt-2 font-display text-2xl font-bold text-textPrimary">
+            Admin production readiness
+          </h3>
+          <p className="mt-2 text-sm text-textSecondary">
+            Use this before enabling real admin write actions, payouts, refunds, bans, or production donations.
+          </p>
+        </div>
+
+        <span
+          className={`w-fit rounded-full px-4 py-2 text-sm font-bold ${
+            productionReady
+              ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+              : "border border-amber-400/30 bg-amber-400/10 text-amber-200"
+          }`}
+        >
+          {productionReady ? "Production Ready" : "Pending Security"}
+        </span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {checklist.map((item) => (
+          <div
+            key={item.label}
+            className={`rounded-2xl border p-4 ${
+              item.done
+                ? "border-emerald-400/30 bg-emerald-400/10"
+                : "border-amber-400/30 bg-amber-400/10"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-bold text-textPrimary">{item.label}</p>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  item.done
+                    ? "bg-emerald-400/10 text-emerald-300"
+                    : "bg-amber-400/10 text-amber-200"
+                }`}
+              >
+                {item.done ? "Ready" : "Pending"}
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm text-textSecondary">{item.note}</p>
+          </div>
+        ))}
+      </div>
+
+      {!productionReady && (
+        <div className="mt-5 rounded-2xl border border-crimson/40 bg-crimson/10 p-4">
+          <p className="font-bold text-crimsonLight">
+            Do not add destructive admin actions yet.
+          </p>
+          <p className="mt-1 text-sm text-textSecondary">
+            Keep admin actions read-only except safe audit entry creation until 2FA, IP allowlist, Stripe webhook, and production security checks are fully ready.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
