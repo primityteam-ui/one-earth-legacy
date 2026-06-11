@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   CheckCircle2,
   Crown,
@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 
 export default function DonationSuccess() {
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
       <section className="overflow-hidden rounded-[2rem] border border-green-500/30 bg-royalCard shadow-gold">
@@ -37,6 +40,22 @@ export default function DonationSuccess() {
           <div className="mt-6 inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-200">
             Safe success redirect verified
           </div>
+
+          {sessionId && (
+            <div className="mx-auto mt-5 max-w-2xl rounded-2xl border border-borderRoyal bg-black/30 p-4 text-left">
+              <p className="text-sm font-bold text-textPrimary">
+                Stripe checkout session
+              </p>
+
+              <p className="mt-2 break-all font-mono text-xs text-textSecondary">
+                {sessionId}
+              </p>
+
+              <p className="mt-2 text-xs text-textSecondary">
+                This ID helps confirm which Stripe checkout session returned to the success page.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-5 p-6 md:grid-cols-4">
