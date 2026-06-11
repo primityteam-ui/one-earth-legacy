@@ -77,7 +77,10 @@ export default function Admin() {
           search,
           paymentStatus,
           mission,
-          country
+          country,
+          auditType: auditTypeFilter,
+          auditStartDate,
+          auditEndDate
         }
       });
 
@@ -126,7 +129,12 @@ export default function Admin() {
   async function handleDownloadAuditCsv() {
     try {
       const response = await api.get("/admin/audit.csv", {
-        responseType: "blob"
+        responseType: "blob",
+        params: {
+          auditType: auditTypeFilter,
+          auditStartDate,
+          auditEndDate
+        }
       });
 
       const blob = new Blob([response.data], {
@@ -1198,6 +1206,7 @@ function AuditPanel({
 
         <p className="mb-4 text-sm text-textSecondary">
           Showing {filteredEntries.length} of {entries.length} audit records.
+          CSV download uses the selected audit filters.
         </p>
 
         {filteredEntries.length === 0 ? (

@@ -92,6 +92,53 @@ function buildDonationCsvRow(donation) {
   ].map(csvEscape).join(",");
 }
 
+function normalizeAuditFilterType(value) {
+  const allowedTypes = [
+    "all",
+    "donation_received",
+    "cause_allocation",
+    "platform_allocation",
+    "lottery_allocation"
+  ];
+
+  const safeType = String(value || "all").trim();
+
+  return allowedTypes.includes(safeType) ? safeType : "all";
+}
+
+function buildAuditQuery(query = {}) {
+  const auditType = normalizeAuditFilterType(query.auditType);
+  const auditStartDate = String(query.auditStartDate || "").trim();
+  const auditEndDate = String(query.auditEndDate || "").trim();
+
+  const auditQuery = {};
+
+  if (auditType !== "all") {
+    auditQuery.type = auditType;
+  }
+
+  if (auditStartDate || auditEndDate) {
+    auditQuery.createdAt = {};
+
+    if (auditStartDate) {
+      auditQuery.createdAt.$gte = new Date(`${auditStartDate}T00:00:00.000Z`);
+    }
+
+    if (auditEndDate) {
+      auditQuery.createdAt.$lte = new Date(`${auditEndDate}T23:59:59.999Z`);
+    }
+  }
+
+  return {
+    auditQuery,
+    auditFilters: {
+      auditType,
+      auditStartDate,
+      auditEndDate
+    }
+  };
+}
+
 function getAdminHealthChecks() {
   const mongoReadyState = mongoose.connection.readyState;
 
@@ -211,9 +258,11 @@ function buildAuditCsvRow(entry) {
 
 export async function exportAdminAuditCsv(req, res, next) {
   try {
-    await writeAdminAction(req, "download_audit_csv");
+    const { auditQuery, auditFilters } = buildAuditQuery(req.query);
 
-    const entries = await AuditEntry.find({})
+    await writeAdminAction(req, "download_audit_csv", auditFilters);
+
+    const entries = await AuditEntry.find(auditQuery)
       .sort({ createdAt: -1 })
       .limit(5000)
       .lean();
@@ -446,6 +495,7 @@ export async function getAdminOverview(req, res, next) {
     const paymentStatus = String(req.query.paymentStatus || "").trim();
     const mission = String(req.query.mission || "").trim();
     const country = String(req.query.country || "").trim().toLowerCase();
+    const { auditQuery, auditFilters } = buildAuditQuery(req.query);
 
     const donationQuery = {};
 
@@ -479,7 +529,7 @@ export async function getAdminOverview(req, res, next) {
         .limit(250)
         .lean(),
 
-      AuditEntry.find({})
+      AuditEntry.find(auditQuery)
         .sort({ createdAt: -1 })
         .limit(100)
         .lean(),
@@ -679,7 +729,8 @@ export async function getAdminOverview(req, res, next) {
         search,
         paymentStatus: paymentStatus || "all",
         mission: mission || "all",
-        country: country || "all"
+        country: country || "all",
+        ...auditFilters
       }
     });
   } catch (error) {
