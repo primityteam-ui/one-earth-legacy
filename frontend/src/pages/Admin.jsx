@@ -548,7 +548,10 @@ export default function Admin() {
           )}
 
           {activeTab === "Health" && (
-            <HealthPanel health={health} />
+            <HealthPanel
+              health={health}
+              onRefresh={loadAdminData}
+            />
           )}
         </>
       )}
@@ -1544,11 +1547,22 @@ function AuditPanel({
   );
 }
 
-function HealthPanel({ health }) {
+function HealthPanel({ health, onRefresh = () => {} }) {
   if (!health) {
     return (
       <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<ShieldCheck />} title="System Health" />
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <PanelHeader icon={<ShieldCheck />} title="System Health" />
+
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="rounded-full border border-gold/30 bg-gold/10 px-5 py-3 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
+          >
+            Refresh Health
+          </button>
+        </div>
+
         <EmptyState
           icon={<ShieldCheck />}
           title="Health data not available"
@@ -1647,7 +1661,17 @@ function HealthPanel({ health }) {
   return (
     <section className="space-y-8">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<ShieldCheck />} title="System Health Checks" />
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <PanelHeader icon={<ShieldCheck />} title="System Health Checks" />
+
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="rounded-full border border-gold/30 bg-gold/10 px-5 py-3 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
+          >
+            Refresh Health
+          </button>
+        </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {checks.map((check) => (
@@ -1655,9 +1679,14 @@ function HealthPanel({ health }) {
           ))}
         </div>
 
-        <p className="mt-6 text-sm text-textSecondary">
-          Last generated: {formatDate(health.generatedAt)}
-        </p>
+        <div className="mt-6 rounded-2xl border border-borderRoyal bg-black/30 p-4">
+          <p className="text-sm font-bold text-textPrimary">
+            Last health refresh
+          </p>
+          <p className="mt-1 text-sm text-textSecondary">
+            {formatDate(health.generatedAt)}
+          </p>
+        </div>
       </div>
     </section>
   );
