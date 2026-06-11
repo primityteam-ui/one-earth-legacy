@@ -18,6 +18,11 @@ import Audit from "./pages/Audit.jsx";
 import LegalPage from "./pages/LegalPage.jsx";
 import Admin from "./pages/Admin.jsx";
 
+function NavigateToPublicProfile() {
+  const username = window.location.pathname.split("/").filter(Boolean).pop();
+  return <Navigate to={`/u/${username}`} replace />;
+}
+
 export default function App() {
   return (
     <div className="min-h-screen bg-royalBlack text-textPrimary font-body">
@@ -32,6 +37,10 @@ export default function App() {
         <Route path="/legends" element={<Legends />} />
         <Route path="/globe" element={<Globe />} />
         <Route path="/u/:username" element={<Profile />} />
+        <Route
+          path="/profiles/:username"
+          element={<NavigateToPublicProfile />}
+        />
         <Route path="/emperor" element={<Emperor />} />
         <Route path="/audit" element={<Audit />} />
         <Route path="/legal/:page" element={<LegalPage />} />
