@@ -28,6 +28,24 @@ function getStripeMode() {
   return "unknown";
 }
 
+function assertStripeEnvironmentIsSafe() {
+  const stripeMode = getStripeMode();
+  const isProduction = process.env.NODE_ENV === "production";
+  const allowLiveInDevelopment = process.env.ALLOW_LIVE_STRIPE_IN_DEVELOPMENT === "true";
+
+  if (stripeMode === "live" && !isProduction && !allowLiveInDevelopment) {
+    throw new Error(
+      "Live Stripe key detected outside production. Set NODE_ENV=production for live payments or ALLOW_LIVE_STRIPE_IN_DEVELOPMENT=true only for a deliberate live test."
+    );
+  }
+
+  if (isProduction && stripeMode !== "live") {
+    throw new Error(
+      "Production environment requires a live Stripe key starting with sk_live_."
+    );
+  }
+}
+
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -38,6 +56,8 @@ function getStripeClient() {
   if (!secretKey.startsWith("sk_test_") && !secretKey.startsWith("sk_live_")) {
     throw new Error("STRIPE_SECRET_KEY must start with sk_test_ or sk_live_");
   }
+
+  assertStripeEnvironmentIsSafe();
 
   return new Stripe(secretKey);
 }
