@@ -112,6 +112,7 @@ export default function Donate() {
   const [previewError, setPreviewError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [stripeError, setStripeError] = useState("");
+  const [stripeSafetyMessage, setStripeSafetyMessage] = useState("");
 
   const selectedMission = useMemo(() => {
     return legacyMissions.find((mission) => mission.id === selectedMissionId) || legacyMissions[0];
@@ -264,12 +265,21 @@ export default function Donate() {
   async function handleStripeCheckout() {
     setStripeLoading(true);
     setStripeError("");
+    setStripeSafetyMessage("");
 
     try {
       const response = await api.post(
         "/payments/stripe/create-checkout-session",
         buildPayload()
       );
+
+      if (response.data?.stripeMode || response.data?.safetyNote) {
+        setStripeSafetyMessage(
+          `${response.data.stripeMode === "live" ? "Live mode" : "Test mode"}: ${
+            response.data.safetyNote || "Stripe checkout created."
+          }`
+        );
+      }
 
       window.location.href = response.data.checkoutUrl;
     } catch (error) {
@@ -576,6 +586,17 @@ export default function Donate() {
                 />
               </div>
             </div>
+
+            {stripeSafetyMessage && (
+              <div className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-4">
+                <p className="text-sm font-bold text-emerald-200">
+                  Stripe checkout status
+                </p>
+                <p className="mt-1 text-sm text-emerald-100/80">
+                  {stripeSafetyMessage}
+                </p>
+              </div>
+            )}
 
             <DonationActionPanel
               onPreview={handleBackendPreview}
