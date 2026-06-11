@@ -53,6 +53,8 @@ export default function Admin() {
   const [auditSaving, setAuditSaving] = useState(false);
   const [newestAuditId, setNewestAuditId] = useState("");
   const [auditTypeFilter, setAuditTypeFilter] = useState("all");
+  const [auditStartDate, setAuditStartDate] = useState("");
+  const [auditEndDate, setAuditEndDate] = useState("");
   const [auditForm, setAuditForm] = useState({
     type: "cause_allocation",
     amount: "1",
@@ -493,6 +495,10 @@ export default function Admin() {
               newestAuditId={newestAuditId}
               auditTypeFilter={auditTypeFilter}
               onAuditTypeFilterChange={setAuditTypeFilter}
+              auditStartDate={auditStartDate}
+              auditEndDate={auditEndDate}
+              onAuditStartDateChange={setAuditStartDate}
+              onAuditEndDateChange={setAuditEndDate}
               form={auditForm}
               saving={auditSaving}
               onChange={updateAuditForm}
@@ -916,6 +922,10 @@ function AuditPanel({
   newestAuditId = "",
   auditTypeFilter = "all",
   onAuditTypeFilterChange = () => {},
+  auditStartDate = "",
+  auditEndDate = "",
+  onAuditStartDateChange = () => {},
+  onAuditEndDateChange = () => {},
   form = {},
   saving = false,
   onChange = () => {},
@@ -946,10 +956,22 @@ function AuditPanel({
     }
   ];
 
-  const filteredEntries =
-    auditTypeFilter === "all"
-      ? entries
-      : entries.filter((entry) => entry.type === auditTypeFilter);
+  const filteredEntries = entries.filter((entry) => {
+    const matchesType =
+      auditTypeFilter === "all" || entry.type === auditTypeFilter;
+
+    const entryDate = entry.createdAt ? new Date(entry.createdAt) : null;
+
+    const matchesStart =
+      !auditStartDate ||
+      (entryDate && entryDate >= new Date(`${auditStartDate}T00:00:00`));
+
+    const matchesEnd =
+      !auditEndDate ||
+      (entryDate && entryDate <= new Date(`${auditEndDate}T23:59:59`));
+
+    return matchesType && matchesStart && matchesEnd;
+  });
 
   const proofUrl = String(form.proofUrl || "").trim();
   const proofUrlLooksInvalid =
@@ -1136,6 +1158,34 @@ function AuditPanel({
               <option value="lottery_allocation">Lottery allocation</option>
             </select>
 
+            <input
+              type="date"
+              value={auditStartDate}
+              onChange={(event) => onAuditStartDateChange(event.target.value)}
+              className="rounded-full border border-borderRoyal bg-black/30 px-5 py-3 text-sm font-bold text-textPrimary outline-none transition focus:border-gold"
+              title="Start date"
+            />
+
+            <input
+              type="date"
+              value={auditEndDate}
+              onChange={(event) => onAuditEndDateChange(event.target.value)}
+              className="rounded-full border border-borderRoyal bg-black/30 px-5 py-3 text-sm font-bold text-textPrimary outline-none transition focus:border-gold"
+              title="End date"
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                onAuditTypeFilterChange("all");
+                onAuditStartDateChange("");
+                onAuditEndDateChange("");
+              }}
+              className="rounded-full border border-borderRoyal bg-black/30 px-5 py-3 text-sm font-bold text-textSecondary transition hover:border-gold hover:text-gold"
+            >
+              Clear filters
+            </button>
+
             <button
               type="button"
               onClick={onDownloadAuditCsv}
@@ -1145,6 +1195,10 @@ function AuditPanel({
             </button>
           </div>
         </div>
+
+        <p className="mb-4 text-sm text-textSecondary">
+          Showing {filteredEntries.length} of {entries.length} audit records.
+        </p>
 
         {filteredEntries.length === 0 ? (
           <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
