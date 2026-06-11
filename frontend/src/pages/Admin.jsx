@@ -264,6 +264,17 @@ export default function Admin() {
   const recentSecurityLogs = data?.recentSecurityLogs || [];
   const health = data?.health || null;
 
+  const hasDonationFilters =
+    Boolean(search.trim()) ||
+    paymentStatus !== "all" ||
+    mission !== "all" ||
+    country !== "all";
+
+  const hasAuditFilters =
+    auditTypeFilter !== "all" ||
+    Boolean(auditStartDate) ||
+    Boolean(auditEndDate);
+
   const revenueStats = useMemo(() => {
     return [
       {
@@ -315,7 +326,7 @@ export default function Admin() {
               onClick={handleDownloadCsv}
               className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
             >
-              Download CSV
+              {hasDonationFilters ? "Download Filtered CSV" : "Download CSV"}
             </button>
 
             <button
@@ -462,18 +473,26 @@ export default function Admin() {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                setPaymentStatus("all");
-                setMission("all");
-                setCountry("all");
-              }}
-              className="mt-4 rounded-full border border-borderRoyal px-4 py-2 text-sm font-bold text-textSecondary transition hover:border-gold hover:text-gold"
-            >
-              Clear filters
-            </button>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPaymentStatus("all");
+                  setMission("all");
+                  setCountry("all");
+                }}
+                className="rounded-full border border-borderRoyal px-4 py-2 text-sm font-bold text-textSecondary transition hover:border-gold hover:text-gold"
+              >
+                Clear filters
+              </button>
+
+              {hasDonationFilters && (
+                <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-bold text-amber-200">
+                  Donation CSV will be filtered
+                </span>
+              )}
+            </div>
           </section>
 
           {activeTab === "Overview" && (
@@ -512,6 +531,7 @@ export default function Admin() {
               onAuditTypeFilterChange={setAuditTypeFilter}
               auditStartDate={auditStartDate}
               auditEndDate={auditEndDate}
+              hasAuditFilters={hasAuditFilters}
               onAuditStartDateChange={setAuditStartDate}
               onAuditEndDateChange={setAuditEndDate}
               form={auditForm}
@@ -939,6 +959,7 @@ function AuditPanel({
   onAuditTypeFilterChange = () => {},
   auditStartDate = "",
   auditEndDate = "",
+  hasAuditFilters = false,
   onAuditStartDateChange = () => {},
   onAuditEndDateChange = () => {},
   form = {},
@@ -1206,7 +1227,7 @@ function AuditPanel({
               onClick={onDownloadAuditCsv}
               className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
             >
-              Download Audit CSV
+              {hasAuditFilters ? "Download Filtered Audit CSV" : "Download Audit CSV"}
             </button>
           </div>
         </div>
