@@ -227,6 +227,7 @@ export default function Admin() {
   const missionTotals = data?.missionTotals || {};
   const countryTotals = data?.countryTotals || [];
   const recentAuditEntries = data?.recentAuditEntries || [];
+  const auditTotalsByType = data?.auditTotalsByType || {};
   const recentSecurityLogs = data?.recentSecurityLogs || [];
   const health = data?.health || null;
 
@@ -471,6 +472,7 @@ export default function Admin() {
           {activeTab === "Audit" && (
             <AuditPanel
               entries={recentAuditEntries}
+              auditTotalsByType={auditTotalsByType}
               newestAuditId={newestAuditId}
               form={auditForm}
               saving={auditSaving}
@@ -888,9 +890,42 @@ function MissionTotals({ missionTotals }) {
   );
 }
 
-function AuditPanel({ entries = [], newestAuditId = "", form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault(), onDownloadAuditCsv = () => {} }) {
+function AuditPanel({ entries = [], auditTotalsByType = {}, newestAuditId = "", form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault(), onDownloadAuditCsv = () => {} }) {
+  const auditSummaryCards = [
+    {
+      label: "Donations received",
+      value: formatMoney(auditTotalsByType.donation_received),
+      icon: <BadgeDollarSign />
+    },
+    {
+      label: "Cause allocation",
+      value: formatMoney(auditTotalsByType.cause_allocation),
+      icon: <Sparkles />
+    },
+    {
+      label: "Platform allocation",
+      value: formatMoney(auditTotalsByType.platform_allocation),
+      icon: <ShieldCheck />
+    },
+    {
+      label: "Lottery allocation",
+      value: formatMoney(auditTotalsByType.lottery_allocation),
+      icon: <Ticket />
+    }
+  ];
+
   return (
     <section className="space-y-8">
+      <div className="grid gap-5 md:grid-cols-4">
+        {auditSummaryCards.map((card) => (
+          <StatCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+          />
+        ))}
+      </div>
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
         <PanelHeader icon={<ShieldCheck />} title="Create Audit Entry" />
 

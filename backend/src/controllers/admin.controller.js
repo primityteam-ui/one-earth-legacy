@@ -551,6 +551,7 @@ export async function getAdminOverview(req, res, next) {
 
     const missionTotals = {};
     const countryTotals = {};
+    const auditTotalsByType = {};
 
     for (const donation of paidDonations) {
       const user = donation.userId || {};
@@ -575,6 +576,14 @@ export async function getAdminOverview(req, res, next) {
       existingCountry.donors += 1;
 
       countryTotals[countryKey] = existingCountry;
+    }
+
+    for (const entry of recentAuditEntries) {
+      const type = entry.type || "unknown";
+
+      auditTotalsByType[type] = money(
+        safeNumber(auditTotalsByType[type]) + safeNumber(entry.amount)
+      );
     }
 
     const recentDonations = donations.map((donation) => {
@@ -639,6 +648,7 @@ export async function getAdminOverview(req, res, next) {
       ),
       recentDonations,
       topDonors,
+      auditTotalsByType,
       recentAuditEntries: recentAuditEntries.map((entry) => ({
         id: entry._id,
         type: entry.type,
