@@ -685,116 +685,132 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
   );
 }
 
-function DonationsPanel({ donations, onViewDonation }) {
+function DonationsPanel({ donations = [], onViewDonation }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
       <PanelHeader icon={<Database />} title="Donation Records" />
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1100px] border-separate border-spacing-y-3">
-          <thead>
-            <tr className="text-left text-sm text-textSecondary">
-              <th className="px-4">Donor</th>
-              <th className="px-4">Amount</th>
-              <th className="px-4">Mission</th>
-              <th className="px-4">Location</th>
-              <th className="px-4">Payment</th>
-              <th className="px-4">Settlement</th>
-              <th className="px-4">Date</th>
-              <th className="px-4">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {donations.map((donation) => (
-              <tr key={donation.id} className="bg-black/30">
-                <td className="rounded-l-2xl px-4 py-4">
-                  <p className="font-bold text-textPrimary">
-                    {donation.donorName}
-                  </p>
-                  <p className="text-sm text-textSecondary">
-                    {donation.email || "Hidden"}
-                  </p>
-                </td>
-
-                <td className="px-4 py-4 font-numbers font-bold text-goldLight">
-                  {formatMoney(donation.amountUSD)}
-                </td>
-
-                <td className="px-4 py-4">
-                  <p className="font-bold text-textPrimary">
-                    {donation.causeCategory}
-                  </p>
-                  <p className="text-sm text-textSecondary">
-                    {donation.causeImpact}
-                  </p>
-                </td>
-
-                <td className="px-4 py-4 text-textSecondary">
-                  {donation.location?.label || "Unknown"}
-                </td>
-
-                <td className="px-4 py-4">
-                  <StatusPill value={donation.paymentStatus} />
-                </td>
-
-                <td className="px-4 py-4">
-                  <StatusPill value={donation.settlementStatus} />
-                </td>
-
-                <td className="px-4 py-4 text-sm text-textSecondary">
-                  {formatDate(donation.createdAt)}
-                </td>
-
-                <td className="rounded-r-2xl px-4 py-4">
-                  <button
-                    type="button"
-                    onClick={() => onViewDonation?.(donation.id)}
-                    className="rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
-                  >
-                    View details
-                  </button>
-                </td>
+      {donations.length === 0 ? (
+        <EmptyState
+          icon={<BadgeDollarSign />}
+          title="No donation records found"
+          message="No donations match the selected filters yet. Try clearing filters or create a mock/test donation."
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1150px] border-separate border-spacing-y-3">
+            <thead>
+              <tr className="text-left text-sm text-textSecondary">
+                <th className="px-4">Donor</th>
+                <th className="px-4">Amount</th>
+                <th className="px-4">Mission</th>
+                <th className="px-4">Location</th>
+                <th className="px-4">Payment</th>
+                <th className="px-4">Settlement</th>
+                <th className="px-4">Date</th>
+                <th className="px-4">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+
+            <tbody>
+              {donations.map((donation) => (
+                <tr key={donation.id} className="bg-black/30">
+                  <td className="rounded-l-2xl px-4 py-4">
+                    <p className="font-bold text-textPrimary">
+                      {donation.donorName || "Unknown donor"}
+                    </p>
+                    <p className="text-sm text-textSecondary">
+                      {donation.email || "Hidden"}
+                    </p>
+                  </td>
+
+                  <td className="px-4 py-4 font-numbers font-bold text-goldLight">
+                    {formatMoney(donation.amountUSD)}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <p className="font-bold text-textPrimary">
+                      {donation.causeCategory || "Unassigned"}
+                    </p>
+                    <p className="text-sm text-textSecondary">
+                      {donation.causeImpact || "No impact selected"}
+                    </p>
+                  </td>
+
+                  <td className="px-4 py-4 text-textSecondary">
+                    {donation.location?.label || "Unknown"}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <StatusPill value={donation.paymentStatus} />
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <StatusPill value={donation.settlementStatus} />
+                  </td>
+
+                  <td className="px-4 py-4 text-sm text-textSecondary">
+                    {formatDate(donation.createdAt)}
+                  </td>
+
+                  <td className="rounded-r-2xl px-4 py-4">
+                    <button
+                      type="button"
+                      onClick={() => onViewDonation?.(donation.id)}
+                      className="rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
+                    >
+                      View details
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
 
-function DonorsPanel({ donors }) {
+function DonorsPanel({ donors = [] }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
       <PanelHeader icon={<Users />} title="Top Donors" />
 
-      <div className="space-y-4">
-        {donors.map((donor) => (
-          <div
-            key={donor.id}
-            className="grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 md:grid-cols-[1fr_160px_160px]"
-          >
-            <div>
-              <p className="font-bold text-textPrimary">
-                {donor.displayName}
-              </p>
-              <p className="text-sm text-textSecondary">
-                {donor.email}
-              </p>
-              <p className="mt-1 flex items-center gap-2 text-sm text-textSecondary">
-                <MapPin className="h-4 w-4 text-gold" />
-                {donor.location?.label || "Unknown"}
+      {donors.length === 0 ? (
+        <EmptyState
+          icon={<Users />}
+          title="No donors found"
+          message="No donor records are available yet. Donors will appear here after successful paid donations."
+        />
+      ) : (
+        <div className="space-y-4">
+          {donors.map((donor) => (
+            <div
+              key={donor.id}
+              className="grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 md:grid-cols-[1fr_160px_160px]"
+            >
+              <div>
+                <p className="font-bold text-textPrimary">
+                  {donor.displayName || donor.username || "Unknown donor"}
+                </p>
+                <p className="text-sm text-textSecondary">
+                  {donor.email || "Hidden"}
+                </p>
+                <p className="mt-1 flex items-center gap-2 text-sm text-textSecondary">
+                  <MapPin className="h-4 w-4 text-gold" />
+                  {donor.location?.label || "Unknown"}
+                </p>
+              </div>
+
+              <p className="font-bold text-goldLight">{donor.rank || "Spark"}</p>
+              <p className="font-numbers font-bold text-textPrimary">
+                {formatMoney(donor.totalDonated)}
               </p>
             </div>
-
-            <p className="font-bold text-goldLight">{donor.rank}</p>
-            <p className="font-numbers font-bold text-textPrimary">
-              {formatMoney(donor.totalDonated)}
-            </p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -1519,9 +1535,11 @@ function HealthPanel({ health }) {
     return (
       <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
         <PanelHeader icon={<ShieldCheck />} title="System Health" />
-        <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-          Health data is not available yet.
-        </p>
+        <EmptyState
+          icon={<ShieldCheck />}
+          title="Health data not available"
+          message="Refresh the admin dashboard. If this continues, check the backend /api/admin/overview response."
+        />
       </section>
     );
   }
@@ -1699,9 +1717,11 @@ function SecurityPanel({ logs }) {
         <PanelHeader icon={<ShieldCheck />} title="Security Log Viewer" />
 
         {!logs || logs.length === 0 ? (
-          <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
-            No security logs yet.
-          </p>
+          <EmptyState
+            icon={<ShieldCheck />}
+            title="No security logs yet"
+            message="Security events such as login attempts, rate-limit hits, admin actions, and OTP events will appear here."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1100px] border-separate border-spacing-y-3">
@@ -1838,6 +1858,24 @@ function StatusPill({ value }) {
     <span className={`rounded-full px-3 py-1 text-xs font-bold ${className}`}>
       {text}
     </span>
+  );
+}
+
+function EmptyState({ icon, title, message }) {
+  return (
+    <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-8 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold/10 text-2xl text-gold">
+        {icon}
+      </div>
+
+      <p className="font-display text-2xl font-bold text-textPrimary">
+        {title}
+      </p>
+
+      <p className="mx-auto mt-3 max-w-xl text-textSecondary">
+        {message}
+      </p>
+    </div>
   );
 }
 
