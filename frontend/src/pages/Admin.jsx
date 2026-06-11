@@ -275,6 +275,16 @@ export default function Admin() {
     Boolean(auditStartDate) ||
     Boolean(auditEndDate);
 
+  const tabCounts = {
+    Overview: recentDonations.length,
+    Donations: recentDonations.length,
+    Donors: topDonors.length,
+    Missions: Object.keys(missionTotals || {}).length,
+    Audit: recentAuditEntries.length,
+    Security: recentSecurityLogs.length,
+    Health: health?.warnings?.length || 0
+  };
+
   const revenueStats = useMemo(() => {
     return [
       {
@@ -410,7 +420,18 @@ export default function Admin() {
                       : "border border-borderRoyal bg-black/30 text-textSecondary hover:border-gold hover:text-gold"
                   }`}
                 >
-                  {tab}
+                  <span>{tab}</span>
+                  {Number(tabCounts[tab] || 0) > 0 && (
+                    <span
+                      className={`ml-2 rounded-full px-2 py-0.5 text-xs font-black ${
+                        activeTab === tab
+                          ? "bg-black/20 text-black"
+                          : "bg-gold/10 text-goldLight"
+                      }`}
+                    >
+                      {tabCounts[tab]}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
