@@ -166,6 +166,17 @@ export default function Audit() {
     );
   }, [visibleEntries]);
 
+  const proofStats = useMemo(() => {
+    const withProof = visibleEntries.filter((entry) => entry.proofUrl).length;
+    const pendingProof = Math.max(visibleEntries.length - withProof, 0);
+
+    return {
+      withProof,
+      pendingProof,
+      total: visibleEntries.length
+    };
+  }, [visibleEntries]);
+
   const allocationHealth = useMemo(() => {
     const expectedCause = Number((totals.totalDonations * 0.6).toFixed(2));
     const expectedPlatform = Number((totals.totalDonations * 0.25).toFixed(2));
@@ -619,6 +630,33 @@ export default function Audit() {
               showBars
               note="These values are calculated from the currently visible public audit records."
             />
+          </div>
+
+          <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+            <p className="mb-4 flex items-center gap-2 font-display text-xl font-bold">
+              <ExternalLink className="h-5 w-5 text-gold" />
+              Proof Status
+            </p>
+
+            <div className="grid gap-3">
+              <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-4">
+                <p className="text-sm text-textSecondary">Records with proof links</p>
+                <p className="mt-2 font-numbers text-3xl font-bold text-green-400">
+                  {proofStats.withProof.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4">
+                <p className="text-sm text-textSecondary">Proof links pending</p>
+                <p className="mt-2 font-numbers text-3xl font-bold text-goldLight">
+                  {proofStats.pendingProof.toLocaleString()}
+                </p>
+              </div>
+
+              <p className="text-sm text-textSecondary">
+                Public proof links can be attached after verified cause payouts or public confirmations.
+              </p>
+            </div>
           </div>
 
           <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
