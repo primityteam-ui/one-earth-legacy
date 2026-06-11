@@ -14,6 +14,20 @@ import { saveConfirmedDonation } from "../services/donation.service.js";
 
 export { stripeCheckoutValidators };
 
+function getStripeMode() {
+  const secretKey = process.env.STRIPE_SECRET_KEY || "";
+
+  if (secretKey.startsWith("sk_live_")) {
+    return "live";
+  }
+
+  if (secretKey.startsWith("sk_test_")) {
+    return "test";
+  }
+
+  return "unknown";
+}
+
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -134,7 +148,12 @@ export async function createStripeCheckoutSession(req, res, next) {
       checkoutUrl: session.url,
       sessionId: session.id,
       amount: totalAmount,
-      currency: currency.toUpperCase()
+      currency: currency.toUpperCase(),
+      stripeMode: getStripeMode(),
+      safetyNote:
+        getStripeMode() === "live"
+          ? "Live Stripe key detected. Confirm production readiness before accepting payments."
+          : "Stripe test mode detected."
     });
   } catch (error) {
     return next(error);
