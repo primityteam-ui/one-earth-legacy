@@ -43,6 +43,8 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [stripeConfigStatus, setStripeConfigStatus] = useState(null);
+  const [stripeConfigError, setStripeConfigError] = useState("");
 
   const [search, setSearch] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("all");
@@ -85,6 +87,18 @@ export default function Admin() {
       });
 
       setData(response.data);
+
+      try {
+        const stripeResponse = await api.get("/payments/stripe/config-status");
+        setStripeConfigStatus(stripeResponse.data);
+        setStripeConfigError("");
+      } catch (stripeError) {
+        setStripeConfigStatus(null);
+        setStripeConfigError(
+          stripeError.response?.data?.message ||
+            "Could not load Stripe configuration status."
+        );
+      }
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ||
@@ -590,6 +604,8 @@ export default function Admin() {
           {activeTab === "Health" && (
             <HealthPanel
               health={health}
+              stripeConfigStatus={stripeConfigStatus}
+              stripeConfigError={stripeConfigError}
               onRefresh={loadAdminData}
             />
           )}
@@ -1636,7 +1652,12 @@ function AuditPanel({
   );
 }
 
-function HealthPanel({ health, onRefresh = () => {} }) {
+function HealthPanel({
+  health,
+  stripeConfigStatus = null,
+  stripeConfigError = "",
+  onRefresh = () => {}
+}) {
   if (!health) {
     return (
       <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -1767,6 +1788,11 @@ function HealthPanel({ health, onRefresh = () => {} }) {
 
         <AdminBuildInfo health={health} />
 
+        <StripeConfigStatusPanel
+          stripeConfigStatus={stripeConfigStatus}
+          stripeConfigError={stripeConfigError}
+        />
+
         {warnings.length > 0 && (
           <div className="mb-6 rounded-[1.5rem] border border-amber-400/30 bg-amber-400/10 p-5">
             <div className="mb-4 flex items-center gap-3">
@@ -1884,6 +1910,156 @@ function HealthPanel({ health, onRefresh = () => {} }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function StripeConfigStatusPanel({ stripeConfigStatus, stripeConfigError }) {
+  if (stripeConfigError) {
+    return (
+      <div className="mb-6 rounded-[1.5rem] border border-crimson/40 bg-crimson/10 p-5">
+        <div className="mb-3 flex items-center gap-3">
+          <AlertTriangle className="h-6 w-6 text-crimsonLight" />
+          <p className="font-display text-2xl font-bold text-textPrimary">
+            Stripe config status unavailable
+          </p>
+        </div>
+
+        <p className="text-sm text-textSecondary">{stripeConfigError}</p>
+      </div>
+    );
+  }
+
+  if (!stripeConfigStatus) {
+    return (
+      <div className="mb-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
+        <p className="font-display text-2xl font-bold text-textPrimary">
+          Stripe config status loading
+        </p>
+        <p className="mt-2 text-sm text-textSecondary">
+          Refresh Health if this panel does not update.
+        </p>
+      </div>
+    );
+  }
+
+  const liveBlocked =
+    Boolean(stripeConfigStatus.safety?.liveKeyBlockedInDevelopment);
+  const liveAllowed =
+    Boolean(stripeConfigStatus.safety?.livePaymentsAllowed);
+
+  const statusCards = [
+    {
+      label: "Stripe mode",
+      value: stripeConfigStatus.stripeMode || "unknown",
+      status: stripeConfigStatus.stripeMode !== "unknown"
+    },
+    {
+      label: "Secret key",
+      value: stripeConfigStatus.hasSecretKey ? "configured" : "missing",
+      status: Boolean(stripeConfigStatus.hasSecretKey)
+    },
+    {
+      label: "Webhook secret",
+      value: stripeConfigStatus.hasWebhookSecret ? "configured" : "missing",
+      status: Boolean(stripeConfigStatus.hasWebhookSecret)
+    },
+    {
+      label: "Success URL",
+      value: stripeConfigStatus.hasSuccessUrl ? "configured" : "default/local",
+      status: true
+    },
+    {
+      label: "Cancel URL",
+      value: stripeConfigStatus.hasCancelUrl ? "configured" : "default/local",
+      status: true
+    },
+    {
+      label: "Node env",
+      value: stripeConfigStatus.nodeEnv || "development",
+      status: true
+    }
+  ];
+
+  return (
+    <div className="mb-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-gold">
+            Stripe Configuration
+          </p>
+
+          <h3 className="mt-2 font-display text-2xl font-bold text-textPrimary">
+            Safe payment config status
+          </h3>
+
+          <p className="mt-2 text-sm text-textSecondary">
+            This panel shows only safe configuration status. It never displays secret keys.
+          </p>
+        </div>
+
+        <span
+          className={`w-fit rounded-full px-4 py-2 text-sm font-bold ${
+            stripeConfigStatus.configured
+              ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+              : "border border-crimson/40 bg-crimson/10 text-crimsonLight"
+          }`}
+        >
+          {stripeConfigStatus.configured ? "Configured" : "Needs Setup"}
+        </span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {statusCards.map((item) => (
+          <div
+            key={item.label}
+            className={`rounded-2xl border p-4 ${
+              item.status
+                ? "border-emerald-400/30 bg-emerald-400/10"
+                : "border-crimson/40 bg-crimson/10"
+            }`}
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-textSecondary">
+              {item.label}
+            </p>
+            <p className="mt-2 break-words font-bold text-textPrimary">
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div
+          className={`rounded-2xl border p-4 ${
+            liveAllowed
+              ? "border-emerald-400/30 bg-emerald-400/10"
+              : "border-amber-400/30 bg-amber-400/10"
+          }`}
+        >
+          <p className="font-bold text-textPrimary">Live payments allowed</p>
+          <p className="mt-1 text-sm text-textSecondary">
+            {liveAllowed
+              ? "Production mode with live Stripe key detected."
+              : "Live payments are not allowed in the current environment."}
+          </p>
+        </div>
+
+        <div
+          className={`rounded-2xl border p-4 ${
+            liveBlocked
+              ? "border-crimson/40 bg-crimson/10"
+              : "border-emerald-400/30 bg-emerald-400/10"
+          }`}
+        >
+          <p className="font-bold text-textPrimary">Live key safety guard</p>
+          <p className="mt-1 text-sm text-textSecondary">
+            {liveBlocked
+              ? "Live Stripe key is blocked because the backend is not running in production."
+              : "No unsafe live-key-in-development state detected."}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
