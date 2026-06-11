@@ -335,6 +335,40 @@ export default function Leaderboard() {
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
 
+      {!loading && (
+        <section className="mb-5 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold text-textPrimary">
+                Showing {leaderboardStats.donors.toLocaleString()} ranked donor
+                {leaderboardStats.donors === 1 ? "" : "s"} in {activeTab}
+              </p>
+
+              <p className="mt-1 text-sm text-textSecondary">
+                Current leader:{" "}
+                <span className="font-bold text-gold">
+                  {safeText(currentLeaderName, "Loading...")}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.18em]">
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
+                {money(leaderboardStats.totalDonated)}
+              </span>
+
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
+                {leaderboardStats.countries} countries
+              </span>
+
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
+                {leaderboardStats.missions} missions
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {loading ? (
         <PublicStateBox message="Loading leaderboard from backend..." />
       ) : activeTab === "By Country" ? (
