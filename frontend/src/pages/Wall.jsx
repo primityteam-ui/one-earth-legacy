@@ -155,12 +155,15 @@ export default function Wall() {
     };
   }, [filteredTiles]);
 
-  const hasFilters =
-    search ||
-    rank !== "All" ||
-    country !== "All" ||
-    missionFilter !== "All Missions" ||
-    impactFilter !== "All Impacts";
+  const activeFilters = [
+    search ? `Search: ${search}` : "",
+    rank !== "All" ? `Rank: ${rank}` : "",
+    country !== "All" ? `Country: ${country}` : "",
+    missionFilter !== "All Missions" ? `Mission: ${missionFilter}` : "",
+    impactFilter !== "All Impacts" ? `Impact: ${impactFilter}` : ""
+  ].filter(Boolean);
+
+  const hasFilters = activeFilters.length > 0;
 
   function clearFilters() {
     setSearch("");
@@ -275,6 +278,25 @@ export default function Wall() {
             setImpactFilter={setImpactFilter}
           />
         </div>
+
+        {hasFilters && (
+          <div className="mt-5 rounded-2xl border border-gold/20 bg-black/25 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-textSecondary">
+              Active Filters
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-gold"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
