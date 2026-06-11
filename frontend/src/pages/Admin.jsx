@@ -1823,6 +1823,8 @@ function HealthPanel({ health, onRefresh = () => {} }) {
 
         <AdminQaChecklist health={health} />
 
+        <AdminSmokeTestChecklist />
+
         <div className="mt-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
           <div className="mb-4 flex items-center gap-3">
             <ShieldCheck className="h-6 w-6 text-gold" />
@@ -1954,6 +1956,125 @@ function BuildInfoItem({ label, value }) {
       <p className="mt-2 break-words font-bold text-textPrimary">
         {value}
       </p>
+    </div>
+  );
+}
+
+function AdminSmokeTestChecklist() {
+  const smokeTests = [
+    {
+      area: "Overview",
+      checks: [
+        "Revenue cards load without crashing",
+        "Latest donations show real MongoDB records or clean empty state",
+        "Mission and country charts show data or clean empty state"
+      ]
+    },
+    {
+      area: "Donations",
+      checks: [
+        "Donation records table loads",
+        "Search filter works",
+        "Mission, country, and payment-status filters work",
+        "CSV download respects selected filters",
+        "View details drawer opens and closes",
+        "Copy email and public profile buttons work"
+      ]
+    },
+    {
+      area: "Donors",
+      checks: [
+        "Top donors list loads",
+        "Copy email works",
+        "Public profile link opens /u/:username"
+      ]
+    },
+    {
+      area: "Audit",
+      checks: [
+        "Audit log loads",
+        "Audit type/date filters work",
+        "Filtered audit CSV downloads",
+        "Manual audit entry form validates required fields",
+        "New audit entry appears after creation"
+      ]
+    },
+    {
+      area: "Security",
+      checks: [
+        "Security log viewer loads",
+        "Admin actions create SecurityLog records",
+        "Empty state looks clean when no logs exist"
+      ]
+    },
+    {
+      area: "Health",
+      checks: [
+        "Build & Runtime card loads",
+        "Environment warnings display correctly",
+        "Final QA checklist displays correct ready/pending statuses",
+        "Protected admin routes are listed",
+        "Refresh Health button reloads current data"
+      ]
+    }
+  ];
+
+  return (
+    <div className="mt-6 rounded-[1.5rem] border border-blue-400/30 bg-blue-400/10 p-5">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-blue-200">
+            Developer Smoke Test
+          </p>
+          <h3 className="mt-2 font-display text-2xl font-bold text-textPrimary">
+            Final admin QA before next section
+          </h3>
+          <p className="mt-2 text-sm text-textSecondary">
+            Use this temporary checklist after each admin change to confirm the dashboard is stable.
+          </p>
+        </div>
+
+        <span className="w-fit rounded-full border border-blue-400/30 bg-blue-400/10 px-4 py-2 text-sm font-bold text-blue-200">
+          Dev Only
+        </span>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {smokeTests.map((group) => (
+          <div
+            key={group.area}
+            className="rounded-2xl border border-borderRoyal bg-royalBlack/70 p-4"
+          >
+            <p className="mb-3 font-display text-xl font-bold text-textPrimary">
+              {group.area}
+            </p>
+
+            <div className="space-y-2">
+              {group.checks.map((check) => (
+                <label
+                  key={check}
+                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-borderRoyal bg-black/20 p-3 text-sm text-textSecondary transition hover:border-gold/40 hover:text-textPrimary"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 accent-gold"
+                  />
+                  <span>{check}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
+        <p className="font-bold text-amber-200">
+          Remove this panel before final public production launch.
+        </p>
+        <p className="mt-1 text-sm text-textSecondary">
+          This checklist is helpful while building, but it should not be visible in a real admin production dashboard forever.
+        </p>
+      </div>
     </div>
   );
 }
