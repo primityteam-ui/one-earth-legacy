@@ -192,6 +192,40 @@ export async function createStripeCheckoutSession(req, res, next) {
   }
 }
 
+export async function getStripeCheckoutSessionStatus(req, res, next) {
+  try {
+    const stripe = getStripeClient();
+    const sessionId = String(req.query.session_id || "").trim();
+
+    if (!sessionId) {
+      return res.status(400).json({
+        message: "Missing Stripe session_id"
+      });
+    }
+
+    if (!sessionId.startsWith("cs_test_") && !sessionId.startsWith("cs_live_")) {
+      return res.status(400).json({
+        message: "Invalid Stripe checkout session id"
+      });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    return res.status(200).json({
+      sessionId: session.id,
+      status: session.status,
+      paymentStatus: session.payment_status,
+      amountTotal: Number(session.amount_total || 0) / 100,
+      currency: String(session.currency || "usd").toUpperCase(),
+      customerEmail: session.customer_email || session.customer_details?.email || "",
+      mode: session.mode,
+      stripeMode: getStripeMode()
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 export async function stripeWebhook(req, res) {
   let stripe;
 

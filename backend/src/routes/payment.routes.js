@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createStripeCheckoutSession,
+  getStripeCheckoutSessionStatus,
   stripeCheckoutValidators,
   stripeWebhook
 } from "../controllers/payment.controller.js";
@@ -14,6 +15,11 @@ router.post(
   stripeCheckoutValidators,
   validateRequest,
   createStripeCheckoutSession
+);
+
+router.get(
+  "/stripe/session-status",
+  getStripeCheckoutSessionStatus
 );
 
 router.post(
