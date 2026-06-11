@@ -982,6 +982,17 @@ async function copyToClipboard(value) {
 }
 
 function DonationDetailDrawer({ donation, loading, onClose }) {
+  const [copiedField, setCopiedField] = useState("");
+
+  async function handleCopy(label, value) {
+    await copyToClipboard(value);
+    setCopiedField(label);
+
+    window.setTimeout(() => {
+      setCopiedField("");
+    }, 2000);
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
       <div className="ml-auto h-full w-full max-w-2xl overflow-y-auto border-l border-borderRoyal bg-royalBlack p-6 shadow-2xl">
@@ -1019,6 +1030,8 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
                 label="Email"
                 value={donation.donor?.email || "Hidden"}
                 copyable
+                copiedField={copiedField}
+                onCopy={handleCopy}
               />
               <DetailLine label="Username" value={donation.donor?.username || "None"} />
               <DetailLine label="Role" value={donation.donor?.role || "donor"} />
@@ -1036,11 +1049,15 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
                 label="Stripe Session"
                 value={donation.stripeSessionId || "Not available"}
                 copyable
+                copiedField={copiedField}
+                onCopy={handleCopy}
               />
               <DetailLine
                 label="Stripe Payment Intent"
                 value={donation.stripePaymentIntentId || "Not available"}
                 copyable
+                copiedField={copiedField}
+                onCopy={handleCopy}
               />
             </DetailSection>
 
@@ -1078,13 +1095,21 @@ function DetailSection({ title, children }) {
   );
 }
 
-function DetailLine({ label, value, copyable = false }) {
+function DetailLine({
+  label,
+  value,
+  copyable = false,
+  copiedField = "",
+  onCopy = () => {}
+}) {
   const displayValue = value || "Unknown";
   const canCopy =
     copyable &&
     displayValue &&
     displayValue !== "Hidden" &&
     displayValue !== "Not available";
+
+  const isCopied = copiedField === label;
 
   return (
     <div className="grid gap-2 rounded-xl border border-borderRoyal bg-black/30 p-4 md:grid-cols-[170px_1fr]">
@@ -1098,10 +1123,14 @@ function DetailLine({ label, value, copyable = false }) {
         {canCopy && (
           <button
             type="button"
-            onClick={() => copyToClipboard(displayValue)}
-            className="w-fit rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-xs font-bold text-goldLight transition hover:bg-gold hover:text-black"
+            onClick={() => onCopy(label, displayValue)}
+            className={`w-fit rounded-full border px-4 py-2 text-xs font-bold transition ${
+              isCopied
+                ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                : "border-gold/30 bg-gold/10 text-goldLight hover:bg-gold hover:text-black"
+            }`}
           >
-            Copy
+            {isCopied ? "Copied" : "Copy"}
           </button>
         )}
       </div>
