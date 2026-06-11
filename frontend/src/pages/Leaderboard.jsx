@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  Copy,
   Crown,
   Filter,
   Globe2,
@@ -592,9 +593,27 @@ function LeaderboardStat({ icon, label, value, subtext }) {
 }
 
 function PodiumCard({ donor, position, activeTab }) {
+  const [copied, setCopied] = useState(false);
   const label = position === 1 ? "Gold" : position === 2 ? "Silver" : "Bronze";
   const value = Number(donor.amountUSD || 0);
   const profilePath = getProfilePath(donor.username);
+
+  async function copyProfileLink() {
+    if (!profilePath) {
+      return;
+    }
+
+    const url = `${window.location.origin}${profilePath}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (error) {
+      console.error("Could not copy leaderboard profile link", error);
+      alert(url);
+    }
+  }
 
   return (
     <motion.article
@@ -626,13 +645,24 @@ function PodiumCard({ donor, position, activeTab }) {
       </p>
 
       {profilePath && (
-        <Link
-          to={profilePath}
-          className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-gold hover:text-goldLight"
-        >
-          View @{donor.username}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Link
+            to={profilePath}
+            className="inline-flex items-center gap-2 text-sm font-bold text-gold hover:text-goldLight"
+          >
+            View @{donor.username}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+
+          <button
+            type="button"
+            onClick={copyProfileLink}
+            className="inline-flex items-center gap-1 rounded-full border border-gold/30 px-3 py-1 text-xs font-bold text-gold hover:bg-gold/10"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            {copied ? "Copied" : "Copy Link"}
+          </button>
+        </div>
       )}
 
       <div className="mt-4">
@@ -665,8 +695,26 @@ function PodiumCard({ donor, position, activeTab }) {
 }
 
 function RankRow({ donor, position }) {
+  const [copied, setCopied] = useState(false);
   const value = Number(donor.amountUSD || 0);
   const profilePath = getProfilePath(donor.username);
+
+  async function copyProfileLink() {
+    if (!profilePath) {
+      return;
+    }
+
+    const url = `${window.location.origin}${profilePath}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (error) {
+      console.error("Could not copy leaderboard row profile link", error);
+      alert(url);
+    }
+  }
 
   return (
     <motion.div
@@ -693,13 +741,24 @@ function RankRow({ donor, position }) {
           </p>
 
           {profilePath && (
-            <Link
-              to={profilePath}
-              className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-goldLight"
-            >
-              @{donor.username}
-              <ArrowRight className="h-3 w-3" />
-            </Link>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <Link
+                to={profilePath}
+                className="inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-goldLight"
+              >
+                @{donor.username}
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={copyProfileLink}
+                className="inline-flex items-center gap-1 rounded-full border border-gold/30 px-2 py-1 text-[11px] font-bold text-gold hover:bg-gold/10"
+              >
+                <Copy className="h-3 w-3" />
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
           )}
         </div>
       </div>
