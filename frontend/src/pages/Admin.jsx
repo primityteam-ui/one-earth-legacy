@@ -301,15 +301,15 @@ export default function Admin() {
   }, [stats]);
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-10">
-      <section className="mb-8 rounded-[2rem] border border-crimson/40 bg-royalCard p-8 shadow-gold">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-5 sm:py-10">
+      <section className="mb-8 rounded-[1.5rem] border border-crimson/40 bg-royalCard p-5 shadow-gold sm:rounded-[2rem] sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="mb-2 text-sm uppercase tracking-[0.35em] text-crimsonLight">
               Admin Control Center
             </p>
 
-            <h1 className="font-display text-4xl font-bold md:text-6xl">
+            <h1 className="font-display text-3xl font-bold sm:text-4xl md:text-6xl">
               Real Donation Dashboard
             </h1>
 
@@ -416,7 +416,7 @@ export default function Admin() {
             </div>
           </section>
 
-          <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+          <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalCard p-5 sm:rounded-[2rem] sm:p-6">
             <div className="mb-5 flex flex-col gap-2">
               <p className="text-sm uppercase tracking-[0.3em] text-gold">
                 Admin Filters
@@ -569,7 +569,7 @@ export default function Admin() {
 
 function AdminSecurityBanner() {
   return (
-    <section className="mb-8 rounded-[2rem] border border-amber-400/30 bg-amber-400/10 p-6">
+    <section className="mb-8 rounded-[1.5rem] border border-amber-400/30 bg-amber-400/10 p-5 sm:rounded-[2rem] sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-200">
@@ -708,8 +708,8 @@ function DonationsPanel({ donations = [], onViewDonation }) {
           message="No donations match the selected filters yet. Try clearing filters or create a mock/test donation."
         />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1150px] border-separate border-spacing-y-3">
+        <div className="overflow-x-auto rounded-2xl">
+          <table className="w-full min-w-[980px] border-separate border-spacing-y-3">
             <thead>
               <tr className="text-left text-sm text-textSecondary">
                 <th className="px-4">Donor</th>
@@ -1028,13 +1028,13 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
-      <div className="ml-auto h-full w-full max-w-2xl overflow-y-auto border-l border-borderRoyal bg-royalBlack p-6 shadow-2xl">
+      <div className="ml-auto h-full w-full max-w-2xl overflow-y-auto border-l border-borderRoyal bg-royalBlack p-4 shadow-2xl sm:p-6">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-gold">
               Donation Detail
             </p>
-            <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
+            <h2 className="mt-2 font-display text-2xl font-bold text-textPrimary sm:text-3xl">
               {formatMoney(donation.amountUSD)}
             </h2>
             <p className="mt-1 text-textSecondary">
@@ -1462,8 +1462,8 @@ function AuditPanel({
             No audit entries found for this filter.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1050px] border-separate border-spacing-y-3">
+          <div className="overflow-x-auto rounded-2xl">
+            <table className="w-full min-w-[940px] border-separate border-spacing-y-3">
               <thead>
                 <tr className="text-left text-sm text-textSecondary">
                   <th className="px-4">Type</th>
@@ -1892,8 +1892,8 @@ function SecurityPanel({ logs }) {
             message="Security events such as login attempts, rate-limit hits, admin actions, and OTP events will appear here."
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] border-separate border-spacing-y-3">
+          <div className="overflow-x-auto rounded-2xl">
+            <table className="w-full min-w-[980px] border-separate border-spacing-y-3">
               <thead>
                 <tr className="text-left text-sm text-textSecondary">
                   <th className="px-4">Event</th>
@@ -2032,7 +2032,7 @@ function StatusPill({ value }) {
 
 function EmptyState({ icon, title, message }) {
   return (
-    <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-8 text-center">
+    <div className="rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 text-center sm:p-8">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold/10 text-2xl text-gold">
         {icon}
       </div>
@@ -2050,7 +2050,7 @@ function EmptyState({ icon, title, message }) {
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-6">
+    <div className="rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5 sm:p-6">
       <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-gold/10 text-gold">
         {icon}
       </div>
@@ -2065,9 +2065,9 @@ function StatCard({ icon, label, value }) {
 
 function PanelHeader({ icon, title }) {
   return (
-    <div className="mb-6 flex items-center gap-3">
-      <div className="text-gold">{icon}</div>
-      <h2 className="font-display text-2xl font-bold text-textPrimary">
+    <div className="mb-5 flex items-center gap-3 sm:mb-6">
+      <div className="shrink-0 text-gold">{icon}</div>
+      <h2 className="font-display text-xl font-bold text-textPrimary sm:text-2xl">
         {title}
       </h2>
     </div>
