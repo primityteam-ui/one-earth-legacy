@@ -134,6 +134,12 @@ export default function Wall() {
     });
   }, [tiles, search, rank, country]);
 
+  const featuredTile = useMemo(() => {
+    return [...filteredTiles].sort(
+      (a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0)
+    )[0];
+  }, [filteredTiles]);
+
   const wallStats = useMemo(() => {
     const totalDonated = filteredTiles.reduce(
       (sum, tile) => sum + Number(tile.amountUSD || 0),
@@ -300,6 +306,74 @@ export default function Wall() {
       </section>
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
+
+      {!loading && featuredTile && (
+        <section className="mb-8 overflow-hidden rounded-[2rem] border border-gold/30 bg-royalCard shadow-gold">
+          <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="bg-gradient-to-br from-gold/20 via-black/20 to-transparent p-7">
+              <div className="mb-5 flex flex-wrap items-center gap-3">
+                <span className="rounded-full border border-gold/40 bg-gold/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.25em] text-gold">
+                  Featured Legacy
+                </span>
+
+                <RankBadge rank={featuredTile.rank || "Spark"} />
+              </div>
+
+              <h2 className="font-display text-4xl font-bold text-textPrimary md:text-5xl">
+                {safeText(featuredTile.name, "Anonymous Donor")}
+              </h2>
+
+              {featuredTile.username && featuredTile.username !== "unknown" && (
+                <Link
+                  to={`/u/${featuredTile.username}`}
+                  className="mt-3 inline-flex items-center gap-2 font-bold text-gold hover:text-goldLight"
+                >
+                  View @{featuredTile.username}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
+
+              <p className="mt-6 max-w-3xl rounded-2xl border border-borderRoyal bg-black/25 p-5 text-lg text-textSecondary">
+                “{safeText(featuredTile.message, "A public legacy tile was created.")}”
+              </p>
+            </div>
+
+            <div className="border-t border-borderRoyal bg-black/25 p-7 lg:border-l lg:border-t-0">
+              <p className="text-sm uppercase tracking-[0.3em] text-textSecondary">
+                Public Impact
+              </p>
+
+              <p className="mt-3 font-numbers text-5xl font-bold text-goldLight">
+                {money(featuredTile.amountUSD)}
+              </p>
+
+              <p className="mt-2 text-sm text-textSecondary">Total donated</p>
+
+              <div className="mt-6 rounded-2xl border border-gold/20 bg-gold/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-goldLight">
+                  {safeText(featuredTile.causeCategory, "Mission Pending")}
+                </p>
+
+                <p className="mt-2 text-textSecondary">
+                  {safeText(featuredTile.causeImpact || featuredTile.cause, "Impact Pending")}
+                </p>
+              </div>
+
+              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-borderRoyal bg-black/25 p-4">
+                <MapPin className="mt-1 h-5 w-5 shrink-0 text-gold" />
+                <div>
+                  <p className="font-bold text-textPrimary">
+                    {featuredTile.flag || "🌍"} {getTileLocation(featuredTile)}
+                  </p>
+                  <p className="mt-1 text-xs text-textSecondary">
+                    City/country display only. No private address is shown.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <PublicStateBox message="Loading wall tiles from backend..." />
