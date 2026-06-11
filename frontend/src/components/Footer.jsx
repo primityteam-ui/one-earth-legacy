@@ -20,13 +20,14 @@ export default function Footer() {
           </Link>
 
           <p className="mt-5 max-w-sm text-sm leading-6 text-textSecondary">
-            One Earth. One Wall. One Emperor. A digital legacy platform built
-            around transparency, purpose, gamification, and secure foundations.
+            One Earth. One Wall. One Emperor. A commercial digital legacy
+            platform built around transparency, donor-safe privacy, audit records,
+            and secure payment foundations.
           </p>
 
           <div className="mt-5 flex items-center gap-3 rounded-2xl border border-gold/20 bg-gold/10 p-4 text-sm text-goldLight">
             <ShieldCheck className="h-5 w-5" />
-            Security-first foundation in progress
+            Privacy-safe location and payment safety in progress
           </div>
         </div>
 
@@ -59,10 +60,10 @@ export default function Footer() {
           </p>
 
           <div className="space-y-3">
-            <StatusItem text="Frontend mock pages built" />
+            <StatusItem text="Public pages connected" />
             <StatusItem text="OTP auth working" />
             <StatusItem text="MongoDB connected" />
-            <StatusItem text="Payments coming next" />
+            <StatusItem text="Stripe test checkout and webhook flow added" />
           </div>
 
           <div className="mt-6 flex items-center gap-3 text-textSecondary">

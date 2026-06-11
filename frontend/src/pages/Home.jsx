@@ -65,11 +65,11 @@ export default function Home() {
           </div>
 
           <h1 className="font-display text-5xl font-extrabold leading-tight md:text-7xl">
-            Leave your mark on <span className="gold-text">Earth forever.</span>
+            Leave your mark on <span className="gold-text">Earth.</span>
           </h1>
 
           <p className="mt-6 max-w-2xl font-subheading text-2xl text-textSecondary md:text-3xl">
-            Every human leaves a mark on this planet. Most marks are invisible. This is your chance to make yours permanent.
+            Create a public legacy tile, choose a mission, and join a transparent digital wall built around visibility, donor-safe location privacy, and audit records.
           </p>
 
           <div className="mt-9 flex flex-wrap gap-4">
@@ -105,7 +105,7 @@ export default function Home() {
             </p>
 
             <p className="mt-4 text-textSecondary">
-              The first Emperor will control the global cause allocation and appear across the entire monument.
+              The first Emperor will guide the active cause spotlight after payment settlement, safety review, and admin verification.
             </p>
 
             <div className="mt-7 rounded-2xl border border-crimson/40 bg-crimson/10 p-4">
@@ -135,20 +135,20 @@ export default function Home() {
         <div className="grid gap-5 md:grid-cols-3">
           <FeatureCard
             icon={<Globe2 className="h-6 w-6" />}
-            title="Global causes"
-            text="60% of every donation goes to the verified cause chosen by the current Emperor."
+            title="Transparent mission split"
+            text="The platform target split is 60% cause allocation, 25% platform sustainability, and 15% donor pool, subject to payment settlement and public audit records."
           />
 
           <FeatureCard
             icon={<Crown className="h-6 w-6" />}
             title="Ranked legacy"
-            text="Every donor receives a rank and tile based on cumulative donation amount."
+            text="Donors receive public ranks and tiles based on confirmed cumulative donation records."
           />
 
           <FeatureCard
             icon={<ShieldCheck className="h-6 w-6" />}
-            title="Built as a fortress"
-            text="Authentication, cookies, rate limits, security logs, and payment safety start from day one."
+            title="Privacy and payment safety"
+            text="Public donor location is city/country level only, and payment records depend on Stripe checkout plus webhook confirmation."
           />
         </div>
       </section>
