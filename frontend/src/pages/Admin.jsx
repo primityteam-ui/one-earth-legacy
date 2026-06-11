@@ -663,7 +663,10 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
         </div>
 
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-          <PanelHeader icon={<Crown />} title="Latest Donations" />
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+            <PanelHeader icon={<Crown />} title="Latest Donations" />
+            <CountBadge label={`${recentDonations.length} recent donations`} />
+          </div>
 
           {recentDonations.length === 0 ? (
             <EmptyState
@@ -699,7 +702,10 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
 function DonationsPanel({ donations = [], onViewDonation }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<Database />} title="Donation Records" />
+      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <PanelHeader icon={<Database />} title="Donation Records" />
+        <CountBadge label={`${donations.length} donation records`} />
+      </div>
 
       {donations.length === 0 ? (
         <EmptyState
@@ -801,7 +807,10 @@ function DonationsPanel({ donations = [], onViewDonation }) {
 function DonorsPanel({ donors = [] }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-      <PanelHeader icon={<Users />} title="Top Donors" />
+      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <PanelHeader icon={<Users />} title="Top Donors" />
+        <CountBadge label={`${donors.length} donors`} />
+      </div>
 
       {donors.length === 0 ? (
         <EmptyState
@@ -1490,10 +1499,12 @@ function AuditPanel({
           </div>
         </div>
 
-        <p className="mb-4 text-sm text-textSecondary">
-          Showing {filteredEntries.length} of {entries.length} audit records.
-          CSV download uses the selected audit filters.
-        </p>
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <CountBadge label={`Showing ${filteredEntries.length} of ${entries.length} audit records`} />
+          <span className="text-sm text-textSecondary">
+            CSV download uses the selected audit filters.
+          </span>
+        </div>
 
         {filteredEntries.length === 0 ? (
           <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
@@ -1921,7 +1932,10 @@ function SecurityPanel({ logs }) {
       </div>
 
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<ShieldCheck />} title="Security Log Viewer" />
+        <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <PanelHeader icon={<ShieldCheck />} title="Security Log Viewer" />
+          <CountBadge label={`${logs?.length || 0} security logs`} />
+        </div>
 
         {!logs || logs.length === 0 ? (
           <EmptyState
@@ -2125,6 +2139,14 @@ function StatusPill({ value }) {
   return (
     <span className={`rounded-full px-3 py-1 text-xs font-bold ${className}`}>
       {text}
+    </span>
+  );
+}
+
+function CountBadge({ label }) {
+  return (
+    <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-goldLight">
+      {label}
     </span>
   );
 }
