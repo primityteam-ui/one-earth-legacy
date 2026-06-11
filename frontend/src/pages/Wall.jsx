@@ -37,6 +37,19 @@ const ranks = [
   "Emperor"
 ];
 
+const rankPower = {
+  Spark: 1,
+  Citizen: 2,
+  Merchant: 3,
+  Knight: 4,
+  Lord: 5,
+  Baron: 6,
+  Duke: 7,
+  Sovereign: 8,
+  "King/Queen": 9,
+  Emperor: 10
+};
+
 function money(value) {
   return `$${Number(value || 0).toLocaleString()}`;
 }
@@ -76,6 +89,7 @@ export default function Wall() {
   const [search, setSearch] = useState("");
   const [rank, setRank] = useState("All");
   const [country, setCountry] = useState("All");
+  const [sortBy, setSortBy] = useState("highest");
   const [missionFilter, setMissionFilter] = useState("All Missions");
   const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [loading, setLoading] = useState(true);
@@ -111,7 +125,7 @@ export default function Wall() {
   const countries = useMemo(() => getUniqueCountries(tiles), [tiles]);
 
   const filteredTiles = useMemo(() => {
-    return tiles.filter((tile) => {
+    const visibleTiles = tiles.filter((tile) => {
       const query = search.trim().toLowerCase();
 
       const matchesSearch =
@@ -132,7 +146,23 @@ export default function Wall() {
 
       return matchesSearch && matchesRank && matchesCountry;
     });
-  }, [tiles, search, rank, country]);
+
+    return [...visibleTiles].sort((a, b) => {
+      if (sortBy === "newest") {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+
+      if (sortBy === "name") {
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      }
+
+      if (sortBy === "rank") {
+        return Number(rankPower[b.rank] || 0) - Number(rankPower[a.rank] || 0);
+      }
+
+      return Number(b.amountUSD || 0) - Number(a.amountUSD || 0);
+    });
+  }, [tiles, search, rank, country, sortBy]);
 
   const featuredTile = useMemo(() => {
     return [...filteredTiles].sort(
@@ -165,6 +195,7 @@ export default function Wall() {
     search ? `Search: ${search}` : "",
     rank !== "All" ? `Rank: ${rank}` : "",
     country !== "All" ? `Country: ${country}` : "",
+    sortBy !== "highest" ? `Sort: ${sortBy}` : "",
     missionFilter !== "All Missions" ? `Mission: ${missionFilter}` : "",
     impactFilter !== "All Impacts" ? `Impact: ${impactFilter}` : ""
   ].filter(Boolean);
@@ -175,6 +206,7 @@ export default function Wall() {
     setSearch("");
     setRank("All");
     setCountry("All");
+    setSortBy("highest");
     setMissionFilter("All Missions");
     setImpactFilter("All Impacts");
   }
@@ -240,7 +272,7 @@ export default function Wall() {
           )}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_180px_220px]">
+        <div className="grid gap-4 lg:grid-cols-[1fr_180px_220px_220px]">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
             <input
@@ -273,6 +305,25 @@ export default function Wall() {
                 {item === "All" ? "All Countries" : item}
               </option>
             ))}
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
+          >
+            <option value="highest" className="bg-royalBlack">
+              Highest Donation
+            </option>
+            <option value="newest" className="bg-royalBlack">
+              Newest Tiles
+            </option>
+            <option value="rank" className="bg-royalBlack">
+              Highest Rank
+            </option>
+            <option value="name" className="bg-royalBlack">
+              Donor Name A-Z
+            </option>
           </select>
         </div>
 
