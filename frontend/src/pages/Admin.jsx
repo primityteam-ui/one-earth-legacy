@@ -959,6 +959,28 @@ function MissionTotals({ missionTotals }) {
   );
 }
 
+async function copyToClipboard(value) {
+  const text = String(value || "").trim();
+
+  if (!text || text === "Not available" || text === "Hidden") {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+}
+
 function DonationDetailDrawer({ donation, loading, onClose }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm">
@@ -993,7 +1015,11 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
           <div className="space-y-6">
             <DetailSection title="Donor">
               <DetailLine label="Name" value={donation.isAnonymous ? "Anonymous" : donation.donor?.displayName || donation.donor?.username || "Unknown"} />
-              <DetailLine label="Email" value={donation.donor?.email || "Hidden"} />
+              <DetailLine
+                label="Email"
+                value={donation.donor?.email || "Hidden"}
+                copyable
+              />
               <DetailLine label="Username" value={donation.donor?.username || "None"} />
               <DetailLine label="Role" value={donation.donor?.role || "donor"} />
               <DetailLine label="Current Rank" value={donation.donor?.currentRank || "Spark"} />
@@ -1006,8 +1032,16 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
               <DetailLine label="Payment Method" value={donation.paymentMethod || "Unknown"} />
               <DetailLine label="Payment Status" value={donation.paymentStatus || "Unknown"} />
               <DetailLine label="Settlement Status" value={donation.settlementStatus || "Unknown"} />
-              <DetailLine label="Stripe Session" value={donation.stripeSessionId || "Not available"} />
-              <DetailLine label="Stripe Payment Intent" value={donation.stripePaymentIntentId || "Not available"} />
+              <DetailLine
+                label="Stripe Session"
+                value={donation.stripeSessionId || "Not available"}
+                copyable
+              />
+              <DetailLine
+                label="Stripe Payment Intent"
+                value={donation.stripePaymentIntentId || "Not available"}
+                copyable
+              />
             </DetailSection>
 
             <DetailSection title="Mission">
@@ -1044,13 +1078,33 @@ function DetailSection({ title, children }) {
   );
 }
 
-function DetailLine({ label, value }) {
+function DetailLine({ label, value, copyable = false }) {
+  const displayValue = value || "Unknown";
+  const canCopy =
+    copyable &&
+    displayValue &&
+    displayValue !== "Hidden" &&
+    displayValue !== "Not available";
+
   return (
     <div className="grid gap-2 rounded-xl border border-borderRoyal bg-black/30 p-4 md:grid-cols-[170px_1fr]">
       <p className="text-sm font-bold uppercase tracking-[0.2em] text-textSecondary">
         {label}
       </p>
-      <p className="break-words text-textPrimary">{value}</p>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <p className="break-words text-textPrimary">{displayValue}</p>
+
+        {canCopy && (
+          <button
+            type="button"
+            onClick={() => copyToClipboard(displayValue)}
+            className="w-fit rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-xs font-bold text-goldLight transition hover:bg-gold hover:text-black"
+          >
+            Copy
+          </button>
+        )}
+      </div>
     </div>
   );
 }
