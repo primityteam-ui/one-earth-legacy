@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import {
   BadgeDollarSign,
+  Database,
   Globe2,
   ImagePlus,
   LocateFixed,
   MapPin,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  TestTube2
 } from "lucide-react";
 import api from "../api/client.js";
 import AddOnSelector from "../components/AddOnSelector.jsx";
@@ -55,6 +57,19 @@ function roundCoordinate(value) {
   }
 
   return Number(number.toFixed(2));
+}
+
+function DonateReadinessCard({ icon, title, text }) {
+  return (
+    <div className="rounded-2xl border border-borderRoyal bg-black/25 p-5">
+      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+        {icon}
+      </div>
+
+      <p className="font-bold text-textPrimary">{title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-textSecondary">{text}</p>
+    </div>
+  );
 }
 
 export default function Donate() {
@@ -259,10 +274,54 @@ export default function Donate() {
       <PageHero
         eyebrow="Donate"
         title="Claim Your Legacy Tile"
-        description="Choose your mission, select the exact impact, create your legacy tile, and send your donation through Stripe test checkout."
+        description="Choose your mission, select the exact impact, create your legacy tile, and complete the checkout flow with clear privacy and payment review."
         rightLabel="Live rank preview"
         rightValue={backendPreview?.rank || currentRank.name}
       />
+
+      <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalPanel p-6">
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-gold">
+              Donation Flow Status
+            </p>
+
+            <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
+              Review mode before production launch
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-textSecondary">
+              This page is ready for local testing. Keep Stripe in test mode until
+              webhook saving, success redirect, cancel redirect, audit records,
+              and admin review are fully verified.
+            </p>
+          </div>
+
+          <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-200">
+            Safe local test flow
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <DonateReadinessCard
+            icon={<TestTube2 />}
+            title="Stripe test checkout"
+            text="Use test keys and test cards while this app is still being verified."
+          />
+
+          <DonateReadinessCard
+            icon={<Database />}
+            title="Mock save for local data"
+            text="Mock save creates MongoDB donor, donation, tile, and audit records for testing."
+          />
+
+          <DonateReadinessCard
+            icon={<ShieldCheck />}
+            title="Privacy-safe location"
+            text="Only city, region, country, and rounded coordinates are saved for public display."
+          />
+        </div>
+      </section>
 
       <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
         <div className="space-y-8">
