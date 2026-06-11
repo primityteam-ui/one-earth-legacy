@@ -1818,17 +1818,24 @@ function SecurityEventPill({ type }) {
 }
 
 function StatusPill({ value }) {
-  const text = value || "unknown";
-  const good = ["paid", "settled"].includes(text);
+  const text = String(value || "unknown").toLowerCase();
+
+  const goodStatuses = ["paid", "settled", "succeeded", "complete", "completed"];
+  const badStatuses = ["failed", "refunded", "canceled", "cancelled", "disputed", "chargeback"];
+  const warningStatuses = ["pending", "created", "processing", "requires_action", "review"];
+
+  let className = "border border-gold/30 bg-gold/10 text-goldLight";
+
+  if (goodStatuses.includes(text)) {
+    className = "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300";
+  } else if (badStatuses.includes(text)) {
+    className = "border border-crimson/40 bg-crimson/10 text-crimsonLight";
+  } else if (warningStatuses.includes(text)) {
+    className = "border border-amber-400/30 bg-amber-400/10 text-amber-200";
+  }
 
   return (
-    <span
-      className={`rounded-full px-3 py-1 text-xs font-bold ${
-        good
-          ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
-          : "border border-gold/30 bg-gold/10 text-goldLight"
-      }`}
-    >
+    <span className={`rounded-full px-3 py-1 text-xs font-bold ${className}`}>
       {text}
     </span>
   );
