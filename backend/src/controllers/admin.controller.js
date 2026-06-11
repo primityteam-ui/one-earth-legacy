@@ -201,6 +201,12 @@ function getAdminHealthChecks() {
   }
 
   return {
+    app: {
+      name: "One Earth Legacy",
+      apiVersion: "1.0.0",
+      adminMode: isProduction ? "production" : "development",
+      generatedAt: new Date().toISOString()
+    },
     backend: {
       status: "online",
       nodeEnv,

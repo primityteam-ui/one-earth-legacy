@@ -1765,6 +1765,8 @@ function HealthPanel({ health, onRefresh = () => {} }) {
           </button>
         </div>
 
+        <AdminBuildInfo health={health} />
+
         {warnings.length > 0 && (
           <div className="mb-6 rounded-[1.5rem] border border-amber-400/30 bg-amber-400/10 p-5">
             <div className="mb-4 flex items-center gap-3">
@@ -1880,6 +1882,79 @@ function HealthPanel({ health, onRefresh = () => {} }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function AdminBuildInfo({ health }) {
+  const app = health?.app || {};
+  const backend = health?.backend || {};
+  const security = health?.security || {};
+
+  const uptimeSeconds = Number(backend.uptimeSeconds || 0);
+  const uptimeMinutes = Math.floor(uptimeSeconds / 60);
+  const uptimeHours = Math.floor(uptimeMinutes / 60);
+
+  const uptimeText =
+    uptimeHours > 0
+      ? `${uptimeHours}h ${uptimeMinutes % 60}m`
+      : `${uptimeMinutes}m ${uptimeSeconds % 60}s`;
+
+  const securityMode =
+    security.adminTwoFactorRequired && security.adminIpAllowlistEnabled
+      ? "Hardened"
+      : backend.isProduction
+        ? "Needs production hardening"
+        : "Development safe mode";
+
+  return (
+    <div className="mb-6 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-gold">
+            Build & Runtime
+          </p>
+          <h3 className="mt-2 font-display text-2xl font-bold text-textPrimary">
+            {app.name || "One Earth Legacy"} Admin
+          </h3>
+          <p className="mt-2 text-sm text-textSecondary">
+            Runtime details returned by the protected admin health API.
+          </p>
+        </div>
+
+        <span
+          className={`w-fit rounded-full px-4 py-2 text-sm font-bold ${
+            backend.isProduction
+              ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+              : "border border-blue-400/30 bg-blue-400/10 text-blue-200"
+          }`}
+        >
+          {backend.isProduction ? "Production" : "Development"}
+        </span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <BuildInfoItem label="API Version" value={app.apiVersion || "1.0.0"} />
+        <BuildInfoItem label="Environment" value={backend.nodeEnv || "development"} />
+        <BuildInfoItem label="Admin Mode" value={app.adminMode || "development"} />
+        <BuildInfoItem label="Backend Status" value={backend.status || "unknown"} />
+        <BuildInfoItem label="Backend Uptime" value={uptimeText} />
+        <BuildInfoItem label="Security Mode" value={securityMode} />
+        <BuildInfoItem label="Generated At" value={formatDate(app.generatedAt || health.generatedAt)} />
+      </div>
+    </div>
+  );
+}
+
+function BuildInfoItem({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-borderRoyal bg-royalBlack/70 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-textSecondary">
+        {label}
+      </p>
+      <p className="mt-2 break-words font-bold text-textPrimary">
+        {value}
+      </p>
+    </div>
   );
 }
 
