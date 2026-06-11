@@ -426,6 +426,45 @@ export default function Wall() {
         </section>
       )}
 
+      {!loading && (
+        <section className="mb-5 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold text-textPrimary">
+                Showing {filteredTiles.length.toLocaleString()} of {tiles.length.toLocaleString()} legacy tiles
+              </p>
+
+              <p className="mt-1 text-sm text-textSecondary">
+                Sorted by{" "}
+                <span className="font-bold text-gold">
+                  {sortBy === "highest"
+                    ? "Highest Donation"
+                    : sortBy === "newest"
+                      ? "Newest Tiles"
+                      : sortBy === "rank"
+                        ? "Highest Rank"
+                        : "Donor Name A-Z"}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.18em]">
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
+                {wallStats.countries} countries
+              </span>
+
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
+                {wallStats.missions} missions
+              </span>
+
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
+                {money(wallStats.totalDonated)}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {loading ? (
         <PublicStateBox message="Loading wall tiles from backend..." />
       ) : (
