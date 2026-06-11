@@ -62,6 +62,7 @@ function getProfilePath(username) {
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Global");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("highest");
   const [missionFilter, setMissionFilter] = useState("All Missions");
   const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [leaderboard, setLeaderboard] = useState([]);
@@ -108,17 +109,7 @@ export default function Leaderboard() {
       list = list.filter((donor) => !donor.isEmperor);
     }
 
-    return list
-      .sort((a, b) => {
-        const amountDifference = Number(b.amountUSD || 0) - Number(a.amountUSD || 0);
-
-        if (amountDifference !== 0) {
-          return amountDifference;
-        }
-
-        return Number(rankPower[b.rank] || 0) - Number(rankPower[a.rank] || 0);
-      })
-      .filter((donor) => {
+    const searchedList = list.filter((donor) => {
         const query = search.trim().toLowerCase();
 
         if (!query) {
@@ -135,7 +126,30 @@ export default function Leaderboard() {
           donor.cause?.toLowerCase().includes(query)
         );
       });
-  }, [activeTab, search, leaderboard]);
+
+    return searchedList.sort((a, b) => {
+      if (sortBy === "rank") {
+        const rankDifference =
+          Number(rankPower[b.rank] || 0) - Number(rankPower[a.rank] || 0);
+
+        if (rankDifference !== 0) {
+          return rankDifference;
+        }
+
+        return Number(b.amountUSD || 0) - Number(a.amountUSD || 0);
+      }
+
+      if (sortBy === "newest") {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+
+      if (sortBy === "name") {
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      }
+
+      return Number(b.amountUSD || 0) - Number(a.amountUSD || 0);
+    });
+  }, [activeTab, search, sortBy, leaderboard]);
 
   const leaderboardStats = useMemo(() => {
     const totalDonated = visibleDonors.reduce(
@@ -161,6 +175,7 @@ export default function Leaderboard() {
 
   const activeFilters = [
     search ? `Search: ${search}` : "",
+    sortBy !== "highest" ? `Sort: ${sortBy}` : "",
     missionFilter !== "All Missions" ? `Mission: ${missionFilter}` : "",
     impactFilter !== "All Impacts" ? `Impact: ${impactFilter}` : ""
   ].filter(Boolean);
@@ -173,6 +188,7 @@ export default function Leaderboard() {
 
   function clearFilters() {
     setSearch("");
+    setSortBy("highest");
     setMissionFilter("All Missions");
     setImpactFilter("All Impacts");
   }
@@ -271,6 +287,25 @@ export default function Leaderboard() {
               layout="inline"
             />
 
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold md:w-56"
+            >
+              <option value="highest" className="bg-royalBlack">
+                Highest Donation
+              </option>
+              <option value="rank" className="bg-royalBlack">
+                Highest Rank
+              </option>
+              <option value="newest" className="bg-royalBlack">
+                Newest Donors
+              </option>
+              <option value="name" className="bg-royalBlack">
+                Donor Name A-Z
+              </option>
+            </select>
+
             <div className="relative w-full md:w-80">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
               <input
@@ -348,6 +383,16 @@ export default function Leaderboard() {
                 Current leader:{" "}
                 <span className="font-bold text-gold">
                   {safeText(currentLeaderName, "Loading...")}
+                </span>
+                {" "}· Sorted by{" "}
+                <span className="font-bold text-gold">
+                  {sortBy === "highest"
+                    ? "Highest Donation"
+                    : sortBy === "rank"
+                      ? "Highest Rank"
+                      : sortBy === "newest"
+                        ? "Newest Donors"
+                        : "Donor Name A-Z"}
                 </span>
               </p>
             </div>
