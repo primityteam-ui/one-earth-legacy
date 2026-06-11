@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/client.js";
-const showTemporaryQaPanels =
-  import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
-
 import {
   CheckCircle2,
   Crown,
@@ -15,6 +12,9 @@ import {
   Sparkles,
   Trophy
 } from "lucide-react";
+
+const showTemporaryQaPanels =
+  import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
 
 export default function DonationSuccess() {
   const [searchParams] = useSearchParams();
