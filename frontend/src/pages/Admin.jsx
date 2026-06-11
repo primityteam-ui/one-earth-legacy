@@ -179,6 +179,22 @@ export default function Admin() {
     }));
   }
 
+  function resetAuditForm() {
+    setAuditForm({
+      type: "cause_allocation",
+      amount: "1",
+      currency: "USD",
+      recipient: "One Earth Legacy",
+      causeCategory: "Human Survival",
+      causeImpact: "Clean Water for Life",
+      description: "Manual admin audit note.",
+      proofUrl: ""
+    });
+
+    setSuccessMessage("");
+    setErrorMessage("");
+  }
+
   async function handleCreateAuditEntry(event) {
     event.preventDefault();
 
@@ -481,6 +497,7 @@ export default function Admin() {
               saving={auditSaving}
               onChange={updateAuditForm}
               onSubmit={handleCreateAuditEntry}
+              onReset={resetAuditForm}
               onDownloadAuditCsv={handleDownloadAuditCsv}
             />
           )}
@@ -903,6 +920,7 @@ function AuditPanel({
   saving = false,
   onChange = () => {},
   onSubmit = (event) => event.preventDefault(),
+  onReset = () => {},
   onDownloadAuditCsv = () => {}
 }) {
   const auditSummaryCards = [
@@ -1080,13 +1098,22 @@ function AuditPanel({
             )}
           </label>
 
-          <div className="lg:col-span-2">
+          <div className="flex flex-wrap gap-3 lg:col-span-2">
             <button
               type="submit"
               disabled={saving || proofUrlLooksInvalid}
               className="rounded-xl bg-gold px-6 py-3 font-bold text-black transition hover:bg-goldLight disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving audit entry..." : "Create audit entry"}
+            </button>
+
+            <button
+              type="button"
+              onClick={onReset}
+              disabled={saving}
+              className="rounded-xl border border-borderRoyal bg-black/30 px-6 py-3 font-bold text-textSecondary transition hover:border-gold hover:text-gold disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Clear form
             </button>
           </div>
         </form>
