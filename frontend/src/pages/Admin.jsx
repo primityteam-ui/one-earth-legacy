@@ -662,11 +662,19 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
           <PanelHeader icon={<Crown />} title="Latest Donations" />
 
-          <div className="space-y-4">
-            {recentDonations.slice(0, 5).map((donation) => (
-              <DonationMiniCard key={donation.id} donation={donation} />
-            ))}
-          </div>
+          {recentDonations.length === 0 ? (
+            <EmptyState
+              icon={<Crown />}
+              title="No recent donations"
+              message="Recent donation activity will appear here after successful paid donations or mock test donations."
+            />
+          ) : (
+            <div className="space-y-4">
+              {recentDonations.slice(0, 5).map((donation) => (
+                <DonationMiniCard key={donation.id} donation={donation} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
