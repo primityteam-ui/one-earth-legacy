@@ -8,7 +8,8 @@ import {
   MapPin,
   ShieldCheck,
   Sparkles,
-  TestTube2
+  TestTube2,
+  WalletCards
 } from "lucide-react";
 import api from "../api/client.js";
 import AddOnSelector from "../components/AddOnSelector.jsx";
@@ -57,6 +58,15 @@ function roundCoordinate(value) {
   }
 
   return Number(number.toFixed(2));
+}
+
+function FinalReviewLine({ label, value }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-2xl border border-borderRoyal bg-black/25 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm font-bold text-textPrimary">{label}</p>
+      <p className="text-sm text-textSecondary sm:text-right">{value}</p>
+    </div>
+  );
 }
 
 function DonateReadinessCard({ icon, title, text }) {
@@ -523,6 +533,50 @@ export default function Donate() {
             title="Step 5 — Complete donation"
             subtitle="Preview first, save mock donation locally, or open Stripe test checkout."
           >
+            <div className="mb-6 rounded-[1.5rem] border border-borderRoyal bg-black/25 p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-full border border-gold/30 bg-gold/10 p-3 text-gold">
+                  <WalletCards className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="font-display text-2xl font-bold text-textPrimary">
+                    Final review before checkout
+                  </p>
+                  <p className="mt-1 text-sm text-textSecondary">
+                    Confirm these details before saving a mock donation or opening Stripe checkout.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <FinalReviewLine
+                  label="Donation amount"
+                  value={`$${Number(amount || 0).toLocaleString()} donation + $${Number(addOnTotal || 0).toLocaleString()} add-ons = $${Number(total || 0).toLocaleString()} today`}
+                />
+
+                <FinalReviewLine
+                  label="Selected mission"
+                  value={cause}
+                />
+
+                <FinalReviewLine
+                  label="Public donor name"
+                  value={anonymous ? "Anonymous donor" : displayName || "Not entered"}
+                />
+
+                <FinalReviewLine
+                  label="Public location"
+                  value={`${donorCity ? `${donorCity}, ` : ""}${donorRegion ? `${donorRegion}, ` : ""}${selectedDonorCountry.flag} ${selectedDonorCountry.country}`}
+                />
+
+                <FinalReviewLine
+                  label="Privacy"
+                  value="No street address is collected. Public location is city/country level only."
+                />
+              </div>
+            </div>
+
             <DonationActionPanel
               onPreview={handleBackendPreview}
               onSaveMock={handleSaveMockDonation}
