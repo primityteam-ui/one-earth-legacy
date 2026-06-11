@@ -1,6 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Globe2, Medal, Search, Trophy } from "lucide-react";
+import {
+  ArrowRight,
+  Crown,
+  Filter,
+  Globe2,
+  HeartHandshake,
+  Medal,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  Users,
+  X
+} from "lucide-react";
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import PageHero from "../components/PageHero.jsx";
@@ -10,6 +24,33 @@ import RankBadge from "../components/RankBadge.jsx";
 import { buildPublicFilterParams } from "../constants/legacyOptions.js";
 
 const tabs = ["Global", "By Country", "This Month", "All Time"];
+
+const rankPower = {
+  Spark: 1,
+  Citizen: 2,
+  Merchant: 3,
+  Knight: 4,
+  Lord: 5,
+  Baron: 6,
+  Duke: 7,
+  Sovereign: 8,
+  "King/Queen": 9,
+  Emperor: 10
+};
+
+function money(value) {
+  return `$${Number(value || 0).toLocaleString()}`;
+}
+
+function safeText(value, fallback = "Not available yet") {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
+function getProfilePath(username) {
+  const cleanUsername = String(username || "").trim();
+  return cleanUsername && cleanUsername !== "unknown" ? `/u/${cleanUsername}` : "";
+}
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("Global");
@@ -61,12 +102,25 @@ export default function Leaderboard() {
     }
 
     return list
-      .sort((a, b) => Number(b.amountUSD || 0) - Number(a.amountUSD || 0))
+      .sort((a, b) => {
+        const amountDifference = Number(b.amountUSD || 0) - Number(a.amountUSD || 0);
+
+        if (amountDifference !== 0) {
+          return amountDifference;
+        }
+
+        return Number(rankPower[b.rank] || 0) - Number(rankPower[a.rank] || 0);
+      })
       .filter((donor) => {
-        const query = search.toLowerCase();
+        const query = search.trim().toLowerCase();
+
+        if (!query) {
+          return true;
+        }
 
         return (
           donor.name?.toLowerCase().includes(query) ||
+          donor.username?.toLowerCase().includes(query) ||
           donor.country?.toLowerCase().includes(query) ||
           donor.rank?.toLowerCase().includes(query) ||
           donor.causeCategory?.toLowerCase().includes(query) ||
@@ -76,28 +130,121 @@ export default function Leaderboard() {
       });
   }, [activeTab, search, leaderboard]);
 
-  const currentLeaderName = visibleDonors[0]?.name || leaderboard[0]?.name || "Loading...";
+  const leaderboardStats = useMemo(() => {
+    const totalDonated = visibleDonors.reduce(
+      (sum, donor) => sum + Number(donor.amountUSD || 0),
+      0
+    );
+
+    const countries = new Set(
+      visibleDonors.map((donor) => donor.country).filter(Boolean)
+    );
+
+    const missions = new Set(
+      visibleDonors.map((donor) => donor.causeCategory).filter(Boolean)
+    );
+
+    return {
+      totalDonated,
+      donors: visibleDonors.length,
+      countries: countries.size,
+      missions: missions.size
+    };
+  }, [visibleDonors]);
+
+  const activeFilters = [
+    search ? `Search: ${search}` : "",
+    missionFilter !== "All Missions" ? `Mission: ${missionFilter}` : "",
+    impactFilter !== "All Impacts" ? `Impact: ${impactFilter}` : ""
+  ].filter(Boolean);
+
+  const hasFilters = activeFilters.length > 0;
+  const currentLeader = visibleDonors[0] || leaderboard[0] || null;
+  const currentLeaderName = currentLeader?.name || "Loading...";
   const podium = visibleDonors.slice(0, 3);
   const rest = visibleDonors.slice(3);
+
+  function clearFilters() {
+    setSearch("");
+    setMissionFilter("All Missions");
+    setImpactFilter("All Impacts");
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
       <PageHero
         eyebrow="Leaderboard"
         title="The Earth Rankings"
-        description="Track the highest donors, strongest countries, monthly leaders, all-time legends, and mission-based support across One Earth Legacy."
+        description="Track top donors, countries, missions, and all-time legacy rankings across One Earth Legacy."
         rightLabel="Current leader"
         rightValue={currentLeaderName}
       />
 
-      <section className="mb-8 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5">
+      <section className="mb-8 grid gap-5 md:grid-cols-4">
+        <LeaderboardStat
+          icon={<Trophy />}
+          label="Visible donors"
+          value={leaderboardStats.donors.toLocaleString()}
+          subtext={`${leaderboard.length.toLocaleString()} loaded`}
+        />
+
+        <LeaderboardStat
+          icon={<HeartHandshake />}
+          label="Visible donated"
+          value={money(leaderboardStats.totalDonated)}
+          subtext="Current tab and filters"
+        />
+
+        <LeaderboardStat
+          icon={<Globe2 />}
+          label="Countries"
+          value={leaderboardStats.countries.toLocaleString()}
+          subtext="Public country-level data"
+        />
+
+        <LeaderboardStat
+          icon={<Sparkles />}
+          label="Missions"
+          value={leaderboardStats.missions.toLocaleString()}
+          subtext="Visible mission spread"
+        />
+      </section>
+
+      <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-5">
+        <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
+              <Filter className="h-5 w-5 text-gold" />
+            </div>
+
+            <div>
+              <h2 className="font-display text-2xl font-bold text-textPrimary">
+                Explore rankings
+              </h2>
+              <p className="text-sm text-textSecondary">
+                Filter by mission, impact, search, or country rankings.
+              </p>
+            </div>
+          </div>
+
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex w-fit items-center gap-2 rounded-full border border-gold/40 px-4 py-2 text-sm font-bold text-gold hover:bg-gold/10"
+            >
+              <X className="h-4 w-4" />
+              Clear Filters
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap gap-3">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`rounded-full px-5 py-3 text-sm font-bold ${
+                className={`rounded-full px-5 py-3 text-sm font-bold transition ${
                   activeTab === tab
                     ? "bg-gold text-black"
                     : "border border-borderRoyal bg-black/30 text-textSecondary hover:border-gold hover:text-gold"
@@ -122,12 +269,31 @@ export default function Leaderboard() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search rankings..."
+                placeholder="Search donor, country, rank, mission..."
                 className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
               />
             </div>
           </div>
         </div>
+
+        {hasFilters && (
+          <div className="mt-5 rounded-2xl border border-gold/20 bg-black/25 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-textSecondary">
+              Active Filters
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-gold"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
@@ -138,6 +304,80 @@ export default function Leaderboard() {
         <CountryLeaderboard countryStats={countryStats} errorMessage={errorMessage} />
       ) : visibleDonors.length > 0 ? (
         <>
+          {currentLeader && (
+            <section className="mb-8 overflow-hidden rounded-[2rem] border border-gold/30 bg-royalCard shadow-gold">
+              <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
+                <div className="bg-gradient-to-br from-gold/20 via-black/20 to-transparent p-7">
+                  <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <span className="rounded-full border border-gold/40 bg-gold/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.25em] text-gold">
+                      Current Leader
+                    </span>
+
+                    <RankBadge rank={currentLeader.rank || "Spark"} />
+                  </div>
+
+                  <h2 className="font-display text-4xl font-bold text-textPrimary md:text-5xl">
+                    {safeText(currentLeader.name, "Anonymous Donor")}
+                  </h2>
+
+                  <p className="mt-3 text-textSecondary">
+                    {currentLeader.flag || "🌍"} {safeText(currentLeader.country, "Global")}
+                  </p>
+
+                  {getProfilePath(currentLeader.username) && (
+                    <Link
+                      to={getProfilePath(currentLeader.username)}
+                      className="mt-4 inline-flex items-center gap-2 font-bold text-gold hover:text-goldLight"
+                    >
+                      View @{currentLeader.username}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
+
+                  <p className="mt-6 max-w-3xl rounded-2xl border border-borderRoyal bg-black/25 p-5 text-lg text-textSecondary">
+                    “{safeText(currentLeader.message, "A public legacy ranking has been earned.")}”
+                  </p>
+                </div>
+
+                <div className="border-t border-borderRoyal bg-black/25 p-7 lg:border-l lg:border-t-0">
+                  <p className="text-sm uppercase tracking-[0.3em] text-textSecondary">
+                    Public Contribution
+                  </p>
+
+                  <p className="mt-3 font-numbers text-5xl font-bold text-goldLight">
+                    {money(currentLeader.amountUSD)}
+                  </p>
+
+                  <p className="mt-2 text-sm text-textSecondary">
+                    {activeTab === "This Month" ? "Monthly view" : "Total donated"}
+                  </p>
+
+                  <div className="mt-6 rounded-2xl border border-gold/20 bg-gold/10 p-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.25em] text-goldLight">
+                      {safeText(currentLeader.causeCategory, "Mission Pending")}
+                    </p>
+
+                    <p className="mt-2 text-textSecondary">
+                      {safeText(currentLeader.causeImpact || currentLeader.cause, "Impact Pending")}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 flex items-start gap-3 rounded-2xl border border-borderRoyal bg-black/25 p-4">
+                    <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-gold" />
+                    <div>
+                      <p className="font-bold text-textPrimary">
+                        Privacy-safe public ranking
+                      </p>
+                      <p className="mt-1 text-xs text-textSecondary">
+                        Leaderboard shows donor name, rank, mission, and country only.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="mb-8 grid gap-5 lg:grid-cols-3">
             {podium.map((donor, index) => (
               <PodiumCard
@@ -150,20 +390,31 @@ export default function Leaderboard() {
           </section>
 
           <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-5">
-            <div className="mb-4 flex items-center gap-3 px-2">
-              <Trophy className="h-5 w-5 text-gold" />
-              <h2 className="font-display text-2xl font-bold">Ranked List</h2>
+            <div className="mb-4 flex flex-col gap-2 px-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3">
+                <Trophy className="h-5 w-5 text-gold" />
+                <h2 className="font-display text-2xl font-bold">Ranked List</h2>
+              </div>
+
+              <p className="text-sm text-textSecondary">
+                Showing {visibleDonors.length.toLocaleString()} ranked donor
+                {visibleDonors.length === 1 ? "" : "s"}
+              </p>
             </div>
 
-            <div className="space-y-3">
-              {rest.map((donor, index) => (
-                <RankRow
-                  key={donor.id}
-                  donor={donor}
-                  position={index + 4}
-                />
-              ))}
-            </div>
+            {rest.length > 0 ? (
+              <div className="space-y-3">
+                {rest.map((donor, index) => (
+                  <RankRow
+                    key={donor.id}
+                    donor={donor}
+                    position={index + 4}
+                  />
+                ))}
+              </div>
+            ) : (
+              <PublicStateBox message="Only podium donors are visible for this search or filter." />
+            )}
           </section>
 
           <section className="mt-8 rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
@@ -182,12 +433,12 @@ export default function Leaderboard() {
                 </p>
               </div>
 
-              <a
-                href="/donate"
+              <Link
+                to="/donate"
                 className="rounded-full bg-gold px-6 py-3 text-center font-bold text-black shadow-gold hover:bg-goldLight"
               >
                 Make First Donation
-              </a>
+              </Link>
             </div>
           </section>
         </>
@@ -204,9 +455,30 @@ export default function Leaderboard() {
   );
 }
 
+function LeaderboardStat({ icon, label, value, subtext }) {
+  return (
+    <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+        {icon}
+      </div>
+
+      <p className="text-sm uppercase tracking-[0.25em] text-textSecondary">
+        {label}
+      </p>
+
+      <p className="mt-2 font-display text-3xl font-bold text-textPrimary">
+        {value}
+      </p>
+
+      <p className="mt-2 text-sm text-textSecondary">{subtext}</p>
+    </div>
+  );
+}
+
 function PodiumCard({ donor, position, activeTab }) {
   const label = position === 1 ? "Gold" : position === 2 ? "Silver" : "Bronze";
   const value = Number(donor.amountUSD || 0);
+  const profilePath = getProfilePath(donor.username);
 
   return (
     <motion.article
@@ -227,26 +499,36 @@ function PodiumCard({ donor, position, activeTab }) {
         </div>
       </div>
 
-      <p className="text-3xl">{donor.flag}</p>
+      <p className="text-3xl">{donor.flag || "🌍"}</p>
 
       <h2 className="mt-4 font-display text-3xl font-bold text-textPrimary">
-        {donor.name}
+        {safeText(donor.name, "Anonymous Donor")}
       </h2>
 
       <p className="mt-2 text-textSecondary">
-        {donor.country}
+        {safeText(donor.country, "Global")}
       </p>
 
+      {profilePath && (
+        <Link
+          to={profilePath}
+          className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-gold hover:text-goldLight"
+        >
+          View @{donor.username}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
+
       <div className="mt-4">
-        <RankBadge rank={donor.rank} size="md" />
+        <RankBadge rank={donor.rank || "Spark"} size="md" />
       </div>
 
       <p className="mt-5 font-numbers text-4xl font-bold text-goldLight">
-        ${value.toLocaleString()}
+        {money(value)}
       </p>
 
       <p className="mt-1 text-sm text-textSecondary">
-        {activeTab === "This Month" ? "Backend monthly total" : "Total donated"}
+        {activeTab === "This Month" ? "Backend monthly view" : "Total donated"}
       </p>
 
       <div className="mt-5 rounded-2xl border border-borderRoyal bg-black/30 p-4">
@@ -255,11 +537,11 @@ function PodiumCard({ donor, position, activeTab }) {
         </p>
 
         <p className="mt-2 font-bold text-textPrimary">
-          {donor.causeCategory || "Mission Pending"}
+          {safeText(donor.causeCategory, "Mission Pending")}
         </p>
 
         <p className="mt-1 text-sm text-textSecondary">
-          {donor.causeImpact || donor.cause || "Impact Pending"}
+          {safeText(donor.causeImpact || donor.cause, "Impact Pending")}
         </p>
       </div>
     </motion.article>
@@ -268,12 +550,13 @@ function PodiumCard({ donor, position, activeTab }) {
 
 function RankRow({ donor, position }) {
   const value = Number(donor.amountUSD || 0);
+  const profilePath = getProfilePath(donor.username);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="grid gap-4 rounded-[1.25rem] border border-borderRoyal bg-black/30 p-4 md:grid-cols-[80px_1fr_180px_220px_180px]"
+      className="grid gap-4 rounded-[1.25rem] border border-borderRoyal bg-black/30 p-4 md:grid-cols-[80px_1fr_160px_220px_160px]"
     >
       <div className="flex items-center">
         <span className="font-numbers text-2xl font-bold text-goldLight">
@@ -282,31 +565,47 @@ function RankRow({ donor, position }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-3xl">{donor.flag}</span>
+        <span className="text-3xl">{donor.flag || "🌍"}</span>
+
         <div>
-          <p className="font-bold text-textPrimary">{donor.name}</p>
-          <p className="text-sm text-textSecondary">{donor.country}</p>
+          <p className="font-bold text-textPrimary">
+            {safeText(donor.name, "Anonymous Donor")}
+          </p>
+
+          <p className="text-sm text-textSecondary">
+            {safeText(donor.country, "Global")}
+          </p>
+
+          {profilePath && (
+            <Link
+              to={profilePath}
+              className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-gold hover:text-goldLight"
+            >
+              @{donor.username}
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          )}
         </div>
       </div>
 
       <div className="flex items-center">
-        <RankBadge rank={donor.rank} />
+        <RankBadge rank={donor.rank || "Spark"} />
       </div>
 
       <div className="flex items-center">
         <div>
           <p className="text-sm font-bold text-textPrimary">
-            {donor.causeCategory || "Mission Pending"}
+            {safeText(donor.causeCategory, "Mission Pending")}
           </p>
           <p className="text-xs text-textSecondary">
-            {donor.causeImpact || "Impact Pending"}
+            {safeText(donor.causeImpact || donor.cause, "Impact Pending")}
           </p>
         </div>
       </div>
 
       <div className="flex items-center justify-start md:justify-end">
         <p className="font-numbers text-2xl font-bold text-textPrimary">
-          ${value.toLocaleString()}
+          {money(value)}
         </p>
       </div>
     </motion.div>
@@ -315,6 +614,14 @@ function RankRow({ donor, position }) {
 
 function CountryLeaderboard({ countryStats, errorMessage }) {
   const maxTotal = Math.max(...countryStats.map((item) => item.totalDonated || 0), 1);
+  const totalDonated = countryStats.reduce(
+    (sum, item) => sum + Number(item.totalDonated || 0),
+    0
+  );
+  const totalDonors = countryStats.reduce(
+    (sum, item) => sum + Number(item.donors || item.donorCount || 0),
+    0
+  );
 
   if (countryStats.length === 0) {
     return (
@@ -331,38 +638,50 @@ function CountryLeaderboard({ countryStats, errorMessage }) {
   return (
     <section className="grid gap-8 lg:grid-cols-[1fr_420px]">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <div className="mb-6 flex items-center gap-3">
-          <Globe2 className="h-6 w-6 text-gold" />
-          <h2 className="font-display text-2xl font-bold">Country Rankings</h2>
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <Globe2 className="h-6 w-6 text-gold" />
+            <h2 className="font-display text-2xl font-bold">Country Rankings</h2>
+          </div>
+
+          <p className="text-sm text-textSecondary">
+            {countryStats.length} public location group
+            {countryStats.length === 1 ? "" : "s"}
+          </p>
         </div>
 
         <div className="space-y-4">
           {countryStats.map((item, index) => (
             <motion.div
-              key={item.countryCode}
+              key={`${item.countryCode}-${item.locationLabel || item.country}-${index}`}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.04 }}
               className="rounded-[1.25rem] border border-borderRoyal bg-black/30 p-5"
             >
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <span className="font-numbers text-xl font-bold text-goldLight">
                     #{index + 1}
                   </span>
 
-                  <span className="text-3xl">{item.flag}</span>
+                  <span className="text-3xl">{item.flag || "🌍"}</span>
 
                   <div>
-                    <p className="font-bold text-textPrimary">{item.country}</p>
+                    <p className="font-bold text-textPrimary">
+                      {item.locationLabel || item.country}
+                    </p>
                     <p className="text-sm text-textSecondary">
-                      {item.donors} donors · Top donor: {item.topDonor}
+                      {item.donors || item.donorCount || 0} donors · Top donor: {safeText(item.topDonor, "Pending")}
+                    </p>
+                    <p className="mt-1 text-xs text-textSecondary">
+                      {safeText(item.causeCategory || item.mission || item.topMission, "Mission Pending")}
                     </p>
                   </div>
                 </div>
 
                 <p className="font-numbers text-2xl font-bold text-goldLight">
-                  ${Number(item.totalDonated || 0).toLocaleString()}
+                  {money(item.totalDonated || item.totalAmount)}
                 </p>
               </div>
 
@@ -381,28 +700,52 @@ function CountryLeaderboard({ countryStats, errorMessage }) {
 
       <aside className="rounded-[2rem] border border-gold/25 bg-gold/10 p-6 shadow-gold">
         <p className="mb-2 text-sm uppercase tracking-[0.3em] text-goldLight">
-          Backend Connected
+          Country Impact
         </p>
 
         <h2 className="font-display text-3xl font-bold text-textPrimary">
-          Country Data API
+          Public location leaderboard
         </h2>
 
         <p className="mt-4 text-textSecondary">
-          This country leaderboard is loaded from the backend route:
-          /api/public/leaderboard/countries and follows the selected mission and impact filters.
+          This view uses the backend country leaderboard API and only displays city/country-level public donor data.
         </p>
 
+        <div className="mt-6 grid gap-3">
+          <div className="rounded-2xl border border-borderRoyal bg-black/30 p-4">
+            <p className="text-sm text-textSecondary">Total country impact</p>
+            <p className="mt-2 font-numbers text-3xl font-bold text-goldLight">
+              {money(totalDonated)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-borderRoyal bg-black/30 p-4">
+            <p className="text-sm text-textSecondary">Public donors counted</p>
+            <p className="mt-2 font-numbers text-3xl font-bold text-goldLight">
+              {totalDonors.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
         <div className="mt-8 grid grid-cols-3 gap-3">
-          {countryStats.slice(0, 9).map((item) => (
+          {countryStats.slice(0, 9).map((item, index) => (
             <div
-              key={item.countryCode}
+              key={`${item.countryCode}-${index}`}
               className="rounded-2xl border border-borderRoyal bg-black/30 p-4 text-center"
             >
-              <p className="text-3xl">{item.flag}</p>
-              <p className="mt-2 text-xs text-textSecondary">{item.country}</p>
+              <p className="text-3xl">{item.flag || "🌍"}</p>
+              <p className="mt-2 line-clamp-1 text-xs text-textSecondary">
+                {item.city || item.country}
+              </p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-borderRoyal bg-black/25 p-4">
+          <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-gold" />
+          <p className="text-sm text-textSecondary">
+            No street address is shown. Coordinates are city/country-level only.
+          </p>
         </div>
       </aside>
     </section>
