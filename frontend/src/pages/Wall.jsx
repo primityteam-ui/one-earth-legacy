@@ -97,6 +97,7 @@ export default function Wall() {
   const [rank, setRank] = useState("All");
   const [country, setCountry] = useState("All");
   const [sortBy, setSortBy] = useState("highest");
+  const [featuredOnly, setFeaturedOnly] = useState(false);
   const [missionFilter, setMissionFilter] = useState("All Missions");
   const [impactFilter, setImpactFilter] = useState("All Impacts");
   const [loading, setLoading] = useState(true);
@@ -150,8 +151,13 @@ export default function Wall() {
 
       const matchesRank = rank === "All" || tile.rank === rank;
       const matchesCountry = country === "All" || tile.country === country;
+      const matchesFeatured =
+        !featuredOnly ||
+        tile.isEmperor ||
+        tile.rank === "Emperor" ||
+        Number(tile.amountUSD || 0) >= 1000;
 
-      return matchesSearch && matchesRank && matchesCountry;
+      return matchesSearch && matchesRank && matchesCountry && matchesFeatured;
     });
 
     return [...visibleTiles].sort((a, b) => {
@@ -169,7 +175,7 @@ export default function Wall() {
 
       return Number(b.amountUSD || 0) - Number(a.amountUSD || 0);
     });
-  }, [tiles, search, rank, country, sortBy]);
+  }, [tiles, search, rank, country, sortBy, featuredOnly]);
 
   const featuredTile = useMemo(() => {
     return [...filteredTiles].sort(
@@ -203,6 +209,7 @@ export default function Wall() {
     rank !== "All" ? `Rank: ${rank}` : "",
     country !== "All" ? `Country: ${country}` : "",
     sortBy !== "highest" ? `Sort: ${sortBy}` : "",
+    featuredOnly ? "Featured only" : "",
     missionFilter !== "All Missions" ? `Mission: ${missionFilter}` : "",
     impactFilter !== "All Impacts" ? `Impact: ${impactFilter}` : ""
   ].filter(Boolean);
@@ -214,6 +221,7 @@ export default function Wall() {
     setRank("All");
     setCountry("All");
     setSortBy("highest");
+    setFeaturedOnly(false);
     setMissionFilter("All Missions");
     setImpactFilter("All Impacts");
   }
@@ -344,6 +352,29 @@ export default function Wall() {
         </div>
 
         <div className="mt-5 rounded-2xl border border-borderRoyal bg-black/25 p-4">
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-textSecondary">
+                Quick Views
+              </p>
+              <p className="mt-1 text-sm text-textSecondary">
+                Use shortcuts to explore the wall faster.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setFeaturedOnly((current) => !current)}
+              className={`w-fit rounded-full border px-4 py-2 text-sm font-bold transition ${
+                featuredOnly
+                  ? "border-gold bg-gold text-black"
+                  : "border-gold/30 bg-gold/10 text-gold hover:bg-gold/20"
+              }`}
+            >
+              {featuredOnly ? "Showing Featured" : "Featured Only"}
+            </button>
+          </div>
+
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-textSecondary">
             Quick Mission Shortcuts
           </p>
