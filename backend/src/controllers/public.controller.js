@@ -976,51 +976,137 @@ export async function getAuditEntries(req, res, next) {
 export async function getPublicProfile(req, res, next) {
   try {
     const { username } = req.params;
+    const cleanUsername = String(username || "").trim().toLowerCase();
 
     const user = await User.findOne({
-      username: username.toLowerCase(),
+      username: cleanUsername,
       isBanned: false
     }).lean();
 
     if (user) {
-      const latestTile = await Tile.findOne({ userId: user._id })
+      const donations = await Donation.find({ userId: user._id })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
+
+      const tiles = await Tile.find({ userId: user._id })
         .populate(
           "donationId",
           "causeCategory causeImpact cause amountUSD rankAtTime tileMessage isAnonymous tileTheme createdAt"
         )
         .sort({ createdAt: -1 })
+        .limit(6)
         .lean();
 
-      const latestDonation = latestTile?.donationId || {};
+      const latestTile = tiles[0] || null;
+      const latestDonation = latestTile?.donationId || donations[0] || {};
       const causeData = normalizeCauseData(latestDonation);
-      const countryData = normalizeCountry(user);
+      const locationData = normalizeDonorLocation(user);
+
+      const higherRankCount = await User.countDocuments({
+        totalDonated: { $gt: Number(user.totalDonated || 0) },
+        isBanned: false
+      });
+
+      const missionMap = new Map();
+
+      for (const donation of donations) {
+        const normalizedCause = normalizeCauseData(donation);
+        const key = normalizedCause.cause;
+
+        const existing = missionMap.get(key) || {
+          causeCategory: normalizedCause.causeCategory,
+          causeImpact: normalizedCause.causeImpact,
+          cause: normalizedCause.cause,
+          totalDonated: 0,
+          donations: 0
+        };
+
+        existing.totalDonated += Number(donation.amountUSD || 0);
+        existing.donations += 1;
+
+        missionMap.set(key, existing);
+      }
+
+      const missionsSupported = Array.from(missionMap.values())
+        .map((mission) => ({
+          ...mission,
+          totalDonated: Number(mission.totalDonated.toFixed(2))
+        }))
+        .sort((a, b) => b.totalDonated - a.totalDonated);
+
+      const recentTiles = tiles.map((tile) => {
+        const donation = tile.donationId || {};
+        const normalizedCause = normalizeCauseData(donation);
+
+        return {
+          id: tile._id.toString(),
+          rank: donation.rankAtTime || user.currentRank || "Spark",
+          message:
+            tile.message ||
+            donation.tileMessage ||
+            "A public legacy tile was created.",
+          causeCategory: normalizedCause.causeCategory,
+          causeImpact: normalizedCause.causeImpact,
+          cause: normalizedCause.cause,
+          amountUSD: Number(donation.amountUSD || 0),
+          themeColor: tile.themeColor || donation.tileTheme || "Gold",
+          createdAt: tile.createdAt
+        };
+      });
+
+      const totalDonated = Number(user.totalDonated || 0);
 
       return res.status(200).json({
         profile: {
-          displayName: user.displayName || user.username,
+          displayName: user.isAnonymous
+            ? "Anonymous"
+            : user.displayName || user.username,
           username: user.username,
-          country: countryData.country,
-          countryCode: countryData.countryCode,
-          flag: countryData.flag,
-          lat: countryData.lat,
-          lng: countryData.lng,
+          city: locationData.city,
+          region: locationData.region,
+          country: locationData.country,
+          countryCode: locationData.countryCode,
+          flag: locationData.flag,
+          lat: locationData.lat,
+          lng: locationData.lng,
+          locationLabel: locationData.locationLabel,
+          precision: locationData.precision,
           rank: user.currentRank || "Spark",
-          totalDonated: Number(user.totalDonated || 0),
-          message: latestTile?.message || "Saved MongoDB donor profile.",
+          rankPosition: higherRankCount + 1,
+          totalDonated,
+          donationCount: donations.length,
+          message:
+            latestTile?.message ||
+            latestDonation?.tileMessage ||
+            "Saved MongoDB donor profile.",
           causeCategory: causeData.causeCategory,
           causeImpact: causeData.causeImpact,
           cause: causeData.cause,
-          joined: new Date(user.createdAt).getFullYear().toString(),
-          tileTheme: latestTile?.themeColor || "Gold",
+          joined: user.createdAt
+            ? new Date(user.createdAt).getFullYear().toString()
+            : "2026",
+          tileTheme:
+            latestTile?.themeColor ||
+            latestDonation?.tileTheme ||
+            "Gold",
           impact: {
-            causeAmount: Number((Number(user.totalDonated || 0) * 0.6).toFixed(2)),
-            platformAmount: Number((Number(user.totalDonated || 0) * 0.25).toFixed(2)),
-            lotteryAmount: Number((Number(user.totalDonated || 0) * 0.15).toFixed(2))
+            causeAmount: Number((totalDonated * 0.6).toFixed(2)),
+            platformAmount: Number((totalDonated * 0.25).toFixed(2)),
+            lotteryAmount: Number((totalDonated * 0.15).toFixed(2))
           },
+          missionsSupported,
+          recentTiles,
           timeline: [
             {
               title: "Joined One Earth Legacy",
-              date: "Saved in MongoDB",
+              date: user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric"
+                  })
+                : "Saved in MongoDB",
               text: "Created a secure legacy profile."
             },
             {
@@ -1030,7 +1116,13 @@ export async function getPublicProfile(req, res, next) {
             },
             {
               title: "Legacy tile created",
-              date: latestTile ? "Saved in MongoDB" : "Pending",
+              date: latestTile
+                ? new Date(latestTile.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric"
+                  })
+                : "Pending",
               text: latestTile
                 ? `A public tile was saved for ${causeData.cause}.`
                 : "This donor does not have a saved tile yet."
@@ -1042,7 +1134,7 @@ export async function getPublicProfile(req, res, next) {
     }
 
     const donor = mockDonors.find(
-      (item) => item.username.toLowerCase() === username.toLowerCase()
+      (item) => item.username.toLowerCase() === cleanUsername
     );
 
     if (!donor) {
@@ -1057,13 +1149,19 @@ export async function getPublicProfile(req, res, next) {
       profile: {
         displayName: donor.name,
         username: donor.username,
+        city: "",
+        region: "",
         country: countryData.country,
         countryCode: countryData.countryCode,
         flag: countryData.flag,
         lat: countryData.lat,
         lng: countryData.lng,
+        locationLabel: countryData.country,
+        precision: "country",
         rank: donor.rank,
+        rankPosition: 1,
         totalDonated: donor.amountUSD,
+        donationCount: 1,
         message: donor.message,
         causeCategory: donor.causeCategory,
         causeImpact: donor.causeImpact,
@@ -1071,10 +1169,32 @@ export async function getPublicProfile(req, res, next) {
         joined: "2026",
         tileTheme: "Gold",
         impact: {
-          causeAmount: donor.amountUSD * 0.6,
-          platformAmount: donor.amountUSD * 0.25,
-          lotteryAmount: donor.amountUSD * 0.15
+          causeAmount: Number((donor.amountUSD * 0.6).toFixed(2)),
+          platformAmount: Number((donor.amountUSD * 0.25).toFixed(2)),
+          lotteryAmount: Number((donor.amountUSD * 0.15).toFixed(2))
         },
+        missionsSupported: [
+          {
+            causeCategory: donor.causeCategory,
+            causeImpact: donor.causeImpact,
+            cause: donor.cause,
+            totalDonated: donor.amountUSD,
+            donations: 1
+          }
+        ],
+        recentTiles: [
+          {
+            id: `${donor.username}-mock-tile`,
+            rank: donor.rank,
+            message: donor.message,
+            causeCategory: donor.causeCategory,
+            causeImpact: donor.causeImpact,
+            cause: donor.cause,
+            amountUSD: donor.amountUSD,
+            themeColor: "Gold",
+            createdAt: new Date().toISOString()
+          }
+        ],
         timeline: [
           {
             title: "Joined One Earth Legacy",
@@ -1099,3 +1219,4 @@ export async function getPublicProfile(req, res, next) {
     next(error);
   }
 }
+
