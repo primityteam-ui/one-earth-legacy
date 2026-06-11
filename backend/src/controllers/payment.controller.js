@@ -62,6 +62,18 @@ function getStripeClient() {
   return new Stripe(secretKey);
 }
 
+function buildStripeSuccessUrl() {
+  const baseSuccessUrl =
+    process.env.STRIPE_SUCCESS_URL || "http://localhost:5173/donate/success";
+
+  if (baseSuccessUrl.includes("{CHECKOUT_SESSION_ID}")) {
+    return baseSuccessUrl;
+  }
+
+  const separator = baseSuccessUrl.includes("?") ? "&" : "?";
+  return `${baseSuccessUrl}${separator}session_id={CHECKOUT_SESSION_ID}`;
+}
+
 function buildLocationPayloadFromMetadata(metadata = {}) {
   return {
     country: metadata.country || "United States",
@@ -132,7 +144,7 @@ export async function createStripeCheckoutSession(req, res, next) {
           quantity: 1
         }
       ],
-      success_url: process.env.STRIPE_SUCCESS_URL || "http://localhost:5173/donate/success",
+      success_url: buildStripeSuccessUrl(),
       cancel_url: process.env.STRIPE_CANCEL_URL || "http://localhost:5173/donate",
       metadata: {
         email: req.body.email,
