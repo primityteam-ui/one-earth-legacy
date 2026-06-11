@@ -734,10 +734,13 @@ function DonationsPanel({ donations = [], onViewDonation }) {
                       {donation.email || "Hidden"}
                     </p>
 
-                    <PublicProfileLink
-                      username={donation.username || donation.donorUsername}
-                      label="Profile"
-                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <CopyButton value={donation.email} label="Copy email" />
+                      <PublicProfileLink
+                        username={donation.username || donation.donorUsername}
+                        label="Profile"
+                      />
+                    </div>
                   </td>
 
                   <td className="px-4 py-4 font-numbers font-bold text-goldLight">
@@ -770,13 +773,20 @@ function DonationsPanel({ donations = [], onViewDonation }) {
                   </td>
 
                   <td className="rounded-r-2xl px-4 py-4">
-                    <button
-                      type="button"
-                      onClick={() => onViewDonation?.(donation.id)}
-                      className="rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
-                    >
-                      View details
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onViewDonation?.(donation.id)}
+                        className="rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
+                      >
+                        View details
+                      </button>
+
+                      <PublicProfileLink
+                        username={donation.username || donation.donorUsername}
+                        label="Profile"
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -814,9 +824,12 @@ function DonorsPanel({ donors = [] }) {
                   {donor.email || "Hidden"}
                 </p>
 
-                <PublicProfileLink username={donor.username} label="Profile" />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <CopyButton value={donor.email} label="Copy email" />
+                  <PublicProfileLink username={donor.username} label="Profile" />
+                </div>
 
-                <p className="mt-1 flex items-center gap-2 text-sm text-textSecondary">
+                <p className="mt-3 flex items-center gap-2 text-sm text-textSecondary">
                   <MapPin className="h-4 w-4 text-gold" />
                   {donor.location?.label || "Unknown"}
                 </p>
@@ -1991,6 +2004,38 @@ function getPublicProfilePath(username) {
   return `/u/${encodeURIComponent(safeUsername)}`;
 }
 
+function CopyButton({ value, label = "Copy" }) {
+  const [copied, setCopied] = useState(false);
+  const text = String(value || "").trim();
+
+  if (!text || text === "Hidden" || text === "Not available") {
+    return null;
+  }
+
+  async function handleClick() {
+    await copyToClipboard(text);
+    setCopied(true);
+
+    window.setTimeout(() => {
+      setCopied(false);
+    }, 1800);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-bold transition ${
+        copied
+          ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+          : "border-borderRoyal bg-black/30 text-textSecondary hover:border-gold hover:text-gold"
+      }`}
+    >
+      {copied ? "Copied" : label}
+    </button>
+  );
+}
+
 function PublicProfileLink({ username, label = "Open public profile" }) {
   const profilePath = getPublicProfilePath(username);
 
@@ -2003,7 +2048,7 @@ function PublicProfileLink({ username, label = "Open public profile" }) {
       href={profilePath}
       target="_blank"
       rel="noreferrer"
-      className="mt-2 inline-flex w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-goldLight transition hover:bg-gold hover:text-black"
+      className="inline-flex w-fit rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-goldLight transition hover:bg-gold hover:text-black"
     >
       {label}
     </a>
