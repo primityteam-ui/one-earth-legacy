@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BadgeDollarSign,
+  Download,
   ExternalLink,
   FileCheck2,
   Filter,
@@ -259,6 +260,61 @@ export default function Audit() {
     setImpactFilter("All Impacts");
   }
 
+  function downloadVisibleCsv() {
+    const headers = [
+      "Date",
+      "Type",
+      "Status",
+      "Recipient",
+      "Mission",
+      "Impact",
+      "Cause",
+      "Description",
+      "Amount",
+      "Currency",
+      "Proof URL"
+    ];
+
+    const rows = visibleEntries.map((entry) => [
+      formatDate(entry.createdAt),
+      formatType(entry.type),
+      entry.status || "recorded",
+      entry.recipient || "",
+      entry.causeCategory || "",
+      entry.causeImpact || "",
+      entry.cause || "",
+      entry.description || "",
+      Number(entry.amount || 0).toFixed(2),
+      entry.currency || "USD",
+      entry.proofUrl || ""
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `one-earth-public-audit-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
       <PageHero
@@ -286,15 +342,26 @@ export default function Audit() {
             </div>
           </div>
 
-          {hasFilters && (
+          <div className="flex flex-wrap gap-3">
             <button
-              onClick={clearFilters}
-              className="flex w-fit items-center gap-2 rounded-full border border-gold/40 px-4 py-2 text-sm font-bold text-gold hover:bg-gold/10"
+              onClick={downloadVisibleCsv}
+              disabled={visibleEntries.length === 0}
+              className="flex w-fit items-center gap-2 rounded-full border border-gold/40 px-4 py-2 text-sm font-bold text-gold hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <X className="h-4 w-4" />
-              Clear Filters
+              <Download className="h-4 w-4" />
+              Download Visible CSV
             </button>
-          )}
+
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex w-fit items-center gap-2 rounded-full border border-gold/40 px-4 py-2 text-sm font-bold text-gold hover:bg-gold/10"
+              >
+                <X className="h-4 w-4" />
+                Clear Filters
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
