@@ -192,6 +192,65 @@ function normalizeAuditType(value) {
   return allowedTypes.includes(safeType) ? safeType : "cause_allocation";
 }
 
+function buildAuditCsvRow(entry) {
+  return [
+    entry._id,
+    entry.type || "",
+    money(entry.amount),
+    entry.currency || "USD",
+    entry.recipient || "",
+    entry.causeCategory || "Unassigned",
+    entry.causeImpact || "",
+    entry.cause || "",
+    entry.description || "",
+    entry.proofUrl || "",
+    entry.createdAt ? new Date(entry.createdAt).toISOString() : "",
+    entry.updatedAt ? new Date(entry.updatedAt).toISOString() : ""
+  ].map(csvEscape).join(",");
+}
+
+export async function exportAdminAuditCsv(req, res, next) {
+  try {
+    await writeAdminAction(req, "download_audit_csv");
+
+    const entries = await AuditEntry.find({})
+      .sort({ createdAt: -1 })
+      .limit(5000)
+      .lean();
+
+    const headers = [
+      "Audit Entry ID",
+      "Type",
+      "Amount",
+      "Currency",
+      "Recipient",
+      "Mission",
+      "Impact",
+      "Cause",
+      "Description",
+      "Proof URL",
+      "Created At",
+      "Updated At"
+    ];
+
+    const csv = [
+      headers.map(csvEscape).join(","),
+      ...entries.map(buildAuditCsvRow)
+    ].join("\n");
+
+    const fileName = `one-earth-legacy-audit-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+
+    return res.status(200).send(csv);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function createAdminAuditEntry(req, res, next) {
   try {
     const amount = normalizeAuditAmount(req.body.amount);

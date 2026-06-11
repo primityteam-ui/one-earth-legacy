@@ -120,6 +120,37 @@ export default function Admin() {
     }
   }
 
+  async function handleDownloadAuditCsv() {
+    try {
+      const response = await api.get("/admin/audit.csv", {
+        responseType: "blob"
+      });
+
+      const blob = new Blob([response.data], {
+        type: "text/csv;charset=utf-8"
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `one-earth-legacy-audit-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Could not download audit CSV."
+      );
+    }
+  }
+
   async function handleViewDonationDetail(donationId) {
     if (!donationId) return;
 
@@ -445,6 +476,7 @@ export default function Admin() {
               saving={auditSaving}
               onChange={updateAuditForm}
               onSubmit={handleCreateAuditEntry}
+              onDownloadAuditCsv={handleDownloadAuditCsv}
             />
           )}
 
@@ -856,7 +888,7 @@ function MissionTotals({ missionTotals }) {
   );
 }
 
-function AuditPanel({ entries = [], newestAuditId = "", form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault() }) {
+function AuditPanel({ entries = [], newestAuditId = "", form = {}, saving = false, onChange = () => {}, onSubmit = (event) => event.preventDefault(), onDownloadAuditCsv = () => {} }) {
   return (
     <section className="space-y-8">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -985,7 +1017,17 @@ function AuditPanel({ entries = [], newestAuditId = "", form = {}, saving = fals
       </div>
 
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-        <PanelHeader icon={<ShieldCheck />} title="Audit Log Viewer" />
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <PanelHeader icon={<ShieldCheck />} title="Audit Log Viewer" />
+
+          <button
+            type="button"
+            onClick={onDownloadAuditCsv}
+            className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
+          >
+            Download Audit CSV
+          </button>
+        </div>
 
         {entries.length === 0 ? (
           <p className="rounded-2xl border border-borderRoyal bg-black/30 p-5 text-textSecondary">
