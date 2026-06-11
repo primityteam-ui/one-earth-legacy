@@ -3,24 +3,31 @@ node_modules/
 frontend/node_modules/
 backend/node_modules/
 
-# Environment variables
+# Environment secrets
 .env
 .env.local
 .env.development
 .env.production
 .env.test
+.env.*.local
 
 backend/.env
 backend/.env.local
 backend/.env.development
 backend/.env.production
 backend/.env.test
+backend/.env.*.local
 
 frontend/.env
 frontend/.env.local
 frontend/.env.development
 frontend/.env.production
 frontend/.env.test
+frontend/.env.*.local
+
+# Keep examples safe to commit
+!backend/.env.example
+!frontend/.env.example
 
 # Build outputs
 dist/
@@ -45,7 +52,7 @@ pnpm-debug.log*
 # Cache
 .cache/
 .parcel-cache/
-.vite/
+vite/
 .next/
 .nuxt/
 .svelte-kit/
@@ -63,36 +70,3 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
-
-# Testing / coverage
-coverage/
-.nyc_output/
-
-# Stripe local files
-.stripe/
-stripe.log
-
-# Mongo / database dumps
-dump/
-*.bson
-*.mongo
-*.mongodb
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Uploaded local files
-uploads/
-backend/uploads/
-
-# Secret files
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-service-account.json
-firebase-adminsdk*.json
-google-credentials.json
