@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  Copy,
   Crown,
   Filter,
   Globe2,
@@ -350,6 +351,7 @@ function WallStat({ icon, label, value, subtext }) {
 }
 
 function DonorTile({ tile, index }) {
+  const [copied, setCopied] = useState(false);
   const isEmperor = tile.isEmperor || tile.rank === "Emperor";
   const isLarge = isEmperor || Number(tile.amountUSD || 0) >= 20000;
   const isMedium = !isLarge && Number(tile.amountUSD || 0) >= 1000;
@@ -362,6 +364,23 @@ function DonorTile({ tile, index }) {
 
   const profilePath = tile.username ? `/u/${tile.username}` : "/wall";
   const locationLabel = getTileLocation(tile);
+
+  async function copyProfileLink() {
+    if (!tile.username || tile.username === "unknown") {
+      return;
+    }
+
+    const url = `${window.location.origin}/u/${tile.username}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (error) {
+      console.error("Could not copy wall profile link", error);
+      alert(url);
+    }
+  }
 
   return (
     <motion.article
@@ -404,13 +423,24 @@ function DonorTile({ tile, index }) {
           </h2>
 
           {tile.username && tile.username !== "unknown" && (
-            <Link
-              to={profilePath}
-              className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-goldLight"
-            >
-              @{tile.username}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <Link
+                to={profilePath}
+                className="inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-goldLight"
+              >
+                @{tile.username}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={copyProfileLink}
+                className="inline-flex items-center gap-1 rounded-full border border-gold/30 px-3 py-1 text-xs font-bold text-gold hover:bg-gold/10"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {copied ? "Copied" : "Copy Link"}
+              </button>
+            </div>
           )}
 
           <p className="mt-4 line-clamp-4 rounded-2xl border border-borderRoyal bg-black/25 p-4 text-textSecondary">
