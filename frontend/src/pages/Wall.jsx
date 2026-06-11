@@ -183,6 +183,32 @@ export default function Wall() {
     )[0];
   }, [filteredTiles]);
 
+  const topPlaces = useMemo(() => {
+    const placeMap = new Map();
+
+    for (const tile of filteredTiles) {
+      const locationLabel = getTileLocation(tile);
+      const key = locationLabel || tile.country || "Global";
+
+      const existing = placeMap.get(key) || {
+        locationLabel: key,
+        flag: tile.flag || "🌍",
+        country: tile.country || "Global",
+        totalDonated: 0,
+        tiles: 0
+      };
+
+      existing.totalDonated += Number(tile.amountUSD || 0);
+      existing.tiles += 1;
+
+      placeMap.set(key, existing);
+    }
+
+    return Array.from(placeMap.values())
+      .sort((a, b) => b.totalDonated - a.totalDonated)
+      .slice(0, 4);
+  }, [filteredTiles]);
+
   const wallStats = useMemo(() => {
     const totalDonated = filteredTiles.reduce(
       (sum, tile) => sum + Number(tile.amountUSD || 0),
@@ -425,6 +451,55 @@ export default function Wall() {
       </section>
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
+
+      {!loading && topPlaces.length > 0 && (
+        <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-6">
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-gold">
+                Top Places
+              </p>
+
+              <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
+                Most active public locations
+              </h2>
+            </div>
+
+            <p className="text-sm text-textSecondary">
+              City/country level only. No private address data.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {topPlaces.map((place) => (
+              <div
+                key={place.locationLabel}
+                className="rounded-2xl border border-borderRoyal bg-black/25 p-5"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
+                    <MapPin className="h-5 w-5 text-gold" />
+                  </div>
+
+                  <span className="text-3xl">{place.flag}</span>
+                </div>
+
+                <p className="line-clamp-1 font-display text-xl font-bold text-textPrimary">
+                  {place.locationLabel}
+                </p>
+
+                <p className="mt-2 text-sm text-textSecondary">
+                  {place.tiles} tile{place.tiles === 1 ? "" : "s"}
+                </p>
+
+                <p className="mt-3 font-numbers text-2xl font-bold text-goldLight">
+                  {money(place.totalDonated)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {!loading && featuredTile && (
         <section className="mb-8 overflow-hidden rounded-[2rem] border border-gold/30 bg-royalCard shadow-gold">
