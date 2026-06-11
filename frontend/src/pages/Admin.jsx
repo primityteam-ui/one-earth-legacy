@@ -1572,6 +1572,8 @@ function HealthPanel({ health, onRefresh = () => {} }) {
     );
   }
 
+  const warnings = Array.isArray(health.warnings) ? health.warnings : [];
+
   const checks = [
     {
       title: "Backend",
@@ -1672,6 +1674,54 @@ function HealthPanel({ health, onRefresh = () => {} }) {
             Refresh Health
           </button>
         </div>
+
+        {warnings.length > 0 && (
+          <div className="mb-6 rounded-[1.5rem] border border-amber-400/30 bg-amber-400/10 p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <AlertTriangle className="h-6 w-6 text-amber-200" />
+              <p className="font-display text-2xl font-bold text-textPrimary">
+                Environment Warnings
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {warnings.map((warning) => (
+                <div
+                  key={`${warning.level}-${warning.title}`}
+                  className={`rounded-2xl border p-4 ${
+                    warning.level === "critical"
+                      ? "border-crimson/40 bg-crimson/10"
+                      : "border-amber-400/30 bg-amber-400/10"
+                  }`}
+                >
+                  <p
+                    className={`font-bold ${
+                      warning.level === "critical"
+                        ? "text-crimsonLight"
+                        : "text-amber-200"
+                    }`}
+                  >
+                    {warning.title}
+                  </p>
+                  <p className="mt-1 text-sm text-textSecondary">
+                    {warning.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {warnings.length === 0 && (
+          <div className="mb-6 rounded-[1.5rem] border border-emerald-400/30 bg-emerald-400/10 p-5">
+            <p className="font-bold text-emerald-300">
+              No health warnings detected.
+            </p>
+            <p className="mt-1 text-sm text-textSecondary">
+              Current environment checks did not return critical or warning items.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {checks.map((check) => (

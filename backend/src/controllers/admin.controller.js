@@ -149,19 +149,68 @@ function getAdminHealthChecks() {
     3: "disconnecting"
   };
 
+  const nodeEnv = process.env.NODE_ENV || "development";
+  const isProduction = nodeEnv === "production";
+
   const stripeSecretConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
   const stripeWebhookConfigured = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
+  const adminIpAllowlistEnabled = process.env.ADMIN_IP_ALLOWLIST_ENABLED === "true";
+  const adminTwoFactorRequired = process.env.ADMIN_2FA_REQUIRED === "true";
+  const databaseConnected = mongoReadyState === 1;
+
+  const warnings = [];
+
+  if (!databaseConnected) {
+    warnings.push({
+      level: "critical",
+      title: "MongoDB is not connected",
+      message: "Admin data may be incomplete or unavailable until MongoDB reconnects."
+    });
+  }
+
+  if (!stripeSecretConfigured) {
+    warnings.push({
+      level: "critical",
+      title: "Stripe secret key is missing",
+      message: "Stripe checkout cannot work without STRIPE_SECRET_KEY."
+    });
+  }
+
+  if (!stripeWebhookConfigured) {
+    warnings.push({
+      level: isProduction ? "critical" : "warning",
+      title: "Stripe webhook secret is missing",
+      message: "Successful Stripe payments may not settle automatically without STRIPE_WEBHOOK_SECRET."
+    });
+  }
+
+  if (isProduction && !adminIpAllowlistEnabled) {
+    warnings.push({
+      level: "warning",
+      title: "Admin IP allowlist is disabled in production",
+      message: "Enable ADMIN_IP_ALLOWLIST_ENABLED=true and configure ADMIN_ALLOWED_IPS before allowing production admin write actions."
+    });
+  }
+
+  if (isProduction && !adminTwoFactorRequired) {
+    warnings.push({
+      level: "warning",
+      title: "Admin 2FA is not required in production",
+      message: "Enable ADMIN_2FA_REQUIRED=true after 2FA setup routes are completed."
+    });
+  }
 
   return {
     backend: {
       status: "online",
-      nodeEnv: process.env.NODE_ENV || "development",
+      nodeEnv,
+      isProduction,
       uptimeSeconds: Math.round(process.uptime())
     },
     database: {
       status: mongoStatusMap[mongoReadyState] || "unknown",
       readyState: mongoReadyState,
-      connected: mongoReadyState === 1
+      connected: databaseConnected
     },
     stripe: {
       secretKeyConfigured: stripeSecretConfigured,
@@ -170,11 +219,12 @@ function getAdminHealthChecks() {
       readyForWebhooks: stripeSecretConfigured && stripeWebhookConfigured
     },
     security: {
-      adminIpAllowlistEnabled: process.env.ADMIN_IP_ALLOWLIST_ENABLED === "true",
+      adminIpAllowlistEnabled,
       adminAllowedIpsConfigured: Boolean(process.env.ADMIN_ALLOWED_IPS),
-      adminTwoFactorRequired: process.env.ADMIN_2FA_REQUIRED === "true",
-      adminRateLimiterEnabled: process.env.NODE_ENV !== "development"
+      adminTwoFactorRequired,
+      adminRateLimiterEnabled: nodeEnv !== "development"
     },
+    warnings,
     generatedAt: new Date().toISOString()
   };
 }
