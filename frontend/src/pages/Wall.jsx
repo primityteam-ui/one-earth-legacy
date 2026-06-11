@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Crown, Search } from "lucide-react";
+import {
+  ArrowRight,
+  Crown,
+  Filter,
+  Globe2,
+  HeartHandshake,
+  MapPin,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  X
+} from "lucide-react";
 import api from "../api/client.js";
 import MissionImpactFilter from "../components/MissionImpactFilter.jsx";
 import PageHero from "../components/PageHero.jsx";
@@ -23,7 +36,39 @@ const ranks = [
   "Emperor"
 ];
 
-const countries = ["All", "Global", "India", "Brazil", "United States"];
+function money(value) {
+  return `$${Number(value || 0).toLocaleString()}`;
+}
+
+function safeText(value, fallback = "Not available yet") {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
+function getTileLocation(tile) {
+  if (tile.locationLabel) {
+    return tile.locationLabel;
+  }
+
+  const city = safeText(tile.city, "");
+  const region = safeText(tile.region, "");
+  const country = safeText(tile.country, "");
+
+  const parts = [city, region, country].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : "Global";
+}
+
+function getUniqueCountries(tiles) {
+  const countries = new Set();
+
+  for (const tile of tiles) {
+    if (tile.country) {
+      countries.add(tile.country);
+    }
+  }
+
+  return ["All", ...Array.from(countries).sort()];
+}
 
 export default function Wall() {
   const [tiles, setTiles] = useState([]);
@@ -62,14 +107,21 @@ export default function Wall() {
     loadTiles();
   }, [missionFilter, impactFilter]);
 
+  const countries = useMemo(() => getUniqueCountries(tiles), [tiles]);
+
   const filteredTiles = useMemo(() => {
     return tiles.filter((tile) => {
-      const query = search.toLowerCase();
+      const query = search.trim().toLowerCase();
 
       const matchesSearch =
+        !query ||
         tile.name?.toLowerCase().includes(query) ||
         tile.message?.toLowerCase().includes(query) ||
         tile.username?.toLowerCase().includes(query) ||
+        tile.country?.toLowerCase().includes(query) ||
+        tile.city?.toLowerCase().includes(query) ||
+        tile.region?.toLowerCase().includes(query) ||
+        tile.locationLabel?.toLowerCase().includes(query) ||
         tile.causeCategory?.toLowerCase().includes(query) ||
         tile.causeImpact?.toLowerCase().includes(query) ||
         tile.cause?.toLowerCase().includes(query);
@@ -81,57 +133,147 @@ export default function Wall() {
     });
   }, [tiles, search, rank, country]);
 
+  const wallStats = useMemo(() => {
+    const totalDonated = filteredTiles.reduce(
+      (sum, tile) => sum + Number(tile.amountUSD || 0),
+      0
+    );
+
+    const visibleCountries = new Set(
+      filteredTiles.map((tile) => tile.country).filter(Boolean)
+    );
+
+    const visibleMissions = new Set(
+      filteredTiles.map((tile) => tile.causeCategory).filter(Boolean)
+    );
+
+    return {
+      totalDonated,
+      countries: visibleCountries.size,
+      missions: visibleMissions.size
+    };
+  }, [filteredTiles]);
+
+  const hasFilters =
+    search ||
+    rank !== "All" ||
+    country !== "All" ||
+    missionFilter !== "All Missions" ||
+    impactFilter !== "All Impacts";
+
+  function clearFilters() {
+    setSearch("");
+    setRank("All");
+    setCountry("All");
+    setMissionFilter("All Missions");
+    setImpactFilter("All Impacts");
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
       <PageHero
         eyebrow="The Wall"
         title="The Legacy Wall"
-        description="Every donor receives a permanent tile. Mission and exact impact filtering are now handled by the backend before tiles reach this page."
+        description="A public, privacy-safe wall of donor legacy tiles. Every tile shows city/country level impact only, never private address data."
         rightLabel="Visible tiles"
         rightValue={filteredTiles.length}
       />
 
-      <section className="mb-8 grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-royalPanel p-5 lg:grid-cols-[1fr_180px_180px_570px]">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search donor, message, mission, or impact..."
-            className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
-          />
+      <section className="mb-8 grid gap-5 md:grid-cols-3">
+        <WallStat
+          icon={<Sparkles />}
+          label="Visible legacy tiles"
+          value={filteredTiles.length.toLocaleString()}
+          subtext={`${tiles.length.toLocaleString()} loaded from backend`}
+        />
+
+        <WallStat
+          icon={<HeartHandshake />}
+          label="Visible donations"
+          value={money(wallStats.totalDonated)}
+          subtext="Based on current filters"
+        />
+
+        <WallStat
+          icon={<Globe2 />}
+          label="Countries / Missions"
+          value={`${wallStats.countries} / ${wallStats.missions}`}
+          subtext="Public location and mission spread"
+        />
+      </section>
+
+      <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-5">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full border border-gold/30 bg-gold/10 p-3">
+              <Filter className="h-5 w-5 text-gold" />
+            </div>
+
+            <div>
+              <h2 className="font-display text-2xl font-bold text-textPrimary">
+                Find a legacy tile
+              </h2>
+              <p className="text-sm text-textSecondary">
+                Search by donor, message, city, country, mission, impact, or rank.
+              </p>
+            </div>
+          </div>
+
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex w-fit items-center gap-2 rounded-full border border-gold/40 px-4 py-2 text-sm font-bold text-gold hover:bg-gold/10"
+            >
+              <X className="h-4 w-4" />
+              Clear Filters
+            </button>
+          )}
         </div>
 
-        <select
-          value={rank}
-          onChange={(event) => setRank(event.target.value)}
-          className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
-        >
-          {ranks.map((item) => (
-            <option key={item} value={item} className="bg-royalBlack">
-              {item} Rank
-            </option>
-          ))}
-        </select>
+        <div className="grid gap-4 lg:grid-cols-[1fr_180px_220px]">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-textSecondary" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search donor, message, city, mission, or impact..."
+              className="w-full rounded-2xl border border-borderRoyal bg-black/40 py-4 pl-12 pr-4 text-textPrimary outline-none focus:border-gold"
+            />
+          </div>
 
-        <select
-          value={country}
-          onChange={(event) => setCountry(event.target.value)}
-          className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
-        >
-          {countries.map((item) => (
-            <option key={item} value={item} className="bg-royalBlack">
-              {item}
-            </option>
-          ))}
-        </select>
+          <select
+            value={rank}
+            onChange={(event) => setRank(event.target.value)}
+            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
+          >
+            {ranks.map((item) => (
+              <option key={item} value={item} className="bg-royalBlack">
+                {item === "All" ? "All Ranks" : `${item} Rank`}
+              </option>
+            ))}
+          </select>
 
-        <MissionImpactFilter
-          missionFilter={missionFilter}
-          setMissionFilter={setMissionFilter}
-          impactFilter={impactFilter}
-          setImpactFilter={setImpactFilter}
-        />
+          <select
+            value={country}
+            onChange={(event) => setCountry(event.target.value)}
+            className="rounded-2xl border border-borderRoyal bg-black/40 px-4 py-4 text-textPrimary outline-none focus:border-gold"
+          >
+            {countries.map((item) => (
+              <option key={item} value={item} className="bg-royalBlack">
+                {item === "All" ? "All Countries" : item}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mt-4">
+          <MissionImpactFilter
+            missionFilter={missionFilter}
+            setMissionFilter={setMissionFilter}
+            impactFilter={impactFilter}
+            setImpactFilter={setImpactFilter}
+          />
+        </div>
       </section>
 
       {errorMessage && <PublicErrorBox message={errorMessage} />}
@@ -139,9 +281,9 @@ export default function Wall() {
       {loading ? (
         <PublicStateBox message="Loading wall tiles from backend..." />
       ) : (
-        <section className="grid auto-rows-[210px] grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-4">
+        <section className="grid auto-rows-[minmax(250px,auto)] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           {filteredTiles.map((tile, index) => (
-            <DonorTile key={tile.id} tile={tile} index={index} />
+            <DonorTile key={tile.id || `${tile.username}-${index}`} tile={tile} index={index} />
           ))}
         </section>
       )}
@@ -158,75 +300,147 @@ export default function Wall() {
           />
         </div>
       )}
+
+      <section className="mt-10 rounded-[2rem] border border-gold/25 bg-gold/10 p-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="mb-2 text-sm uppercase tracking-[0.3em] text-goldLight">
+              Add your name to the wall
+            </p>
+
+            <h2 className="font-display text-3xl font-bold text-textPrimary">
+              Create your own legacy tile
+            </h2>
+
+            <p className="mt-2 text-textSecondary">
+              Choose a mission, write your message, and claim a public donor profile.
+            </p>
+          </div>
+
+          <Link
+            to="/donate"
+            className="rounded-full bg-gold px-6 py-3 text-center font-bold text-black shadow-gold hover:bg-goldLight"
+          >
+            Claim Your Tile
+          </Link>
+        </div>
+      </section>
     </main>
+  );
+}
+
+function WallStat({ icon, label, value, subtext }) {
+  return (
+    <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+        {icon}
+      </div>
+
+      <p className="text-sm uppercase tracking-[0.25em] text-textSecondary">
+        {label}
+      </p>
+
+      <p className="mt-2 font-display text-3xl font-bold text-textPrimary">
+        {value}
+      </p>
+
+      <p className="mt-2 text-sm text-textSecondary">{subtext}</p>
+    </div>
   );
 }
 
 function DonorTile({ tile, index }) {
   const isEmperor = tile.isEmperor || tile.rank === "Emperor";
+  const isLarge = isEmperor || Number(tile.amountUSD || 0) >= 20000;
+  const isMedium = !isLarge && Number(tile.amountUSD || 0) >= 1000;
 
-  const sizeClass = isEmperor
-    ? "md:col-span-3 lg:col-span-2 row-span-2 border-gold/60 shadow-gold"
-    : tile.amountUSD >= 20000
-      ? "md:col-span-2 row-span-2 border-gold/40"
-      : tile.amountUSD >= 1000
-        ? "md:col-span-2 border-gold/30"
-        : "border-borderRoyal";
+  const sizeClass = isLarge
+    ? "md:col-span-2 xl:col-span-2 border-gold/60 shadow-gold"
+    : isMedium
+      ? "md:col-span-2 xl:col-span-2 border-gold/35"
+      : "border-borderRoyal";
+
+  const profilePath = tile.username ? `/u/${tile.username}` : "/wall";
+  const locationLabel = getTileLocation(tile);
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 22, scale: 0.96 }}
+      initial={{ opacity: 0, y: 22, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.45, delay: index * 0.04 }}
-      whileHover={{ scale: 1.03 }}
-      className={`group relative overflow-hidden rounded-[1.5rem] border bg-royalCard p-6 ${sizeClass}`}
+      transition={{ duration: 0.45, delay: Math.min(index * 0.035, 0.35) }}
+      whileHover={{ y: -6 }}
+      className={`group relative overflow-hidden rounded-[1.75rem] border bg-royalCard p-6 ${sizeClass}`}
     >
-      <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100">
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gold/10 blur-2xl" />
-        <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-crimson/10 blur-2xl" />
+      <div className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
+        <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-gold/10 blur-2xl" />
+        <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-crimson/10 blur-2xl" />
       </div>
 
-      <div className="relative z-10 flex h-full flex-col justify-between">
+      <div className="relative z-10 flex h-full min-h-[240px] flex-col justify-between">
         <div>
-          <div className="mb-4 flex items-center justify-between">
-            <RankBadge rank={tile.rank} />
-            <span className="text-2xl">{tile.flag}</span>
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <RankBadge rank={tile.rank || "Spark"} />
+
+              <p className="mt-3 flex items-center gap-2 text-sm text-textSecondary">
+                <MapPin className="h-4 w-4 text-gold" />
+                <span className="line-clamp-1">
+                  {tile.flag || "🌍"} {locationLabel}
+                </span>
+              </p>
+            </div>
+
+            <span className="text-3xl">{tile.flag || "🌍"}</span>
           </div>
+
+          {isEmperor && <Crown className="mb-3 h-9 w-9 text-gold" />}
 
           <h2
             className={`font-display font-bold ${
-              isEmperor ? "text-4xl text-goldLight" : "text-2xl"
+              isEmperor ? "text-4xl text-goldLight" : "text-2xl text-textPrimary"
             }`}
           >
-            {isEmperor && <Crown className="mb-3 h-9 w-9 text-gold" />}
-            {tile.name}
+            {safeText(tile.name, "Anonymous Donor")}
           </h2>
 
-          <p className="mt-3 line-clamp-3 text-textSecondary">
-            {tile.message}
+          {tile.username && tile.username !== "unknown" && (
+            <Link
+              to={profilePath}
+              className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-gold hover:text-goldLight"
+            >
+              @{tile.username}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+
+          <p className="mt-4 line-clamp-4 rounded-2xl border border-borderRoyal bg-black/25 p-4 text-textSecondary">
+            “{safeText(tile.message, "A public legacy tile was created.")}”
           </p>
         </div>
 
-        <div className="mt-5 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-textSecondary">
-              {tile.country}
+        <div className="mt-5 space-y-4">
+          <div className="rounded-2xl border border-gold/20 bg-gold/10 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-goldLight">
+              {safeText(tile.causeCategory, "Mission Pending")}
             </p>
 
-            <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-gold">
-              {tile.causeCategory || "Mission Pending"}
-            </p>
-
-            <p className="mt-1 line-clamp-1 text-sm text-textSecondary">
-              {tile.causeImpact || tile.cause || "Impact Pending"}
+            <p className="mt-2 line-clamp-2 text-sm text-textSecondary">
+              {safeText(tile.causeImpact || tile.cause, "Impact Pending")}
             </p>
           </div>
 
-          <div className="text-right">
-            <p className="font-numbers text-2xl font-bold text-goldLight">
-              ${Number(tile.amountUSD || 0).toLocaleString()}
-            </p>
-            <p className="text-xs text-textSecondary">Donated</p>
+          <div className="flex items-end justify-between gap-4 border-t border-borderRoyal pt-4">
+            <div className="flex items-center gap-2 text-xs text-textSecondary">
+              <ShieldCheck className="h-4 w-4 text-gold" />
+              Public safe tile
+            </div>
+
+            <div className="text-right">
+              <p className="font-numbers text-2xl font-bold text-goldLight">
+                {money(tile.amountUSD)}
+              </p>
+              <p className="text-xs text-textSecondary">Donated</p>
+            </div>
           </div>
         </div>
       </div>
