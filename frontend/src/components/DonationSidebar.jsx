@@ -41,12 +41,12 @@ export default function DonationSidebar({
           causeAmount={causeAmount}
           platformLabel="25% → Platform sustainability"
           platformAmount={platformAmount}
-          lotteryLabel="15% → Monthly donor lottery"
+          lotteryLabel="15% → Legacy Impact Reserve"
           lotteryAmount={lotteryAmount}
         />
 
         <PaymentSummaryCard
-          donationAmount={amount}
+          contributionAmount={amount}
           addOnTotal={addOnTotal}
           totalToday={totalToday}
         />

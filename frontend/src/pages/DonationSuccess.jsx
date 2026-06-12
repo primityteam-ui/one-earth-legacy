@@ -16,7 +16,7 @@ import {
 const showTemporaryQaPanels =
   import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
 
-export default function DonationSuccess() {
+export default function ContributionSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
 
@@ -89,7 +89,7 @@ export default function DonationSuccess() {
           <p className="mx-auto mt-5 max-w-3xl text-textSecondary">
             Stripe sent you back to One Earth Legacy. In test mode, this page confirms
             the checkout redirect worked. The backend webhook is responsible for saving
-            the paid donation, legacy tile, rank update, and public audit entries.
+            the paid contribution, legacy tile, rank update, and public audit entries.
           </p>
 
           <div className="mt-6 inline-flex rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-200">
@@ -153,19 +153,19 @@ export default function DonationSuccess() {
           <InfoCard
             icon={<Crown />}
             title="Rank Update"
-            text="Your rank updates after the Stripe webhook confirms the payment and saves the donation."
+            text="Your rank updates after the Stripe webhook confirms the payment and saves the contribution."
           />
 
           <InfoCard
             icon={<Sparkles />}
             title="Tile Created"
-            text="Your public legacy tile is created from the saved donation and checkout metadata."
+            text="Your public legacy tile is created from the saved contribution and checkout metadata."
           />
 
           <InfoCard
             icon={<FileCheck2 />}
             title="Audit Saved"
-            text="Donation received and split allocation records are written to the public audit log."
+            text="Contribution received and split allocation records are written to the public audit log."
           />
 
           <InfoCard
@@ -197,21 +197,21 @@ export default function DonationSuccess() {
           <div className="grid gap-4 md:grid-cols-2">
             <NextStep
               title="1. Check the Wall"
-              text="Your legacy tile should appear after the webhook saves the paid donation."
+              text="Your legacy tile should appear after the webhook saves the paid contribution."
               to="/wall"
               label="Open Wall"
             />
 
             <NextStep
               title="2. Check the Audit"
-              text="Donation received, cause allocation, platform allocation, and lottery allocation should be visible."
+              text="Contribution received, Impact Allocation, Platform Operations, and Legacy Impact Reserve records should be visible."
               to="/audit"
               label="Open Audit"
             />
 
             <NextStep
               title="3. Check the Leaderboard"
-              text="Your rank and total donation should affect the public ranking after save."
+              text="Your rank and total contribution should affect the public ranking after save."
               to="/leaderboard"
               label="Open Leaderboard"
             />
@@ -235,7 +235,7 @@ export default function DonationSuccess() {
             <div className="space-y-3">
               <SplitLine label="Cause impact" value="60%" />
               <SplitLine label="Platform sustainability" value="25%" />
-              <SplitLine label="Monthly donor pool" value="15%" />
+              <SplitLine label="Legacy Impact Reserve" value="15%" />
             </div>
 
             <p className="mt-4 text-sm text-textSecondary">
@@ -251,7 +251,7 @@ export default function DonationSuccess() {
 
             <p className="text-sm leading-relaxed text-textSecondary">
               One Earth Legacy does not show a street address publicly. Public profile,
-              wall, globe, and leaderboard views should use only donor-safe fields like
+              wall, globe, and leaderboard views should use only supporter-safe fields like
               name, rank, mission, country, city, and rounded/approximate coordinates.
             </p>
           </div>
@@ -291,12 +291,12 @@ export default function DonationSuccess() {
           {[
             "Stripe redirected to /donate/success",
             "Webhook listener received checkout.session.completed",
-            "Donation was saved once, not duplicated",
+            "Contribution was saved once, not duplicated",
             "Tile appears on Wall",
             "Audit entries appear with correct split",
             "Leaderboard total/rank updates",
             "Globe shows city/country-level point",
-            "Admin dashboard can review the donation"
+            "Admin dashboard can review the contribution"
           ].map((item) => (
             <div
               key={item}

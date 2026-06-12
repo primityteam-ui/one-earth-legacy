@@ -27,19 +27,19 @@ export default function Home() {
 
   const statCards = [
     {
-      label: "Total donated",
+      label: "Legacy contributions",
       value: `$${Number(stats.totalDonated || 0).toLocaleString()}`
     },
     {
-      label: "Founding donors",
+      label: "Founding supporters",
       value: Number(stats.donors || 0).toLocaleString()
     },
     {
-      label: "Countries",
+      label: "Countries represented",
       value: Number(stats.countries || 0).toLocaleString()
     },
     {
-      label: "Lives impacted",
+      label: "Impact records",
       value: Number(stats.livesImpacted || 0).toLocaleString()
     }
   ];
@@ -61,7 +61,7 @@ export default function Home() {
         >
           <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm text-goldLight">
             <Sparkles className="h-4 w-4" />
-            One Earth. One Wall. One Emperor.
+            One Earth. One Wall. One Legacy.
           </div>
 
           <h1 className="font-display text-5xl font-extrabold leading-tight md:text-7xl">
@@ -69,7 +69,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-6 max-w-2xl font-subheading text-2xl text-textSecondary md:text-3xl">
-            Create a public legacy tile, choose a mission, and join a transparent digital wall built around visibility, donor-safe location privacy, and audit records.
+            Create a public legacy tile, choose an impact mission, and join a transparent digital wall built around recognition, privacy-safe location, and public audit records.
           </p>
 
           <div className="mt-9 flex flex-wrap gap-4">
@@ -77,7 +77,7 @@ export default function Home() {
               to="/donate"
               className="rounded-full bg-gold px-7 py-4 font-bold text-black shadow-gold hover:bg-goldLight"
             >
-              Claim Your Legacy
+              Create Your Legacy
             </Link>
 
             <Link
@@ -86,6 +86,15 @@ export default function Home() {
             >
               View the Wall
             </Link>
+          </div>
+
+          <div className="mt-7 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
+            <p className="font-bold text-amber-100">
+              Important platform notice
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-textSecondary">
+              One Earth Legacy is a commercial digital legacy platform, not a charity, lottery, raffle, sweepstakes, investment, or financial product. Legacy Contributions create digital recognition benefits with no cash value, no withdrawal, and no supporter payout.
+            </p>
           </div>
         </motion.div>
 
@@ -105,12 +114,12 @@ export default function Home() {
             </p>
 
             <p className="mt-4 text-textSecondary">
-              The first Emperor will guide the active cause spotlight after payment settlement, safety review, and admin verification.
+              The top supporter position may receive special visibility and voting influence after payment settlement, safety review, and admin verification.
             </p>
 
             <div className="mt-7 rounded-2xl border border-crimson/40 bg-crimson/10 p-4">
               <p className="text-sm uppercase tracking-[0.35em] text-crimsonLight">
-                Throne War
+                Legacy Ranking
               </p>
               <p className="mt-2 font-numbers text-3xl font-bold text-textPrimary">
                 Not Started
@@ -135,20 +144,20 @@ export default function Home() {
         <div className="grid gap-5 md:grid-cols-3">
           <FeatureCard
             icon={<Globe2 className="h-6 w-6" />}
-            title="Transparent mission split"
-            text="The platform target split is 60% cause allocation, 25% platform sustainability, and 15% donor pool, subject to payment settlement and public audit records."
+            title="Clear money split"
+            text="The platform target split is 60% Impact Allocation, 25% Platform Operations, and 15% Legacy Impact Reserve, subject to Stripe confirmation, settlement, fraud review, and admin approval."
           />
 
           <FeatureCard
             icon={<Crown className="h-6 w-6" />}
-            title="Ranked legacy"
-            text="Donors receive public ranks and tiles based on confirmed cumulative donation records."
+            title="Digital recognition"
+            text="Supporters receive public ranks, legacy tiles, profile visibility, leaderboard placement, and voting influence based on confirmed contribution records."
           />
 
           <FeatureCard
             icon={<ShieldCheck className="h-6 w-6" />}
-            title="Privacy and payment safety"
-            text="Public donor location is city/country level only, and payment records depend on Stripe checkout plus webhook confirmation."
+            title="No payout model"
+            text="Ranks, points, tiles, and voting influence have no cash value. The Legacy Impact Reserve is platform-controlled and is not paid to supporters as cash."
           />
         </div>
       </section>

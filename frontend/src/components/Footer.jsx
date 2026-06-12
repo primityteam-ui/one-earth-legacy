@@ -15,19 +15,24 @@ export default function Footer() {
               <p className="font-display text-xl font-bold text-textPrimary">
                 One Earth Legacy
               </p>
-              <p className="text-sm text-textSecondary">Emperor of Earth</p>
+              <p className="text-sm text-textSecondary">
+                Commercial digital legacy platform
+              </p>
             </div>
           </Link>
 
           <p className="mt-5 max-w-sm text-sm leading-6 text-textSecondary">
-            One Earth. One Wall. One Emperor. A commercial digital legacy
-            platform built around transparency, donor-safe privacy, audit records,
-            and secure payment foundations.
+            One Earth Legacy is built around digital recognition, public legacy
+            tiles, privacy-safe location display, supporter rankings, voting
+            influence, and transparent public audit records.
           </p>
 
-          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-gold/20 bg-gold/10 p-4 text-sm text-goldLight">
-            <ShieldCheck className="h-5 w-5" />
-            Privacy-safe location and payment safety in progress
+          <div className="mt-5 flex items-start gap-3 rounded-2xl border border-gold/20 bg-gold/10 p-4 text-sm text-goldLight">
+            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
+            <span>
+              Not a charity, lottery, raffle, sweepstakes, investment, financial
+              product, cashback program, or supporter payout system.
+            </span>
           </div>
         </div>
 
@@ -36,7 +41,7 @@ export default function Footer() {
           links={[
             ["Home", "/"],
             ["Wall", "/wall"],
-            ["Donate", "/donate"],
+            ["Contribute", "/donate"],
             ["Leaderboard", "/leaderboard"],
             ["Hall of Legends", "/legends"],
             ["Globe", "/globe"]
@@ -46,7 +51,7 @@ export default function Footer() {
         <FooterColumn
           title="Trust"
           links={[
-            ["Audit Log", "/audit"],
+            ["Public Audit", "/audit"],
             ["Security", "/legal/security"],
             ["FAQ", "/legal/faq"],
             ["Terms", "/legal/terms"],
@@ -64,6 +69,7 @@ export default function Footer() {
             <StatusItem text="OTP auth working" />
             <StatusItem text="MongoDB connected" />
             <StatusItem text="Stripe test checkout and webhook flow added" />
+            <StatusItem text="Legacy contribution model in progress" />
           </div>
 
           <div className="mt-6 flex items-center gap-3 text-textSecondary">
@@ -79,7 +85,7 @@ export default function Footer() {
 
           <p className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-gold" />
-            Commercial digital legacy platform, not a charity.
+            Legacy Contributions create digital benefits with no cash value.
           </p>
         </div>
       </div>

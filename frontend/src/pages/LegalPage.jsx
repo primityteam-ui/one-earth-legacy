@@ -9,33 +9,55 @@ import {
   WalletCards
 } from "lucide-react";
 
+const platformNotice =
+  "One Earth Legacy is a commercial digital legacy platform, not a charity, lottery, raffle, sweepstakes, investment, bank, financial product, cashback program, or supporter payout system. Legacy Contributions create digital platform benefits such as tiles, ranks, profiles, leaderboard visibility, globe visibility, and voting influence. These benefits have no cash value, cannot be withdrawn, and do not guarantee any financial return.";
+
 const pages = {
   terms: {
     eyebrow: "Legal",
     title: "Terms of Service",
     description:
-      "Rules for using One Earth Legacy, purchasing digital legacy features, creating public donor tiles, and participating in platform visibility features.",
+      "Rules for using One Earth Legacy, making Legacy Contributions, creating public legacy tiles, and participating in digital recognition features.",
     icon: <FileText />,
     sections: [
       {
         title: "Commercial platform notice",
+        text: platformNotice
+      },
+      {
+        title: "Legacy Contributions",
         text:
-          "One Earth Legacy is a commercial digital legacy and visibility platform. It is not currently a registered charity, nonprofit, bank, investment product, lottery operator, or government program. Users pay for digital legacy space, public tile placement, profile features, rank visibility, and optional add-ons. Cause-related allocations are part of the platform feature set and should be reviewed through the public audit page."
+          "A Legacy Contribution is a payment for digital legacy platform features. It may create a public tile, public profile visibility, rank, leaderboard placement, globe visibility, selected mission display, and voting influence. It is not a charitable tax-deductible donation unless the platform later separately obtains and clearly states such status."
       },
       {
         title: "Digital tile and profile features",
         text:
-          "A legacy tile gives the user a public display space on the platform. It does not create ownership of the website, brand, codebase, donation infrastructure, payment accounts, future revenue, cause partner organizations, or any physical land or object. Public display may depend on payment settlement, platform safety review, and content compliance."
+          "A legacy tile gives the supporter a public display space on the platform. It does not create ownership of the website, brand, codebase, payment accounts, future revenue, cause partner organizations, physical land, or any physical object. Public display may depend on payment settlement, platform safety review, and content compliance."
+      },
+      {
+        title: "How money works",
+        text:
+          "The platform target split is 60% Impact Allocation, 25% Platform Operations, and 15% Legacy Impact Reserve. Actual records may depend on Stripe confirmation, settlement, fraud review, refunds, chargebacks, compliance review, and founder/admin approval."
+      },
+      {
+        title: "Legacy Impact Reserve",
+        text:
+          "The 15% Legacy Impact Reserve is not paid to supporters as cash. It is platform-controlled and founder-reviewed. It may support approved public-benefit missions, verified causes, emergency missions, education, children, planet protection, food support, scholarships, matching campaigns, or other impact actions."
+      },
+      {
+        title: "Supporter voting influence",
+        text:
+          "Supporters may vote on, nominate, or influence future Impact Missions where the platform allows it. Voting influence does not control money directly, does not guarantee that a mission will be funded, and does not override founder/admin review, fraud prevention, legal compliance, safety review, or payment settlement rules."
       },
       {
         title: "Payments, settlement, and review",
         text:
-          "Payments may be processed through Stripe Checkout or another supported payment provider. A checkout success screen does not always mean the donation has been fully saved, settled, or reviewed. Final rank, tile visibility, Emperor privileges, audit records, and leaderboard updates may depend on webhook confirmation, settlement status, fraud checks, and admin review."
+          "Payments may be processed through Stripe Checkout or another supported payment provider. A checkout success screen does not always mean the contribution has been fully saved, settled, or reviewed. Final rank, tile visibility, audit records, leaderboard updates, and Impact Allocation records may depend on webhook confirmation, settlement status, fraud checks, refund or chargeback risk, and admin review."
       },
       {
         title: "Refunds and chargebacks",
         text:
-          "Refund rules should be shown before payment or provided through support. Refunds, failed payments, disputes, chargebacks, or suspected fraud may cause rank changes, tile removal, public visibility changes, Emperor privilege suspension, or account review. Fraudulent or abusive chargebacks may result in account suspension."
+          "Refunds, failed payments, disputes, chargebacks, or suspected fraud may cause rank changes, tile removal, public visibility changes, voting influence changes, or account review. Fraudulent or abusive activity may result in account suspension."
       },
       {
         title: "Content rules",
@@ -45,7 +67,7 @@ const pages = {
       {
         title: "No guarantee of permanent availability",
         text:
-          "One Earth Legacy aims to preserve donor legacy records and public visibility, but no website can guarantee permanent uptime, permanent hosting, permanent ranking rules, or permanent display format. Features may change for security, legal, payment, technical, or operational reasons."
+          "One Earth Legacy aims to preserve legacy records and public visibility, but no website can guarantee permanent uptime, permanent hosting, permanent ranking rules, permanent display format, or permanent feature availability. Features may change for security, legal, payment, technical, or operational reasons."
       }
     ]
   },
@@ -54,28 +76,28 @@ const pages = {
     eyebrow: "Privacy",
     title: "Privacy Policy",
     description:
-      "How One Earth Legacy handles account data, donation records, donor-safe location data, cookies, security logs, and deletion requests.",
+      "How One Earth Legacy handles account data, contribution records, privacy-safe location data, cookies, security logs, and deletion requests.",
     icon: <LockKeyhole />,
     sections: [
       {
         title: "Data we collect",
         text:
-          "We may collect account details such as email, display name, username, login history, donation records, selected mission, tile content, profile settings, payment status, referral data, and security logs needed to operate and protect the platform."
+          "We may collect account details such as email, display name, username, login history, contribution records, selected mission, tile content, profile settings, payment status, referral data, and security logs needed to operate and protect the platform."
       },
       {
-        title: "Safe donor location policy",
+        title: "Safe supporter location policy",
         text:
-          "One Earth Legacy does not ask for or display a street address for public donor pages. Public location features should use donor-safe fields such as country, region, city, and rounded or approximate coordinates. If a browser location option is used, coordinates should be rounded before saving and shown only as an approximate city-area point, not a home address."
+          "One Earth Legacy does not ask for or display a street address for public pages. Public location features should use privacy-safe fields such as country, region, city, and rounded or approximate coordinates. If a browser location option is used, coordinates should be rounded before saving and shown only as an approximate city-area point, not a home address."
       },
       {
         title: "Payment data",
         text:
-          "Raw card details are not handled directly by One Earth Legacy servers. Card entry is handled by payment providers such as Stripe Checkout. We may store payment status, payment IDs, Stripe checkout session IDs, payment method type, amount, currency, settlement status, refund/dispute status, and audit records needed for payment tracking and fraud prevention."
+          "Raw card details are not handled directly by One Earth Legacy servers. Card entry is handled by payment providers such as Stripe Checkout. We may store payment status, payment IDs, Stripe checkout session IDs, payment method type, amount, currency, settlement status, refund or dispute status, and audit records needed for payment tracking and fraud prevention."
       },
       {
-        title: "Public donation records",
+        title: "Public contribution records",
         text:
-          "Some donation-related information may be public by design, including display name, username, donor rank, tile message, selected mission, country or city-level location, total donated, and audit-style allocation records. Anonymous display options may hide public name, but payment, security, fraud, tax, and audit records may still be retained internally where required."
+          "Some contribution-related information may be public by design, including display name, username, supporter rank, tile message, selected mission, country or city-level location, confirmed contribution totals, and audit-style allocation records. Anonymous display options may hide public name, but payment, security, fraud, tax, and audit records may still be retained internally where required."
       },
       {
         title: "Security logs",
@@ -110,12 +132,12 @@ const pages = {
       {
         title: "Payment security",
         text:
-          "The platform should never receive raw card data. Stripe webhooks must be signature verified using the raw request body before paid donation records, ranks, tiles, or audit records are trusted. Stripe live keys should be used only in production after webhook testing is complete."
+          "The platform should never receive raw card data. Stripe webhooks must be signature verified using the raw request body before paid contribution records, ranks, tiles, or audit records are trusted. Stripe live keys should be used only in production after webhook testing is complete."
       },
       {
         title: "Admin safety",
         text:
-          "Admin features should stay read-only or limited until IP allowlist, two-factor verification, rate limits, security logs, and audit trails are fully ready. Destructive actions such as refunds, bans, deletes, payouts, or Emperor privilege changes should require extra review and logging."
+          "Admin features should stay read-only or limited until IP allowlist, two-factor verification, rate limits, security logs, and audit trails are fully ready. Destructive actions such as refunds, bans, deletes, reserve actions, or role changes should require extra review and logging."
       },
       {
         title: "Input protection",
@@ -139,43 +161,53 @@ const pages = {
     eyebrow: "FAQ",
     title: "Frequently Asked Questions",
     description:
-      "Simple answers about payments, ranks, the wall, donor location privacy, Emperor status, audit records, and the platform split.",
+      "Simple answers about Legacy Contributions, ranks, the wall, supporter location privacy, audit records, voting influence, and the platform split.",
     icon: <HelpCircle />,
     sections: [
       {
         title: "Is One Earth Legacy a charity?",
         text:
-          "No. One Earth Legacy is a commercial digital legacy platform. Users pay for digital display, profile, tile, rank, and visibility features. Cause allocation is a built-in platform feature, not a claim that the platform is a registered charity."
+          "No. One Earth Legacy is a commercial digital legacy platform. Users pay for digital display, profile, tile, rank, leaderboard, globe visibility, and voting influence features. Impact Allocation is a built-in platform feature, not a claim that the platform is a registered charity."
+      },
+      {
+        title: "Is this a lottery, raffle, sweepstakes, or investment?",
+        text:
+          "No. One Earth Legacy is not a lottery, raffle, sweepstakes, investment, financial product, cashback program, or supporter payout system. Digital ranks, points, tiles, and voting influence have no cash value and cannot be withdrawn."
       },
       {
         title: "Where does my money go?",
         text:
-          "The platform target split is shown publicly: 60% for cause allocation, 25% for platform sustainability, and 15% for the donor pool feature. Actual records should be reviewed through the public audit page and may depend on payment settlement, refunds, disputes, and admin review."
+          "The platform target split is 60% Impact Allocation, 25% Platform Operations, and 15% Legacy Impact Reserve. Actual records should be reviewed through the public audit page and may depend on Stripe confirmation, payment settlement, refunds, disputes, fraud checks, compliance review, and founder/admin approval."
+      },
+      {
+        title: "How does the Legacy Impact Reserve work?",
+        text:
+          "The 15% Legacy Impact Reserve is not paid to supporters. It is platform-controlled and founder-reviewed. It may support approved public-benefit missions, verified causes, emergency causes, scholarships, food aid, education, children, planet protection, matching campaigns, or other impact actions."
+      },
+      {
+        title: "Can supporters vote on missions?",
+        text:
+          "Supporters may receive voting influence or nomination options inside the platform. Votes help guide mission priorities, but the founder/admin makes final approval to prevent fraud, unsafe transfers, illegal causes, compliance issues, and misuse."
       },
       {
         title: "Do you show my address?",
         text:
-          "No public donor page should show a street address. The platform is designed to show donor-safe location data such as country, region, city, or rounded approximate coordinates for globe and leaderboard features."
+          "No public supporter page should show a street address. The platform is designed to show privacy-safe location data such as country, region, city, or rounded approximate coordinates for globe and leaderboard features."
       },
       {
         title: "Why does the success page say webhook verification matters?",
         text:
-          "Stripe can redirect a user to the success page after checkout, but the backend webhook is what safely confirms and saves the paid donation. Wall, audit, leaderboard, profile, and globe updates should depend on webhook-confirmed payment data."
+          "Stripe can redirect a user to the success page after checkout, but the backend webhook is what safely confirms and saves the paid contribution. Wall, audit, leaderboard, profile, and globe updates should depend on webhook-confirmed payment data."
       },
       {
         title: "How are ranks calculated?",
         text:
-          "Ranks are based on cumulative confirmed donation amounts in USD equivalent. Failed payments, refunds, chargebacks, disputes, fraud checks, or admin review may change rank visibility or status."
+          "Ranks are based on cumulative confirmed Legacy Contribution amounts in USD equivalent. Failed payments, refunds, chargebacks, disputes, fraud checks, or admin review may change rank visibility or status."
       },
       {
-        title: "What is the Emperor?",
+        title: "What is the top supporter position?",
         text:
-          "The Emperor is the highest donor tier and may receive special visibility or cause-selection privileges. Emperor privileges require payment settlement, admin review, security checks, and may be delayed, suspended, or changed for safety or legal reasons."
-      },
-      {
-        title: "How does the donor pool work?",
-        text:
-          "The donor pool feature is planned to use 15% of donation value according to published rules. Final rules, eligibility, winner proof, and payout logs should appear in the public audit log before real payouts are made."
+          "The highest supporter tier may receive special visibility or mission voting influence. It does not control platform money directly and does not create any ownership, payout, withdrawal, or investment rights."
       }
     ]
   }
@@ -221,9 +253,12 @@ export default function LegalPage() {
           Important notice
         </p>
         <p className="mt-3 leading-7 text-textSecondary">
+          {platformNotice}
+        </p>
+        <p className="mt-3 leading-7 text-textSecondary">
           This page is practical platform policy copy for product clarity. It is
           not legal advice. Before public production launch, have a qualified
-          attorney review these terms, privacy, payment, refund, donor pool, and
+          attorney review these terms, privacy, payment, refund, reserve, and
           audit statements for your target countries and payment providers.
         </p>
       </section>

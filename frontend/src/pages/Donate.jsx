@@ -31,7 +31,7 @@ import {
 const showTemporaryQaPanels =
   import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
 
-const donorCountries = [
+const supporterCountries = [
   { country: "United States", countryCode: "US", flag: "🇺🇸" },
   { country: "India", countryCode: "IN", flag: "🇮🇳" },
   { country: "Brazil", countryCode: "BR", flag: "🇧🇷" },
@@ -92,11 +92,11 @@ export default function Donate() {
   const [displayName, setDisplayName] = useState("Vamshi");
   const [theme, setTheme] = useState("Gold");
 
-  const [donorCountryCode, setDonorCountryCode] = useState("US");
-  const [donorCity, setDonorCity] = useState("Dallas");
-  const [donorRegion, setDonorRegion] = useState("Texas");
-  const [donorLat, setDonorLat] = useState("");
-  const [donorLng, setDonorLng] = useState("");
+  const [supporterCountryCode, setSupporterCountryCode] = useState("US");
+  const [supporterCity, setSupporterCity] = useState("Dallas");
+  const [supporterRegion, setSupporterRegion] = useState("Texas");
+  const [supporterLat, setSupporterLat] = useState("");
+  const [supporterLng, setSupporterLng] = useState("");
   const [locationMessage, setLocationMessage] = useState("");
 
   const [selectedMissionId, setSelectedMissionId] = useState("human-survival");
@@ -128,12 +128,12 @@ export default function Donate() {
     );
   }, [selectedMission, selectedImpactId]);
 
-  const selectedDonorCountry = useMemo(() => {
+  const selectedSupporterCountry = useMemo(() => {
     return (
-      donorCountries.find((country) => country.countryCode === donorCountryCode) ||
-      donorCountries[0]
+      supporterCountries.find((country) => country.countryCode === supporterCountryCode) ||
+      supporterCountries[0]
     );
-  }, [donorCountryCode]);
+  }, [supporterCountryCode]);
 
   const cause = `${selectedMission.name} — ${selectedImpact.name}`;
 
@@ -156,7 +156,7 @@ export default function Donate() {
 
   const causeAmount = amount * 0.6;
   const platformAmount = amount * 0.25;
-  const lotteryAmount = amount * 0.15;
+  const legacyReserveAmount = amount * 0.15;
 
   function selectMission(mission) {
     setSelectedMissionId(mission.id);
@@ -181,8 +181,8 @@ export default function Donate() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setDonorLat(roundCoordinate(position.coords.latitude));
-        setDonorLng(roundCoordinate(position.coords.longitude));
+        setSupporterLat(roundCoordinate(position.coords.latitude));
+        setSupporterLng(roundCoordinate(position.coords.longitude));
         setLocationMessage(
           "Approximate location added. Coordinates are rounded for privacy."
         );
@@ -201,27 +201,27 @@ export default function Donate() {
   }
 
   function buildPayload() {
-    const safeLat = donorLat === "" ? undefined : Number(donorLat);
-    const safeLng = donorLng === "" ? undefined : Number(donorLng);
+    const safeLat = supporterLat === "" ? undefined : Number(supporterLat);
+    const safeLng = supporterLng === "" ? undefined : Number(supporterLng);
 
     return {
       email,
       amount,
       currency: "USD",
       displayName,
-      country: selectedDonorCountry.country,
-      countryCode: selectedDonorCountry.countryCode,
-      donorCity,
-      donorRegion,
-      donorLat: Number.isFinite(safeLat) ? safeLat : undefined,
-      donorLng: Number.isFinite(safeLng) ? safeLng : undefined,
-      donorLocationPrecision:
+      country: selectedSupporterCountry.country,
+      countryCode: selectedSupporterCountry.countryCode,
+      supporterCity,
+      supporterRegion,
+      supporterLat: Number.isFinite(safeLat) ? safeLat : undefined,
+      supporterLng: Number.isFinite(safeLng) ? safeLng : undefined,
+      supporterLocationPrecision:
         Number.isFinite(safeLat) && Number.isFinite(safeLng)
           ? "approximate"
-          : donorCity.trim()
+          : supporterCity.trim()
             ? "city"
             : "country",
-      donorLocationSource:
+      supporterLocationSource:
         Number.isFinite(safeLat) && Number.isFinite(safeLng)
           ? "browser"
           : "manual",
@@ -244,7 +244,7 @@ export default function Donate() {
       const response = await api.post("/donate/preview", buildPayload());
       setBackendPreview(response.data.preview);
     } catch (error) {
-      setPreviewError(error.response?.data?.message || "Could not create donation preview");
+      setPreviewError(error.response?.data?.message || "Could not create contribution preview");
     } finally {
       setPreviewLoading(false);
     }
@@ -259,7 +259,7 @@ export default function Donate() {
       const response = await api.post("/donate/mock-create", buildPayload());
       setSavedDonation(response.data);
     } catch (error) {
-      setSaveError(error.response?.data?.message || "Could not save mock donation");
+      setSaveError(error.response?.data?.message || "Could not save mock contribution");
     } finally {
       setSaveLoading(false);
     }
@@ -295,18 +295,37 @@ export default function Donate() {
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
       <PageHero
-        eyebrow="Donate"
-        title="Claim Your Legacy Tile"
-        description="Choose your mission, select the exact impact, create your legacy tile, and complete the checkout flow with clear privacy and payment review."
+        eyebrow="Contribute"
+        title="Create Your Legacy Tile"
+        description="Choose your mission, select the exact impact, create your legacy tile, and complete a Legacy Contribution with clear privacy, payment review, and no cash payout."
         rightLabel="Live rank preview"
         rightValue={backendPreview?.rank || currentRank.name}
       />
+      <section className="mb-8 rounded-[2rem] border border-amber-400/30 bg-amber-400/10 p-6">
+        <p className="font-display text-2xl font-bold text-textPrimary">
+          No lottery, no investment, no cash payout
+        </p>
 
+        <p className="mt-3 leading-7 text-textSecondary">
+          One Earth Legacy is a commercial digital legacy platform. A Legacy
+          Contribution creates digital platform benefits such as a tile, profile,
+          rank, leaderboard visibility, globe visibility, and voting influence.
+          These benefits have no cash value, cannot be withdrawn, and do not
+          guarantee any financial return.
+        </p>
+
+        <p className="mt-3 leading-7 text-textSecondary">
+          The 15% Legacy Impact Reserve is not paid to supporters. It is
+          platform-controlled and founder-reviewed for approved impact missions,
+          verified causes, emergency causes, scholarships, food aid, education,
+          children, planet protection, or other public-benefit missions.
+        </p>
+      </section>
       <section className="mb-8 rounded-[2rem] border border-gold/25 bg-royalPanel p-6">
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-gold">
-              Donation Flow Status
+              Legacy Contribution Flow Status
             </p>
 
             <h2 className="mt-2 font-display text-3xl font-bold text-textPrimary">
@@ -335,7 +354,7 @@ export default function Donate() {
           <DonateReadinessCard
             icon={<Database />}
             title="Mock save for local data"
-            text="Mock save creates MongoDB donor, donation, tile, and audit records for testing."
+            text="Local save creates MongoDB supporter, contribution, tile, and audit records for testing."
           />
 
           <DonateReadinessCard
@@ -350,8 +369,8 @@ export default function Donate() {
         <div className="space-y-8">
           <Panel
             icon={<BadgeDollarSign className="h-5 w-5" />}
-            title="Step 1 — Choose amount"
-            subtitle="Rank is cumulative. Your confirmed donations raise your legacy rank."
+            title="Step 1 — Choose contribution amount"
+            subtitle="Rank is cumulative. Your confirmed Legacy Contributions raise your legacy rank."
           >
             <AmountSelector
               amount={amount}
@@ -364,7 +383,7 @@ export default function Donate() {
           <Panel
             icon={<Globe2 className="h-5 w-5" />}
             title="Step 2 — Choose your Legacy Mission"
-            subtitle="Pick the greater mission first, then choose the exact impact your donation should support."
+            subtitle="Pick the greater mission first, then choose the exact impact your Legacy Contribution should support."
           >
             <MissionSelector
               legacyMissions={legacyMissions}
@@ -380,7 +399,7 @@ export default function Donate() {
           <Panel
             icon={<ImagePlus className="h-5 w-5" />}
             title="Step 3 — Customize tile"
-            subtitle="This data is saved into Donation, Tile, AuditEntry, and safe donor location records."
+            subtitle="This data is saved into contribution, tile, audit, and privacy-safe supporter location records."
           >
             <TileCustomizer
               email={email}
@@ -406,7 +425,7 @@ export default function Donate() {
                     Add your safe Earth location
                   </h3>
                   <p className="text-sm text-slate-400">
-                    This places your legacy impact near your city on the live globe.
+                    This places your legacy tile near your city on the live globe.
                   </p>
                 </div>
               </div>
@@ -417,8 +436,8 @@ export default function Donate() {
                     City
                   </label>
                   <input
-                    value={donorCity}
-                    onChange={(event) => setDonorCity(event.target.value)}
+                    value={supporterCity}
+                    onChange={(event) => setSupporterCity(event.target.value)}
                     placeholder="Dallas"
                     className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
                   />
@@ -429,8 +448,8 @@ export default function Donate() {
                     State / Region
                   </label>
                   <input
-                    value={donorRegion}
-                    onChange={(event) => setDonorRegion(event.target.value)}
+                    value={supporterRegion}
+                    onChange={(event) => setSupporterRegion(event.target.value)}
                     placeholder="Texas"
                     className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
                   />
@@ -442,11 +461,11 @@ export default function Donate() {
               </label>
 
               <select
-                value={donorCountryCode}
-                onChange={(event) => setDonorCountryCode(event.target.value)}
+                value={supporterCountryCode}
+                onChange={(event) => setSupporterCountryCode(event.target.value)}
                 className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
               >
-                {donorCountries.map((country) => (
+                {supporterCountries.map((country) => (
                   <option key={country.countryCode} value={country.countryCode}>
                     {country.flag} {country.country}
                   </option>
@@ -480,8 +499,8 @@ export default function Donate() {
                       Latitude
                     </label>
                     <input
-                      value={donorLat}
-                      onChange={(event) => setDonorLat(event.target.value)}
+                      value={supporterLat}
+                      onChange={(event) => setSupporterLat(event.target.value)}
                       placeholder="32.78"
                       className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
                     />
@@ -492,8 +511,8 @@ export default function Donate() {
                       Longitude
                     </label>
                     <input
-                      value={donorLng}
-                      onChange={(event) => setDonorLng(event.target.value)}
+                      value={supporterLng}
+                      onChange={(event) => setSupporterLng(event.target.value)}
                       placeholder="-96.80"
                       className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-sky-400"
                     />
@@ -510,9 +529,9 @@ export default function Donate() {
               <p className="mt-3 text-sm text-slate-400">
                 Selected:{" "}
                 <span className="font-semibold text-white">
-                  {donorCity ? `${donorCity}, ` : ""}
-                  {donorRegion ? `${donorRegion}, ` : ""}
-                  {selectedDonorCountry.flag} {selectedDonorCountry.country}
+                  {supporterCity ? `${supporterCity}, ` : ""}
+                  {supporterRegion ? `${supporterRegion}, ` : ""}
+                  {selectedSupporterCountry.flag} {selectedSupporterCountry.country}
                 </span>
               </p>
 
@@ -543,8 +562,8 @@ export default function Donate() {
 
           <Panel
             icon={<ShieldCheck className="h-5 w-5" />}
-            title="Step 5 — Complete donation"
-            subtitle="Preview first, save mock donation locally, or open Stripe test checkout."
+            title="Step 5 — Complete Legacy Contribution"
+            subtitle="Preview first, save a local test contribution, or open Stripe test checkout."
           >
             <div className="mb-6 rounded-[1.5rem] border border-borderRoyal bg-black/25 p-5">
               <div className="mb-4 flex items-center gap-3">
@@ -557,15 +576,15 @@ export default function Donate() {
                     Final review before checkout
                   </p>
                   <p className="mt-1 text-sm text-textSecondary">
-                    Confirm these details before saving a mock donation or opening Stripe checkout.
+                    Confirm these details before saving a local test contribution or opening Stripe checkout.
                   </p>
                 </div>
               </div>
 
               <div className="grid gap-3">
                 <FinalReviewLine
-                  label="Donation amount"
-                  value={`$${Number(amount || 0).toLocaleString()} donation + $${Number(addOnTotal || 0).toLocaleString()} add-ons = $${Number(total || 0).toLocaleString()} today`}
+                  label="Legacy Contribution amount"
+                  value={`$${Number(amount || 0).toLocaleString()} contribution + $${Number(addOnTotal || 0).toLocaleString()} add-ons = $${Number(total || 0).toLocaleString()} today`}
                 />
 
                 <FinalReviewLine
@@ -574,13 +593,13 @@ export default function Donate() {
                 />
 
                 <FinalReviewLine
-                  label="Public donor name"
-                  value={anonymous ? "Anonymous donor" : displayName || "Not entered"}
+                  label="Public supporter name"
+                  value={anonymous ? "Anonymous supporter" : displayName || "Not entered"}
                 />
 
                 <FinalReviewLine
                   label="Public location"
-                  value={`${donorCity ? `${donorCity}, ` : ""}${donorRegion ? `${donorRegion}, ` : ""}${selectedDonorCountry.flag} ${selectedDonorCountry.country}`}
+                  value={`${supporterCity ? `${supporterCity}, ` : ""}${supporterRegion ? `${supporterRegion}, ` : ""}${selectedSupporterCountry.flag} ${selectedSupporterCountry.country}`}
                 />
 
                 <FinalReviewLine
@@ -628,7 +647,7 @@ export default function Donate() {
           impactDescription={selectedImpact.description}
           causeAmount={backendPreview?.split?.causeAmount ?? causeAmount}
           platformAmount={backendPreview?.split?.platformAmount ?? platformAmount}
-          lotteryAmount={backendPreview?.split?.lotteryAmount ?? lotteryAmount}
+          lotteryAmount={backendPreview?.split?.lotteryAmount ?? legacyReserveAmount}
           addOnTotal={backendPreview?.addOnTotal ?? addOnTotal}
           totalToday={backendPreview?.totalToday ?? total}
         />
@@ -654,14 +673,14 @@ export default function Donate() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
-            "Create Preview returns backend split and rank",
-            "Save Mock Donation creates User, Donation, Tile, and AuditEntry",
+            "Create Preview returns backend contribution split and rank",
+            "Save local test contribution creates User, Contribution, Tile, and AuditEntry",
             "Stripe checkout opens with test key before live launch",
-            "Stripe webhook saves paid donations after checkout.session.completed",
+            "Stripe webhook saves paid contributions after checkout.session.completed",
             "Success page loads after Stripe payment",
             "Cancel page returns user safely to Donate",
             "No street address is collected or shown publicly",
-            "Admin dashboard can review donation and audit records"
+            "Admin dashboard can review contribution and audit records"
           ].map((item) => (
             <div
               key={item}

@@ -4,7 +4,7 @@ export default function MoneySplitCard({
   causeAmount = 0,
   platformLabel = "25% Platform sustainability",
   platformAmount = 0,
-  lotteryLabel = "15% Monthly donor lottery",
+  lotteryLabel = "15% Legacy Impact Reserve",
   lotteryAmount = 0,
   showBars = false,
   note = ""

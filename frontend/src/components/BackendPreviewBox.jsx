@@ -28,7 +28,7 @@ export default function BackendPreviewBox({
           value={`$${Number(backendPreview.split?.platformAmount || 0).toFixed(2)}`}
         />
         <PreviewItem
-          label="Lottery amount"
+          label="Legacy Impact Reserve amount"
           value={`$${Number(backendPreview.split?.lotteryAmount || 0).toFixed(2)}`}
         />
         <PreviewItem label="Status" value={backendPreview.paymentStatus} />

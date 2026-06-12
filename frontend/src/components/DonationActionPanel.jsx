@@ -35,9 +35,9 @@ export default function DonationActionPanel({
             </p>
 
             <p className="mt-2 text-sm leading-relaxed text-textSecondary">
-              First create a backend preview. Then use mock save only for local
-              testing, or open Stripe checkout for a real payment flow. Public
-              donor location stays city/country level only.
+              First create a backend preview. Then use local save only for
+              development testing, or open Stripe checkout for the real payment
+              flow. Public supporter location stays city/country level only.
             </p>
           </div>
         </div>
@@ -75,11 +75,12 @@ export default function DonationActionPanel({
             loadingText="Saving..."
             variant="gold"
           >
-            Save Mock Donation
+            Save Local Test Contribution
           </ActionButton>
 
           <p className="mt-3 text-xs leading-relaxed text-textSecondary">
-            Local development only. Saves a test donor, donation, tile, and audit record.
+            Local development only. Saves a test supporter, contribution, tile,
+            and audit record.
           </p>
         </div>
 
@@ -112,7 +113,21 @@ export default function DonationActionPanel({
 
         <p className="mt-2 text-sm leading-relaxed text-textSecondary">
           Do not switch to live Stripe keys until webhook saving, success page,
-          cancel page, legal copy, and admin review checks are tested.
+          cancel page, legal copy, contribution records, and admin review checks
+          are tested.
+        </p>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
+        <p className="text-sm font-bold text-amber-100">
+          No cash payout notice
+        </p>
+
+        <p className="mt-2 text-sm leading-relaxed text-textSecondary">
+          Legacy Contributions create digital platform benefits only. Tiles,
+          ranks, points, leaderboard placement, profile visibility, and voting
+          influence have no cash value, cannot be withdrawn, and do not create
+          any investment return or supporter payout.
         </p>
       </div>
 

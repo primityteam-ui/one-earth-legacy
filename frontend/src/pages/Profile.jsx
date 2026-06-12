@@ -87,7 +87,7 @@ export default function Profile() {
   const lotteryAmount = Number(impact.lotteryAmount || 0);
   const totalDonated = Number(profile?.totalDonated || 0);
   const rankPosition = Number(profile?.rankPosition || 0);
-  const donationCount = Number(profile?.donationCount || 0);
+  const contributionCount = Number(profile?.contributionCount || 0);
 
   const locationLabel = useMemo(() => {
     if (!profile) {
@@ -121,7 +121,7 @@ export default function Profile() {
         causeImpact: profile.causeImpact,
         cause: profile.cause,
         totalDonated: totalDonated,
-        donations: 1
+        contributions: 1
       }
     ];
   }, [profile, totalDonated]);
@@ -168,7 +168,7 @@ export default function Profile() {
   if (loading) {
     return (
       <main className="mx-auto max-w-7xl px-5 py-10">
-        <PublicStateBox message="Loading public donor profile from backend..." />
+        <PublicStateBox message="Loading public supporter profile from backend..." />
       </main>
     );
   }
@@ -208,7 +208,7 @@ export default function Profile() {
   return (
     <main className="mx-auto max-w-7xl px-5 py-10">
       <PageHero
-        eyebrow="Public Donor Profile"
+        eyebrow="Public Supporter Profile"
         title={profile.displayName}
         description={`@${profile.username} · ${profile.flag || "🌍"} ${locationLabel} · Joined ${safeText(
           profile.joined,
@@ -239,7 +239,7 @@ export default function Profile() {
                     Legacy Identity
                   </p>
                   <p className="mt-2 text-sm text-textSecondary">
-                    Public, privacy-safe donor page
+                    Public, privacy-safe supporter page
                   </p>
                 </div>
 
@@ -264,7 +264,7 @@ export default function Profile() {
                 <p className="mt-2 text-textSecondary">@{profile.username}</p>
 
                 <p className="mt-5 min-h-[90px] rounded-2xl border border-borderRoyal bg-black/30 p-4 text-textSecondary">
-                  “{safeText(profile.message, "This donor is building a public legacy.")}”
+                  “{safeText(profile.message, "This supporter is building a public legacy.")}”
                 </p>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
@@ -318,7 +318,7 @@ export default function Profile() {
                 <div>
                   <p className="font-bold text-textPrimary">Privacy status</p>
                   <p className="text-sm text-textSecondary">
-                    Public profile uses donor-safe display fields only.
+                    Public profile uses supporter-safe display fields only.
                   </p>
                   <p className="mt-1 text-xs text-textSecondary">
                     Location precision: {safeText(profile.precision, "city/country")}
@@ -371,9 +371,9 @@ export default function Profile() {
 
             <StatCard
               icon={<Trophy />}
-              label="Donor reward pool"
+              label="Supporter reward pool"
               value={money(lotteryAmount)}
-              subtext="15% monthly donor pool"
+              subtext="15% Legacy Impact Reserve"
             />
           </section>
 
@@ -381,13 +381,13 @@ export default function Profile() {
             <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
               <Award className="mb-4 h-7 w-7 text-gold" />
               <p className="text-sm uppercase tracking-[0.25em] text-textSecondary">
-                Donor Rank
+                Supporter Rank
               </p>
               <p className="mt-2 font-display text-3xl font-bold text-textPrimary">
                 {safeText(profile.rank, "Spark")}
               </p>
               <p className="mt-2 text-sm text-textSecondary">
-                {rankPosition > 0 ? `#${rankPosition} on the public donor wall` : "Public donor wall rank"}
+                {rankPosition > 0 ? `#${rankPosition} on the public supporter wall` : "Public supporter wall rank"}
               </p>
             </div>
 
@@ -404,10 +404,10 @@ export default function Profile() {
             <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
               <Users className="mb-4 h-7 w-7 text-gold" />
               <p className="text-sm uppercase tracking-[0.25em] text-textSecondary">
-                Donations
+                Contributions
               </p>
               <p className="mt-2 font-display text-3xl font-bold text-textPrimary">
-                {donationCount || missionsSupported.length}
+                {contributionCount || missionsSupported.length}
               </p>
               <p className="mt-2 text-sm text-textSecondary">
                 Across {missionsSupported.length} mission{missionsSupported.length === 1 ? "" : "s"}
@@ -462,8 +462,8 @@ export default function Profile() {
                       </p>
 
                       <p className="text-sm text-textSecondary">
-                        {Number(mission.donations || 1)} donation
-                        {Number(mission.donations || 1) === 1 ? "" : "s"}
+                        {Number(mission.contributions || 1)} contribution
+                        {Number(mission.contributions || 1) === 1 ? "" : "s"}
                       </p>
                     </div>
                   </div>
@@ -521,7 +521,7 @@ export default function Profile() {
 
             <TimelineList
               items={profile.timeline || []}
-              emptyMessage="This donor does not have timeline events yet."
+              emptyMessage="This supporter does not have timeline events yet."
             />
           </section>
 
@@ -537,7 +537,7 @@ export default function Profile() {
                 </h2>
 
                 <p className="mt-2 text-textSecondary">
-                  Create your own public donor profile, legacy tile, and rank on One Earth Legacy.
+                  Create your own public supporter profile, legacy tile, and rank on One Earth Legacy.
                 </p>
               </div>
 

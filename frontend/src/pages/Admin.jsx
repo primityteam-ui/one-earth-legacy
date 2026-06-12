@@ -16,7 +16,7 @@ const Database = ({ className = "" }) => <span className={className}>🗄️</sp
 const FileText = ({ className = "" }) => <span className={className}>📄</span>;
 const MapPin = ({ className = "" }) => <span className={className}>📍</span>;
 
-const tabs = ["Overview", "Donations", "Donors", "Missions", "Audit", "Security", "Health"];
+const tabs = ["Overview", "Contributions", "Supporters", "Missions", "Audit", "Security", "Health"];
 
 const showTemporaryQaPanels =
   import.meta.env.VITE_SHOW_TEMPORARY_QA_PANELS !== "false";
@@ -53,7 +53,7 @@ export default function Admin() {
   const [paymentStatus, setPaymentStatus] = useState("all");
   const [mission, setMission] = useState("all");
   const [country, setCountry] = useState("all");
-  const [selectedDonation, setSelectedDonation] = useState(null);
+  const [selectedContribution, setSelectedContribution] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [auditSaving, setAuditSaving] = useState(false);
   const [newestAuditId, setNewestAuditId] = useState("");
@@ -114,7 +114,7 @@ export default function Admin() {
 
   async function handleDownloadCsv() {
     try {
-      const response = await api.get("/admin/donations.csv", {
+      const response = await api.get("/admin/contributions.csv", {
         responseType: "blob",
         params: {
           search,
@@ -132,7 +132,7 @@ export default function Admin() {
       const link = document.createElement("a");
 
       link.href = url;
-      link.download = `one-earth-legacy-donations-${new Date()
+      link.download = `one-earth-legacy-contributions-${new Date()
         .toISOString()
         .slice(0, 10)}.csv`;
 
@@ -185,20 +185,20 @@ export default function Admin() {
     }
   }
 
-  async function handleViewDonationDetail(donationId) {
-    if (!donationId) return;
+  async function handleViewContributionDetail(contributionId) {
+    if (!contributionId) return;
 
     setDetailLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
 
     try {
-      const response = await api.get(`/admin/donations/${donationId}`);
-      setSelectedDonation(response.data);
+      const response = await api.get(`/admin/contributions/${contributionId}`);
+      setSelectedContribution(response.data);
     } catch (error) {
       setErrorMessage(
         error.response?.data?.message ||
-          "Could not load donation details."
+          "Could not load contribution details."
       );
     } finally {
       setDetailLoading(false);
@@ -272,8 +272,8 @@ export default function Admin() {
   }, []);
 
   const stats = data?.stats || {};
-  const recentDonations = data?.recentDonations || [];
-  const topDonors = data?.topDonors || [];
+  const recentContributions = data?.recentContributions || [];
+  const topSupporters = data?.topSupporters || [];
   const missionTotals = data?.missionTotals || {};
   const countryTotals = data?.countryTotals || [];
   const recentAuditEntries = data?.recentAuditEntries || [];
@@ -281,7 +281,7 @@ export default function Admin() {
   const recentSecurityLogs = data?.recentSecurityLogs || [];
   const health = data?.health || null;
 
-  const hasDonationFilters =
+  const hasContributionFilters =
     Boolean(search.trim()) ||
     paymentStatus !== "all" ||
     mission !== "all" ||
@@ -293,9 +293,9 @@ export default function Admin() {
     Boolean(auditEndDate);
 
   const tabCounts = {
-    Overview: recentDonations.length,
-    Donations: recentDonations.length,
-    Donors: topDonors.length,
+    Overview: recentContributions.length,
+    Contributions: recentContributions.length,
+    Supporters: topSupporters.length,
     Missions: Object.keys(missionTotals || {}).length,
     Audit: recentAuditEntries.length,
     Security: recentSecurityLogs.length,
@@ -325,22 +325,22 @@ export default function Admin() {
   const revenueStats = useMemo(() => {
     return [
       {
-        label: "Total revenue",
+        label: "Total contributions",
         value: formatMoney(stats.totalRevenue),
         icon: <BadgeDollarSign className="h-5 w-5" />
       },
       {
-        label: "Cause reserve",
+        label: "Impact Allocation",
         value: formatMoney(stats.causeReserve),
         icon: <Landmark className="h-5 w-5" />
       },
       {
-        label: "Platform reserve",
+        label: "Platform Operations",
         value: formatMoney(stats.platformReserve),
         icon: <ShieldCheck className="h-5 w-5" />
       },
       {
-        label: "Lottery reserve",
+        label: "Legacy Impact Reserve",
         value: formatMoney(stats.lotteryReserve),
         icon: <Ticket className="h-5 w-5" />
       }
@@ -357,12 +357,12 @@ export default function Admin() {
             </p>
 
             <h1 className="font-display text-3xl font-bold sm:text-4xl md:text-6xl">
-              Real Donation Dashboard
+              Legacy Contribution Dashboard
             </h1>
 
             <p className="mt-4 max-w-3xl text-textSecondary">
-              View real MongoDB donations, donors, locations, missions, payment status,
-              reserve split, and public legacy activity. Donation CSV downloads use the selected
+              View real MongoDB contributions, supporters, locations, missions, payment status,
+              reserve split, and public legacy activity. Contribution CSV downloads use the selected
               search, payment, mission, and country filters.
             </p>
           </div>
@@ -373,7 +373,7 @@ export default function Admin() {
               onClick={handleDownloadCsv}
               className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 font-bold text-emerald-200 transition hover:bg-emerald-400 hover:text-black"
             >
-              {hasDonationFilters ? "Download Filtered CSV" : "Download CSV"}
+              {hasContributionFilters ? "Download Filtered CSV" : "Download CSV"}
             </button>
 
             <button
@@ -424,8 +424,8 @@ export default function Admin() {
           <section className="mb-8 grid gap-5 md:grid-cols-4">
             <StatCard
               icon={<Users className="h-5 w-5" />}
-              label="Paid donors"
-              value={Number(stats.totalDonors || 0).toLocaleString()}
+              label="Paid supporters"
+              value={Number(stats.totalSupporters || 0).toLocaleString()}
             />
             <StatCard
               icon={<Globe2 className="h-5 w-5" />}
@@ -434,8 +434,8 @@ export default function Admin() {
             />
             <StatCard
               icon={<Database className="h-5 w-5" />}
-              label="Paid donations"
-              value={Number(stats.donationsCount || 0).toLocaleString()}
+              label="Paid contributions"
+              value={Number(stats.contributionsCount || 0).toLocaleString()}
             />
             <StatCard
               icon={<FileText className="h-5 w-5" />}
@@ -479,7 +479,7 @@ export default function Admin() {
                 Admin Filters
               </p>
               <h2 className="font-display text-2xl font-bold text-textPrimary">
-                Search donations and donors
+                Search contributions and supporters
               </h2>
             </div>
 
@@ -544,9 +544,9 @@ export default function Admin() {
                 Clear filters
               </button>
 
-              {hasDonationFilters && (
+              {hasContributionFilters && (
                 <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-bold text-amber-200">
-                  Donation CSV will be filtered
+                  Contribution CSV will be filtered
                 </span>
               )}
             </div>
@@ -555,21 +555,21 @@ export default function Admin() {
           {activeTab === "Overview" && (
             <OverviewPanel
               stats={stats}
-              recentDonations={recentDonations}
+              recentContributions={recentContributions}
               missionTotals={missionTotals}
               countryTotals={countryTotals}
             />
           )}
 
-          {activeTab === "Donations" && (
-            <DonationsPanel
-              donations={recentDonations}
-              onViewDonation={handleViewDonationDetail}
+          {activeTab === "Contributions" && (
+            <ContributionsPanel
+              contributions={recentContributions}
+              onViewContribution={handleViewContributionDetail}
             />
           )}
 
-          {activeTab === "Donors" && (
-            <DonorsPanel donors={topDonors} />
+          {activeTab === "Supporters" && (
+            <SupportersPanel supporters={topSupporters} />
           )}
 
           {activeTab === "Missions" && (
@@ -615,11 +615,11 @@ export default function Admin() {
         </>
       )}
 
-      {selectedDonation && (
-        <DonationDetailDrawer
-          donation={selectedDonation}
+      {selectedContribution && (
+        <ContributionDetailDrawer
+          contribution={selectedContribution}
           loading={detailLoading}
-          onClose={() => setSelectedDonation(null)}
+          onClose={() => setSelectedContribution(null)}
         />
       )}
     </main>
@@ -645,8 +645,8 @@ function AdminSecurityBanner() {
             </h2>
 
             <p className="mt-2 max-w-3xl text-textSecondary">
-              This page can view donations, donors, audit logs, security logs, and CSV exports.
-              Do not add delete, refund, ban, payout, or withdrawal actions until IP whitelist,
+              This page can view contributions, supporters, audit logs, security logs, and CSV exports.
+              Do not add delete, refund, ban, reserve-release, or destructive actions until IP whitelist,
               2FA, and SecurityLog write-audit rules are fully ready.
             </p>
           </div>
@@ -677,26 +677,26 @@ function SecurityBadge({ text, warning = false }) {
   );
 }
 
-function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals }) {
+function OverviewPanel({ stats, recentContributions, missionTotals, countryTotals }) {
   return (
     <section className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
-          <PanelHeader icon={<BadgeDollarSign />} title="Revenue Split" />
+          <PanelHeader icon={<BadgeDollarSign />} title="Money Split" />
 
           <div className="grid gap-5 md:grid-cols-3">
             <ChartCard
-              label="Cause allocation"
+              label="Impact Allocation"
               value={formatMoney(stats.causeReserve)}
               percent={60}
             />
             <ChartCard
-              label="Platform reserve"
+              label="Platform Operations"
               value={formatMoney(stats.platformReserve)}
               percent={25}
             />
             <ChartCard
-              label="Lottery reserve"
+              label="Legacy Impact Reserve"
               value={formatMoney(stats.lotteryReserve)}
               percent={15}
             />
@@ -704,17 +704,17 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
 
           <div className="mt-8 space-y-5">
             <RevenueBar
-              label="60% Cause allocation"
+              label="60% Impact Allocation"
               amount={formatMoney(stats.causeReserve)}
               width="60%"
             />
             <RevenueBar
-              label="25% Platform sustainability"
+              label="25% Platform Operations"
               amount={formatMoney(stats.platformReserve)}
               width="25%"
             />
             <RevenueBar
-              label="15% Lottery pool"
+              label="15% Legacy Impact Reserve"
               amount={formatMoney(stats.lotteryReserve)}
               width="15%"
             />
@@ -723,20 +723,20 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
 
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
           <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-            <PanelHeader icon={<Crown />} title="Latest Donations" />
-            <CountBadge label={`${recentDonations.length} recent donations`} />
+            <PanelHeader icon={<Crown />} title="Latest Contributions" />
+            <CountBadge label={`${recentContributions.length} recent contributions`} />
           </div>
 
-          {recentDonations.length === 0 ? (
+          {recentContributions.length === 0 ? (
             <EmptyState
               icon={<Crown />}
-              title="No recent donations"
-              message="Recent donation activity will appear here after successful paid donations or mock test donations."
+              title="No recent contributions"
+              message="Recent contribution activity will appear here after successful paid contributions or local test contributions."
             />
           ) : (
             <div className="space-y-4">
-              {recentDonations.slice(0, 5).map((donation) => (
-                <DonationMiniCard key={donation.id} donation={donation} />
+              {recentContributions.slice(0, 5).map((contribution) => (
+                <ContributionMiniCard key={contribution.id} contribution={contribution} />
               ))}
             </div>
           )}
@@ -746,7 +746,7 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
           <PanelHeader icon={<Sparkles />} title="Mission Chart" />
-          <BarChartFromObject data={missionTotals} emptyText="No mission donations yet." />
+          <BarChartFromObject data={missionTotals} emptyText="No mission contributions yet." />
         </div>
 
         <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -758,26 +758,26 @@ function OverviewPanel({ stats, recentDonations, missionTotals, countryTotals })
   );
 }
 
-function DonationsPanel({ donations = [], onViewDonation }) {
+function ContributionsPanel({ contributions = [], onViewContribution }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
       <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <PanelHeader icon={<Database />} title="Donation Records" />
-        <CountBadge label={`${donations.length} donation records`} />
+        <PanelHeader icon={<Database />} title="Contribution Records" />
+        <CountBadge label={`${contributions.length} contribution records`} />
       </div>
 
-      {donations.length === 0 ? (
+      {contributions.length === 0 ? (
         <EmptyState
           icon={<BadgeDollarSign />}
-          title="No donation records found"
-          message="No donations match the selected filters yet. Try clearing filters or create a mock/test donation."
+          title="No contribution records found"
+          message="No contribution records match the selected filters yet. Try clearing filters or create a local test contribution."
         />
       ) : (
         <div className="overflow-x-auto rounded-2xl">
           <table className="w-full min-w-[980px] border-separate border-spacing-y-3">
             <thead>
               <tr className="text-left text-sm text-textSecondary">
-                <th className="px-4">Donor</th>
+                <th className="px-4">Supporter</th>
                 <th className="px-4">Amount</th>
                 <th className="px-4">Mission</th>
                 <th className="px-4">Location</th>
@@ -789,66 +789,66 @@ function DonationsPanel({ donations = [], onViewDonation }) {
             </thead>
 
             <tbody>
-              {donations.map((donation) => (
-                <tr key={donation.id} className="bg-black/30">
+              {contributions.map((contribution) => (
+                <tr key={contribution.id} className="bg-black/30">
                   <td className="rounded-l-2xl px-4 py-4">
                     <p className="font-bold text-textPrimary">
-                      {donation.donorName || "Unknown donor"}
+                      {contribution.supporterName || "Unknown supporter"}
                     </p>
                     <p className="text-sm text-textSecondary">
-                      {donation.email || "Hidden"}
+                      {contribution.email || "Hidden"}
                     </p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <CopyButton value={donation.email} label="Copy email" />
+                      <CopyButton value={contribution.email} label="Copy email" />
                       <PublicProfileLink
-                        username={donation.username || donation.donorUsername}
+                        username={contribution.username || contribution.supporterUsername}
                         label="Profile"
                       />
                     </div>
                   </td>
 
                   <td className="px-4 py-4 font-numbers font-bold text-goldLight">
-                    {formatMoney(donation.amountUSD)}
+                    {formatMoney(contribution.amountUSD)}
                   </td>
 
                   <td className="px-4 py-4">
                     <p className="font-bold text-textPrimary">
-                      {donation.causeCategory || "Unassigned"}
+                      {contribution.causeCategory || "Unassigned"}
                     </p>
                     <p className="text-sm text-textSecondary">
-                      {donation.causeImpact || "No impact selected"}
+                      {contribution.causeImpact || "No impact selected"}
                     </p>
                   </td>
 
                   <td className="px-4 py-4 text-textSecondary">
-                    {donation.location?.label || "Unknown"}
+                    {contribution.location?.label || "Unknown"}
                   </td>
 
                   <td className="px-4 py-4">
-                    <StatusPill value={donation.paymentStatus} />
+                    <StatusPill value={contribution.paymentStatus} />
                   </td>
 
                   <td className="px-4 py-4">
-                    <StatusPill value={donation.settlementStatus} />
+                    <StatusPill value={contribution.settlementStatus} />
                   </td>
 
                   <td className="px-4 py-4 text-sm text-textSecondary">
-                    {formatDate(donation.createdAt)}
+                    {formatDate(contribution.createdAt)}
                   </td>
 
                   <td className="rounded-r-2xl px-4 py-4">
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => onViewDonation?.(donation.id)}
+                        onClick={() => onViewContribution?.(contribution.id)}
                         className="rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-goldLight transition hover:bg-gold hover:text-black"
                       >
                         View details
                       </button>
 
                       <PublicProfileLink
-                        username={donation.username || donation.donorUsername}
+                        username={contribution.username || contribution.supporterUsername}
                         label="Profile"
                       />
                     </div>
@@ -863,49 +863,49 @@ function DonationsPanel({ donations = [], onViewDonation }) {
   );
 }
 
-function DonorsPanel({ donors = [] }) {
+function SupportersPanel({ supporters = [] }) {
   return (
     <section className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
       <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <PanelHeader icon={<Users />} title="Top Donors" />
-        <CountBadge label={`${donors.length} donors`} />
+        <PanelHeader icon={<Users />} title="Top Supporters" />
+        <CountBadge label={`${supporters.length} supporters`} />
       </div>
 
-      {donors.length === 0 ? (
+      {supporters.length === 0 ? (
         <EmptyState
           icon={<Users />}
-          title="No donors found"
-          message="No donor records are available yet. Donors will appear here after successful paid donations."
+          title="No supporters found"
+          message="No supporter records are available yet. Supporters will appear here after successful paid contributions."
         />
       ) : (
         <div className="space-y-4">
-          {donors.map((donor) => (
+          {supporters.map((supporter) => (
             <div
-              key={donor.id}
+              key={supporter.id}
               className="grid gap-4 rounded-[1.5rem] border border-borderRoyal bg-black/30 p-5 md:grid-cols-[1fr_160px_160px]"
             >
               <div>
                 <p className="font-bold text-textPrimary">
-                  {donor.displayName || donor.username || "Unknown donor"}
+                  {supporter.displayName || supporter.username || "Unknown supporter"}
                 </p>
                 <p className="text-sm text-textSecondary">
-                  {donor.email || "Hidden"}
+                  {supporter.email || "Hidden"}
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <CopyButton value={donor.email} label="Copy email" />
-                  <PublicProfileLink username={donor.username} label="Profile" />
+                  <CopyButton value={supporter.email} label="Copy email" />
+                  <PublicProfileLink username={supporter.username} label="Profile" />
                 </div>
 
                 <p className="mt-3 flex items-center gap-2 text-sm text-textSecondary">
                   <MapPin className="h-4 w-4 text-gold" />
-                  {donor.location?.label || "Unknown"}
+                  {supporter.location?.label || "Unknown"}
                 </p>
               </div>
 
-              <p className="font-bold text-goldLight">{donor.rank || "Spark"}</p>
+              <p className="font-bold text-goldLight">{supporter.rank || "Spark"}</p>
               <p className="font-numbers font-bold text-textPrimary">
-                {formatMoney(donor.totalDonated)}
+                {formatMoney(supporter.totalDonated)}
               </p>
             </div>
           ))}
@@ -920,7 +920,7 @@ function MissionsPanel({ missionTotals, countryTotals }) {
     <section className="grid gap-8 lg:grid-cols-2">
       <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
         <PanelHeader icon={<Sparkles />} title="Mission Performance" />
-        <BarChartFromObject data={missionTotals} emptyText="No mission donations yet." />
+        <BarChartFromObject data={missionTotals} emptyText="No mission contributions yet." />
 
         <div className="mt-8">
           <MissionTotals missionTotals={missionTotals} />
@@ -964,7 +964,7 @@ function BarChartFromObject({ data, emptyText }) {
       <EmptyState
         icon={<Sparkles />}
         title="No mission totals yet"
-        message={emptyText || "Mission totals will appear after successful paid donations."}
+        message={emptyText || "Mission totals will appear after successful paid contributions."}
       />
     );
   }
@@ -1008,7 +1008,7 @@ function CountryChart({ countries }) {
       <EmptyState
         icon={<Globe2 />}
         title="No country totals yet"
-        message="Country totals will appear after donors choose a country or city location."
+        message="Country totals will appear after supporters choose a country or city location."
       />
     );
   }
@@ -1029,7 +1029,7 @@ function CountryChart({ countries }) {
                   {country.country}
                 </p>
                 <p className="text-sm text-textSecondary">
-                  {country.countryCode} · {country.donors} donor records
+                  {country.countryCode} · {country.supporters} supporter records
                 </p>
               </div>
 
@@ -1059,7 +1059,7 @@ function MissionTotals({ missionTotals }) {
       <EmptyState
         icon={<Sparkles />}
         title="No mission breakdown yet"
-        message="Mission breakdown totals will appear once paid donations are recorded."
+        message="Mission breakdown totals will appear once paid contributions are recorded."
       />
     );
   }
@@ -1103,7 +1103,7 @@ async function copyToClipboard(value) {
   }
 }
 
-function DonationDetailDrawer({ donation, loading, onClose }) {
+function ContributionDetailDrawer({ contribution, loading, onClose }) {
   const [copiedField, setCopiedField] = useState("");
 
   async function handleCopy(label, value) {
@@ -1121,13 +1121,13 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-gold">
-              Donation Detail
+              Contribution Detail
             </p>
             <h2 className="mt-2 font-display text-2xl font-bold text-textPrimary sm:text-3xl">
-              {formatMoney(donation.amountUSD)}
+              {formatMoney(contribution.amountUSD)}
             </h2>
             <p className="mt-1 text-textSecondary">
-              {donation.causeCategory || "Unassigned"} · {formatDate(donation.createdAt)}
+              {contribution.causeCategory || "Unassigned"} · {formatDate(contribution.createdAt)}
             </p>
           </div>
 
@@ -1142,58 +1142,58 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
 
         {loading ? (
           <div className="rounded-2xl border border-borderRoyal bg-royalCard p-6 text-center text-textSecondary">
-            Loading donation details...
+            Loading contribution details...
           </div>
         ) : (
           <div className="space-y-6">
-            <DetailSection title="Donor">
-              <DetailLine label="Name" value={donation.isAnonymous ? "Anonymous" : donation.donor?.displayName || donation.donor?.username || "Unknown"} />
+            <DetailSection title="Supporter">
+              <DetailLine label="Name" value={contribution.isAnonymous ? "Anonymous" : contribution.supporter?.displayName || contribution.supporter?.username || "Unknown"} />
               <DetailLine
                 label="Email"
-                value={donation.donor?.email || "Hidden"}
+                value={contribution.supporter?.email || "Hidden"}
                 copyable
                 copiedField={copiedField}
                 onCopy={handleCopy}
               />
               <DetailLine
                 label="Username"
-                value={donation.donor?.username || "None"}
-                copyable={Boolean(donation.donor?.username)}
+                value={contribution.supporter?.username || "None"}
+                copyable={Boolean(contribution.supporter?.username)}
                 copiedField={copiedField}
                 onCopy={handleCopy}
               />
               <DetailLine
                 label="Public Profile"
                 value={
-                  donation.donor?.username
-                    ? `${window.location.origin}/u/${donation.donor.username}`
+                  contribution.supporter?.username
+                    ? `${window.location.origin}/u/${contribution.supporter.username}`
                     : "Not available"
                 }
-                copyable={Boolean(donation.donor?.username)}
+                copyable={Boolean(contribution.supporter?.username)}
                 copiedField={copiedField}
                 onCopy={handleCopy}
               />
-              <DetailLine label="Role" value={donation.donor?.role || "donor"} />
-              <DetailLine label="Current Rank" value={donation.donor?.currentRank || "Spark"} />
-              <DetailLine label="Total Donated" value={formatMoney(donation.donor?.totalDonated)} />
+              <DetailLine label="Role" value={contribution.supporter?.role || "supporter"} />
+              <DetailLine label="Current Rank" value={contribution.supporter?.currentRank || "Spark"} />
+              <DetailLine label="Total Contributed" value={formatMoney(contribution.supporter?.totalDonated)} />
             </DetailSection>
 
             <DetailSection title="Payment">
-              <DetailLine label="Amount" value={formatMoney(donation.amountUSD)} />
-              <DetailLine label="Currency" value={donation.currency || "USD"} />
-              <DetailLine label="Payment Method" value={donation.paymentMethod || "Unknown"} />
-              <DetailLine label="Payment Status" value={donation.paymentStatus || "Unknown"} />
-              <DetailLine label="Settlement Status" value={donation.settlementStatus || "Unknown"} />
+              <DetailLine label="Amount" value={formatMoney(contribution.amountUSD)} />
+              <DetailLine label="Currency" value={contribution.currency || "USD"} />
+              <DetailLine label="Payment Method" value={contribution.paymentMethod || "Unknown"} />
+              <DetailLine label="Payment Status" value={contribution.paymentStatus || "Unknown"} />
+              <DetailLine label="Settlement Status" value={contribution.settlementStatus || "Unknown"} />
               <DetailLine
                 label="Stripe Session"
-                value={donation.stripeSessionId || "Not available"}
+                value={contribution.stripeSessionId || "Not available"}
                 copyable
                 copiedField={copiedField}
                 onCopy={handleCopy}
               />
               <DetailLine
                 label="Stripe Payment Intent"
-                value={donation.stripePaymentIntentId || "Not available"}
+                value={contribution.stripePaymentIntentId || "Not available"}
                 copyable
                 copiedField={copiedField}
                 onCopy={handleCopy}
@@ -1201,20 +1201,20 @@ function DonationDetailDrawer({ donation, loading, onClose }) {
             </DetailSection>
 
             <DetailSection title="Mission">
-              <DetailLine label="Mission" value={donation.causeCategory || "Unassigned"} />
-              <DetailLine label="Impact" value={donation.causeImpact || "None"} />
-              <DetailLine label="Cause" value={donation.cause || "None"} />
-              <DetailLine label="Rank at Time" value={donation.rankAtTime || "Spark"} />
-              <DetailLine label="Message" value={donation.message || "No donor message"} />
+              <DetailLine label="Mission" value={contribution.causeCategory || "Unassigned"} />
+              <DetailLine label="Impact" value={contribution.causeImpact || "None"} />
+              <DetailLine label="Cause" value={contribution.cause || "None"} />
+              <DetailLine label="Rank at Time" value={contribution.rankAtTime || "Spark"} />
+              <DetailLine label="Message" value={contribution.message || "No supporter message"} />
             </DetailSection>
 
             <DetailSection title="Location">
-              <DetailLine label="Location" value={donation.location?.label || "Unknown"} />
-              <DetailLine label="City" value={donation.location?.city || "Unknown"} />
-              <DetailLine label="Region" value={donation.location?.region || "Unknown"} />
-              <DetailLine label="Country" value={donation.location?.country || "Unknown"} />
-              <DetailLine label="Country Code" value={donation.location?.countryCode || "UN"} />
-              <DetailLine label="Precision" value={donation.location?.precision || "country"} />
+              <DetailLine label="Location" value={contribution.location?.label || "Unknown"} />
+              <DetailLine label="City" value={contribution.location?.city || "Unknown"} />
+              <DetailLine label="Region" value={contribution.location?.region || "Unknown"} />
+              <DetailLine label="Country" value={contribution.location?.country || "Unknown"} />
+              <DetailLine label="Country Code" value={contribution.location?.countryCode || "UN"} />
+              <DetailLine label="Precision" value={contribution.location?.precision || "country"} />
             </DetailSection>
           </div>
         )}
@@ -1297,22 +1297,22 @@ function AuditPanel({
 }) {
   const auditSummaryCards = [
     {
-      label: "Donations received",
+      label: "Contributions received",
       value: formatMoney(auditTotalsByType.donation_received),
       icon: <BadgeDollarSign />
     },
     {
-      label: "Cause allocation",
+      label: "Impact Allocation",
       value: formatMoney(auditTotalsByType.cause_allocation),
       icon: <Sparkles />
     },
     {
-      label: "Platform allocation",
+      label: "Platform Operations",
       value: formatMoney(auditTotalsByType.platform_allocation),
       icon: <ShieldCheck />
     },
     {
-      label: "Lottery allocation",
+      label: "Legacy Impact Reserve",
       value: formatMoney(auditTotalsByType.lottery_allocation),
       icon: <Ticket />
     }
@@ -1364,11 +1364,11 @@ function AuditPanel({
               onChange={(event) => onChange("type", event.target.value)}
               className="w-full rounded-xl border border-borderRoyal bg-black/30 px-4 py-3 text-textPrimary outline-none focus:border-gold"
             >
-              <option value="cause_allocation">Cause allocation</option>
-              <option value="donation_received">Donation received</option>
-              <option value="cause_allocation">Cause allocation</option>
-              <option value="platform_allocation">Platform allocation</option>
-              <option value="lottery_allocation">Lottery allocation</option>
+              <option value="cause_allocation">Impact Allocation</option>
+              <option value="donation_received">Contribution received</option>
+              <option value="cause_allocation">Impact Allocation</option>
+              <option value="platform_allocation">Platform Operations</option>
+              <option value="lottery_allocation">Legacy Impact Reserve</option>
             </select>
           </label>
 
@@ -1514,10 +1514,10 @@ function AuditPanel({
               className="rounded-full border border-borderRoyal bg-black/30 px-5 py-3 text-sm font-bold text-textPrimary outline-none transition focus:border-gold"
             >
               <option value="all">All audit types</option>
-              <option value="donation_received">Donation received</option>
-              <option value="cause_allocation">Cause allocation</option>
-              <option value="platform_allocation">Platform allocation</option>
-              <option value="lottery_allocation">Lottery allocation</option>
+              <option value="donation_received">Contribution received</option>
+              <option value="cause_allocation">Impact Allocation</option>
+              <option value="platform_allocation">Platform Operations</option>
+              <option value="lottery_allocation">Legacy Impact Reserve</option>
             </select>
 
             <input
@@ -2145,14 +2145,14 @@ function AdminSmokeTestChecklist() {
       area: "Overview",
       checks: [
         "Revenue cards load without crashing",
-        "Latest donations show real MongoDB records or clean empty state",
+        "Latest contributions show real MongoDB records or clean empty state",
         "Mission and country charts show data or clean empty state"
       ]
     },
     {
-      area: "Donations",
+      area: "Contributions",
       checks: [
-        "Donation records table loads",
+        "Contribution records table loads",
         "Search filter works",
         "Mission, country, and payment-status filters work",
         "CSV download respects selected filters",
@@ -2161,9 +2161,9 @@ function AdminSmokeTestChecklist() {
       ]
     },
     {
-      area: "Donors",
+      area: "Supporters",
       checks: [
-        "Top donors list loads",
+        "Top supporters list loads",
         "Copy email works",
         "Public profile link opens /u/:username"
       ]
@@ -2271,12 +2271,12 @@ function AdminQaChecklist({ health }) {
     {
       label: "MongoDB connected",
       done: databaseConnected,
-      note: "Required for donations, audit logs, users, and admin dashboard data."
+      note: "Required for contribution records, audit logs, users, and admin dashboard data."
     },
     {
       label: "Stripe checkout configured",
       done: stripeCheckoutReady,
-      note: "Required before accepting real donations."
+      note: "Required before accepting real Legacy Contributions."
     },
     {
       label: "Stripe webhook configured",
@@ -2320,7 +2320,7 @@ function AdminQaChecklist({ health }) {
             Admin production readiness
           </h3>
           <p className="mt-2 text-sm text-textSecondary">
-            Use this before enabling real admin write actions, payouts, refunds, bans, or production donations.
+            Use this before enabling real admin write actions, reserve actions, refunds, bans, or production contributions.
           </p>
         </div>
 
@@ -2605,24 +2605,24 @@ function PublicProfileLink({ username, label = "Open public profile" }) {
   );
 }
 
-function DonationMiniCard({ donation }) {
+function ContributionMiniCard({ contribution }) {
   return (
     <div className="rounded-2xl border border-borderRoyal bg-black/30 p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-bold text-textPrimary">{donation.donorName}</p>
+          <p className="font-bold text-textPrimary">{contribution.supporterName}</p>
           <p className="text-sm text-textSecondary">
-            {donation.location?.label || "Unknown"}
+            {contribution.location?.label || "Unknown"}
           </p>
         </div>
 
         <p className="font-numbers font-bold text-goldLight">
-          {formatMoney(donation.amountUSD)}
+          {formatMoney(contribution.amountUSD)}
         </p>
       </div>
 
       <p className="mt-3 text-sm text-textSecondary">
-        {donation.causeCategory} — {donation.causeImpact}
+        {contribution.causeCategory} — {contribution.causeImpact}
       </p>
     </div>
   );

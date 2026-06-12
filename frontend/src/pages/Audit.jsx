@@ -7,7 +7,6 @@ import {
   FileCheck2,
   Filter,
   HeartHandshake,
-  Landmark,
   Search,
   ShieldCheck,
   Ticket,
@@ -37,19 +36,19 @@ const quickAuditTypes = [
     value: "All"
   },
   {
-    label: "Donations",
+    label: "Contributions",
     value: "donation_received"
   },
   {
-    label: "Cause",
+    label: "Impact",
     value: "cause_allocation"
   },
   {
-    label: "Platform",
+    label: "Operations",
     value: "platform_allocation"
   },
   {
-    label: "Lottery",
+    label: "Legacy Reserve",
     value: "lottery_allocation"
   }
 ];
@@ -71,6 +70,36 @@ function money(value) {
 function safeText(value, fallback = "Not available yet") {
   const text = String(value || "").trim();
   return text || fallback;
+}
+
+function formatType(type) {
+  const labels = {
+    donation_received: "Contribution Received",
+    cause_allocation: "Impact Allocation",
+    platform_allocation: "Platform Operations",
+    lottery_allocation: "Legacy Impact Reserve"
+  };
+
+  if (labels[type]) {
+    return labels[type];
+  }
+
+  return String(type || "")
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "Today";
+  }
+
+  return new Date(value).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
 }
 
 export default function Audit() {
@@ -117,6 +146,7 @@ export default function Audit() {
         const matchesSearch =
           !query ||
           entry.type?.toLowerCase().includes(query) ||
+          formatType(entry.type).toLowerCase().includes(query) ||
           entry.recipient?.toLowerCase().includes(query) ||
           entry.description?.toLowerCase().includes(query) ||
           entry.status?.toLowerCase().includes(query) ||
@@ -139,11 +169,11 @@ export default function Audit() {
         acc.totalVisible += amount;
 
         if (entry.type === "donation_received") {
-          acc.totalDonations += amount;
+          acc.totalContributions += amount;
         }
 
         if (entry.type === "cause_allocation") {
-          acc.cause += amount;
+          acc.impact += amount;
         }
 
         if (entry.type === "platform_allocation") {
@@ -151,17 +181,17 @@ export default function Audit() {
         }
 
         if (entry.type === "lottery_allocation") {
-          acc.lottery += amount;
+          acc.legacyReserve += amount;
         }
 
         return acc;
       },
       {
         totalVisible: 0,
-        totalDonations: 0,
-        cause: 0,
+        totalContributions: 0,
+        impact: 0,
         platform: 0,
-        lottery: 0
+        legacyReserve: 0
       }
     );
   }, [visibleEntries]);
@@ -178,26 +208,26 @@ export default function Audit() {
   }, [visibleEntries]);
 
   const allocationHealth = useMemo(() => {
-    const expectedCause = Number((totals.totalDonations * 0.6).toFixed(2));
-    const expectedPlatform = Number((totals.totalDonations * 0.25).toFixed(2));
-    const expectedLottery = Number((totals.totalDonations * 0.15).toFixed(2));
+    const expectedImpact = Number((totals.totalContributions * 0.6).toFixed(2));
+    const expectedPlatform = Number((totals.totalContributions * 0.25).toFixed(2));
+    const expectedLegacyReserve = Number((totals.totalContributions * 0.15).toFixed(2));
 
-    const causeDifference = Number((totals.cause - expectedCause).toFixed(2));
+    const impactDifference = Number((totals.impact - expectedImpact).toFixed(2));
     const platformDifference = Number((totals.platform - expectedPlatform).toFixed(2));
-    const lotteryDifference = Number((totals.lottery - expectedLottery).toFixed(2));
+    const legacyReserveDifference = Number((totals.legacyReserve - expectedLegacyReserve).toFixed(2));
 
     const isBalanced =
-      Math.abs(causeDifference) <= 0.02 &&
+      Math.abs(impactDifference) <= 0.02 &&
       Math.abs(platformDifference) <= 0.02 &&
-      Math.abs(lotteryDifference) <= 0.02;
+      Math.abs(legacyReserveDifference) <= 0.02;
 
     return {
-      expectedCause,
+      expectedImpact,
       expectedPlatform,
-      expectedLottery,
-      causeDifference,
+      expectedLegacyReserve,
+      impactDifference,
       platformDifference,
-      lotteryDifference,
+      legacyReserveDifference,
       isBalanced
     };
   }, [totals]);
@@ -239,18 +269,18 @@ export default function Audit() {
       icon: <FileCheck2 />
     },
     {
-      label: "Donations received",
-      value: money(totals.totalDonations),
+      label: "Contributions received",
+      value: money(totals.totalContributions),
       icon: <BadgeDollarSign />
     },
     {
-      label: "Cause allocation",
-      value: money(totals.cause),
+      label: "Impact Allocation",
+      value: money(totals.impact),
       icon: <HeartHandshake />
     },
     {
-      label: "Platform + lottery",
-      value: money(totals.platform + totals.lottery),
+      label: "Operations + Reserve",
+      value: money(totals.platform + totals.legacyReserve),
       icon: <Trophy />
     }
   ];
@@ -330,11 +360,31 @@ export default function Audit() {
     <main className="mx-auto max-w-7xl px-5 py-10">
       <PageHero
         eyebrow="Public Audit Log"
-        title="Every Dollar Visible"
-        description="A public transparency page showing donation receipts, cause allocation, platform sustainability, and lottery pool records by mission and impact."
+        title="Public Contribution Records"
+        description="A public transparency page showing confirmed contribution records, Impact Allocation, Platform Operations, and Legacy Impact Reserve records by mission and impact."
         rightLabel="Transparency mode"
         rightValue="Backend Filtered"
       />
+
+      <section className="mb-8 rounded-[1.5rem] border border-amber-400/30 bg-amber-400/10 p-5">
+        <p className="font-display text-2xl font-bold text-textPrimary">
+          Audit safety notice
+        </p>
+
+        <p className="mt-3 leading-7 text-textSecondary">
+          One Earth Legacy is a commercial digital legacy platform, not a charity,
+          lottery, raffle, sweepstakes, investment, or financial product. Public
+          audit records may show contribution, allocation, and reserve records,
+          but digital ranks, tiles, points, and voting influence have no cash
+          value and cannot be withdrawn.
+        </p>
+
+        <p className="mt-3 leading-7 text-textSecondary">
+          Impact allocations and reserve actions are subject to Stripe confirmation,
+          settlement, fraud review, refund or chargeback risk, compliance review,
+          and founder/admin approval.
+        </p>
+      </section>
 
       <section className="mb-8 rounded-[2rem] border border-borderRoyal bg-royalPanel p-5">
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -570,15 +620,15 @@ export default function Audit() {
 
             <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.18em]">
               <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
-                {money(totals.cause)} cause
+                {money(totals.impact)} impact
               </span>
 
               <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
-                {money(totals.platform)} platform
+                {money(totals.platform)} operations
               </span>
 
               <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-gold">
-                {money(totals.lottery)} lottery
+                {money(totals.legacyReserve)} reserve
               </span>
             </div>
           </div>
@@ -621,12 +671,12 @@ export default function Audit() {
           <div className="rounded-[2rem] border border-gold/25 bg-royalCard p-6 shadow-gold">
             <MoneySplitCard
               title="Visible Money Split"
-              causeLabel="60% Cause"
-              causeAmount={totals.cause}
-              platformLabel="25% Platform"
+              causeLabel="60% Impact"
+              causeAmount={totals.impact}
+              platformLabel="25% Operations"
               platformAmount={totals.platform}
-              lotteryLabel="15% Lottery"
-              lotteryAmount={totals.lottery}
+              lotteryLabel="15% Legacy Impact Reserve"
+              lotteryAmount={totals.legacyReserve}
               showBars
               note="These values are calculated from the currently visible public audit records."
             />
@@ -654,7 +704,7 @@ export default function Audit() {
               </div>
 
               <p className="text-sm text-textSecondary">
-                Public proof links can be attached after verified cause payouts or public confirmations.
+                Public proof links can be attached after verified impact confirmations or public records.
               </p>
             </div>
           </div>
@@ -683,30 +733,31 @@ export default function Audit() {
               </p>
 
               <p className="mt-2 text-sm text-textSecondary">
-                This checks whether visible allocation records match 60% cause,
-                25% platform, and 15% lottery based on visible donation received records.
+                This checks whether visible allocation records match 60% Impact Allocation,
+                25% Platform Operations, and 15% Legacy Impact Reserve based on
+                visible contribution received records.
               </p>
             </div>
 
             <AllocationLine
-              label="Cause expected"
-              expected={allocationHealth.expectedCause}
-              actual={totals.cause}
-              difference={allocationHealth.causeDifference}
+              label="Impact expected"
+              expected={allocationHealth.expectedImpact}
+              actual={totals.impact}
+              difference={allocationHealth.impactDifference}
             />
 
             <AllocationLine
-              label="Platform expected"
+              label="Operations expected"
               expected={allocationHealth.expectedPlatform}
               actual={totals.platform}
               difference={allocationHealth.platformDifference}
             />
 
             <AllocationLine
-              label="Lottery expected"
-              expected={allocationHealth.expectedLottery}
-              actual={totals.lottery}
-              difference={allocationHealth.lotteryDifference}
+              label="Legacy Impact Reserve expected"
+              expected={allocationHealth.expectedLegacyReserve}
+              actual={totals.legacyReserve}
+              difference={allocationHealth.legacyReserveDifference}
             />
           </div>
 
@@ -719,8 +770,10 @@ export default function Audit() {
             <TrustLine text="Mission and exact impact are saved separately in MongoDB." />
             <TrustLine text="Audit records can be filtered by mission and exact impact." />
             <TrustLine text="Ranks update only after verified payment settlement." />
-            <TrustLine text="Large donations require manual review." />
-            <TrustLine text="Public proof links can be attached to verified cause payouts." />
+            <TrustLine text="Large contributions require manual review." />
+            <TrustLine text="Public proof links can be attached to verified impact confirmations." />
+            <TrustLine text="Digital ranks, tiles, and voting influence have no cash value." />
+            <TrustLine text="Legacy Impact Reserve is not paid to supporters as cash." />
           </div>
 
           <div className="rounded-[2rem] border border-borderRoyal bg-royalCard p-6">
@@ -730,10 +783,10 @@ export default function Audit() {
             </p>
 
             {[
-              "Donation received records are visible",
-              "Cause allocation records are visible",
-              "Platform allocation records are visible",
-              "Lottery allocation records are visible",
+              "Contribution received records are visible",
+              "Impact Allocation records are visible",
+              "Platform Operations records are visible",
+              "Legacy Impact Reserve records are visible",
               "Mission and impact filters update backend results",
               "Search and type filters work without exposing private data"
             ].map((item) => (
@@ -746,8 +799,10 @@ export default function Audit() {
               Legal note
             </p>
             <p className="mt-3 text-textSecondary">
-              This platform is a commercial digital legacy platform, not a charity.
-              Cause contribution is a transparent product feature.
+              This platform is a commercial digital legacy platform, not a charity,
+              lottery, raffle, sweepstakes, investment, or financial product.
+              Impact Allocation is a transparent platform feature, subject to payment
+              settlement, compliance review, and founder/admin approval.
             </p>
           </div>
         </aside>
@@ -862,23 +917,4 @@ function TrustLine({ text }) {
       <span className="text-sm text-textSecondary">{text}</span>
     </div>
   );
-}
-
-function formatType(type) {
-  return String(type || "")
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function formatDate(value) {
-  if (!value) {
-    return "Today";
-  }
-
-  return new Date(value).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
 }
